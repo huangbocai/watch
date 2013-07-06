@@ -1,0 +1,12 @@
+
+
+net mark_pos_x mark.pos-x => motion.analog-in-00
+net mark_pos_y mark.pos-y => motion.analog-in-01
+net mark_pos_z mark.pos-z => motion.analog-in-02
+
+loadrt conv_u32_bit count=1 
+addf conv-u32-bit.0 servo-thread
+net mark_posCmd_u32 mark.posCmd => conv-u32-bit.0.in
+net mark_posCmd_bit conv-u32-bit.0.out => motion.digital-in-00
+
+net mark_pos_valid mark.posValid => motion.digital-in-01

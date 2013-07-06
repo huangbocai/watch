@@ -1,0 +1,57 @@
+#!/bin/bash
+
+#ready to detect mark
+readyIndex=`printf "%.0f" $2`
+
+if [ "$readyIndex" = "99" ];then
+	halcmd setp mark.clear-result 1
+	exit 0
+elif [ $readyIndex -gt 0 ]; then
+	halcmd setp mark.ready-index  $readyIndex
+	exit 0
+fi
+
+# test if the commad pin is ready
+val=`halcmd getp mark.cvCmd`
+WAIT=99
+while [ "$val" != "0" ] && [ $WAIT -gt 1 ]
+do
+	#echo "busy"
+	sleep 0.1
+	WAIT=$(($WAIT-1))
+	val=`halcmd getp mark.cvCmd`
+done
+
+if [ "$val" != "0" ]; then
+	echo "M102 time out"
+	exit -1
+fi
+
+#set the commad pin
+cmd=`printf "%.0f" $1`
+halcmd setp mark.cvCmd $cmd
+
+#wait the commad finished
+sleep 0.1
+WAIT=99
+val=`halcmd getp mark.cvCmd`
+while [ "$val" != "0" ]  && [ $WAIT -gt 1 ]
+do
+	#echo "busy"
+	sleep 0.1
+	WAIT=$(($WAIT-1))
+	val=`halcmd getp mark.cvCmd`
+done
+
+if [ "$val" != "0" ]; then
+	echo "M102 time out"
+	exit -1
+fi
+
+	
+exit 0
+
+
+
+
+

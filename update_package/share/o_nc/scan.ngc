@@ -1,0 +1,31 @@
+%
+#<sx0> = #3301
+#<sy0> = #3302
+#<sz> = #3303
+#<rowNum> = #3304
+#<colNum> = #3305
+#<row_inr> = -#3306
+#<col_inr> = #3307
+
+M102 P0 Q1 (ready for scan diamonds)
+
+g0 g53 z0
+
+#1=0
+#<row_offset> = 0
+O100 while [#1 lt #<rowNum>]
+	#2=0
+	#<col_offset> = 0
+	O110 while [#2 lt #<colNum>]
+		g0 g53 x[#<sx0> + #<col_offset>] y[#<sy0> + #<row_offset>]
+		g0 g53 z#<sz>
+		M102 P1 (detect diamond)
+		#2= [#2+1]
+		#<col_offset> = [ #<col_offset> + #<col_inr> ]
+	O110 endwhile
+	#1 = [#1+1]
+	#<row_offset> = [#<row_offset> + #<row_inr>]
+O100 endwhile
+
+g0 g53 z0
+%

@@ -1,0 +1,47 @@
+%
+
+#<send_z> = #3309
+#<release_z> = [ #<send_z>- 1]
+
+M106 p1 (ask ready  the first positon)
+
+O100 while[1]
+	
+	(check whether have diamonds)
+	M66 P1 L0
+	O110 if[ #5399 EQ 0 ]
+		(debug,完成该次取钻)	
+		O100 break;
+	O110 endif
+	g0 g53 z#<send_z> 
+
+	(check whether pos ready)
+	M66 P0 L4 Q1.0
+	O120 if[ #5399 eq -1 ]
+		(debug,获取钻石位置超时)	
+		O110 break	
+	O120 endif
+	
+	(get the positon)
+	M66 E0 L0
+	#<px> = #5399
+	M66 E1 L0
+	#<py> = #5399
+	M66 E2 L0
+	#<pz> = #5399
+
+	(pickup the diamond)
+	g0 g53 x#<px> y#<py> 
+	g0 g53 z#<pz>
+	M106 Q1 (tell has pickup)
+	g0 g53 z#<send_z>	
+	
+	(ask ready the next positon)
+	M106 p1	
+		
+	g0 g53 x0 y0	(reload the diamond)
+	g0 g53 z#<release_z>			
+O100 endwhile
+
+g0 g53 z0
+%

@@ -1,0 +1,49 @@
+#!/bin/bash
+
+posCmd=`printf "%.0f" $1`
+reachCmd=`printf "%.0f" $2`
+
+if [ $posCmd -gt 0 ]; then
+	# watit the pos commad pin ready
+	val=`halcmd getp mark.posCmd`
+	WAIT=99
+	while [ "$val" != "0" ] && [ $WAIT -gt 1 ]
+	do
+		#echo "busy"
+		sleep 0.1
+		WAIT=$(($WAIT-1))
+		val=`halcmd getp mark.posCmd`
+	done
+	if [ "$val" != "0" ]; then
+		echo "M106 posCmd time out"
+		exit -1
+	fi
+	#set the commad pin
+	halcmd sets mark_posCmd_u32 $posCmd
+else
+	# watit the reach commad pin ready
+	val=`halcmd getp mark.reachCmd`
+	WAIT=99
+	while [ "$val" != "0" ] && [ $WAIT -gt 1 ]
+	do
+		#echo "busy"
+		sleep 0.1
+		WAIT=$(($WAIT-1))
+		val=`halcmd getp mark.reachCmd`
+	done
+	if [ "$val" != "0" ]; then
+		echo "M106 reachCmd time out"
+		exit -1
+	fi
+	#set the commad pin
+	halcmd setp mark.reachCmd $reachCmd
+fi
+
+
+# [ $readyIndex -gt 0 ]; then
+exit 0
+
+
+
+
+

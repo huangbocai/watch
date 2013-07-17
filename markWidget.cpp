@@ -116,6 +116,7 @@ const Position* Recorder::get_position(unsigned int index)
         return NULL;
 }
 
+
 void Recorder::load()
 {
     std::ifstream ifs;
@@ -536,6 +537,22 @@ void MarkWidget::auto_detect_watch(){
     if(capture)
         capture->get_image(srcImage);
      watchResult.scanIndex++;
+     list<Point> holesPos;
+     holesPos.push_back(Point(200,300));
+     holesPos.push_back(Point(250,300));
+     holesPos.push_back(Point(300,300));
+     holesPos.push_back(Point(350,300));
+     holesPos.push_back(Point(400,300));
+
+     list<Point>::const_iterator it;
+     Point pos;
+     Vector2 vm(emcStatus.cmdAxis[0], emcStatus.cmdAxis[1]);
+     for(it=holesPos.begin();it!=holesPos.end();it++){
+         pos=transfMatrix->transform(it->x(), it->y());
+         pos.move(vm);
+         Position* hole = new Position(pos.x(),pos.y(),emcStatus.cmdAxis[2],emcStatus.cmdAxis[3],emcStatus.cmdAxis[4]);
+         posRecorder->holesPosVec.push_back(hole);
+     }
 }
 
 
@@ -545,8 +562,6 @@ void MarkWidget::clear_diamond_pos(){
     markView->set_diamond_pos(watchResult.dimamondPos);
     markView->set_diamond_sum(0);
 }
-
-
 
 void MarkWidget::cv_cmd_cycle()
 {
@@ -563,6 +578,9 @@ void MarkWidget::cv_cmd_cycle()
     if(*halpins->readyIndex!=0){
         if(*halpins->readyIndex==1)
             ready_for_diamond_scan();
+        else if(*halpins->readyIndex==2)
+            ready_for_watch_scan();
+
         *halpins->readyIndex=0;
     }
 
@@ -619,8 +637,7 @@ void MarkWidget::fast_react_cycle(){
             *halpins->posAxis[2]=pos->get_value(2);
             *halpins->posAxis[3]=pos->get_value(3);
             *halpins->posAxis[4]=pos->get_value(4);
-            posRecorder->incr_current_index(1);
-            //std::cout<<"m106 p2: "<<posRecorder->get_current_index()<<std::endl;
+            posRecorder->incr_current_index(1);            
         }
         *halpins->posCmd=0;
     }
@@ -632,7 +649,6 @@ void MarkWidget::fast_react_cycle(){
     }
     else if(*halpins->reachCmd==2){
         const Position* pos = posRecorder->get_last_position();
-        //std::cout<<"m106 Q2: "<<posRecorder->get_current_index()<<std::endl;
         if(pos)
         {
             RectangleFrame rect = pos->get_search_area();
@@ -645,10 +661,8 @@ void MarkWidget::fast_react_cycle(){
     if(posRecorder->get_current_index()<posRecorder->get_pos_num())
         *halpins->watchPosValid = 1;
     else{
-        *halpins->watchPosValid = 0;
-        //posRecorder->set_current_index(0);
+        *halpins->watchPosValid = 0;        
     }
-
 
     if(watchResult.dimamondPos.size()){
         *halpins->posValid=1;
@@ -664,6 +678,14 @@ void MarkWidget::ready_for_diamond_scan(){
     sl_contrast->setValue(prjManage.contrastD);
     sl_brightness->setValue(prjManage.brightnessD);
     sl_exposure->setValue(prjManage.exposureD);
+}
+
+void MarkWidget::ready_for_watch_scan()
+{
+    sp_ADLevle->setValue(prjManage.adlW);
+    sl_contrast->setValue(prjManage.contrastW);
+    sl_brightness->setValue(prjManage.brightnessW);
+    sl_exposure->setValue(prjManage.exposureW);
 }
 
 void MarkWidget::select_pattern_toggled(bool checked){
@@ -895,7 +917,7 @@ void MarkWidget::record_cam_pos()
     lb_posNum->setText(tmpNum);
     bt_abandonCurrentPos->setEnabled(true);
     bt_abandonAllPos->setEnabled(true);
-    bt_finishRecord->setEnabled(true);
+    bt_finishRecord->setEnabled(true);    
 }
 
 void MarkWidget::abandon_current_pos()
@@ -944,6 +966,7 @@ void MarkWidget::finish_record_cam_pos()
     bt_firstPos->setEnabled(true);
     bt_nextPos->setEnabled(true);
     bt_camRun->setEnabled(true);
+    prjManage.save_diamond_camera_param(param.camADL, param.camBL, param.camGain, param.camExposure);
 }
 
 void MarkWidget::get_first_pos()
@@ -1009,6 +1032,36 @@ void MarkWidget::cam_run()
     emcStatus.stopToManual=true;    
 #endif
 }
+
+void MarkWidget::set_first_hole()
+{
+    const Position* pos = posRecorder->holesPosVec.at(0);
+#ifdef WITH_EMC
+    if(pos)
+    {
+        emc_mode(NULL,EMC_TASK_MODE_MDI);
+        emc_mdi("g0 g53 z0");
+        sprintf(buf,"g0 g53 x%.3f y%.3f",pos->get_value(0), pos->get_value(1));
+        emc_mdi(buf);
+        sprintf(buf, "g0 g53 x%.3f y%.3f z%.3f a%.3f b%.3f", pos->get_value(0), pos->get_value(1),
+                pos->get_value(2),pos->get_value(3),pos->get_value(4));
+        emc_mdi(buf);
+        emcStatus.stopToManual=true;
+    }
+#endif
+
+}
+
+void MarkWidget::set_next_hole()
+{
+
+}
+
+void MarkWidget::set_all_holes()
+{
+
+}
+
 
 //void MarkWidget::cancel_area_select(){
 //    markView->cancel_area_select();

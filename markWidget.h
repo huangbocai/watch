@@ -63,7 +63,7 @@ public:
     {
         val[0] = 0; val[1] = 0; val[2] = 0; val[3] = 0; val[4] = 0;
     }
-    Position(double xVal, double yVal, double zVal, double aVal, double bVal, RectangleFrame rect)
+    Position(double xVal, double yVal, double zVal, double aVal, double bVal, RectangleFrame rect=RectangleFrame())
     {
         val[0] = xVal; val[1] = yVal; val[2] = zVal; val[3] = aVal; val[4] = bVal; searchArea = rect;
     }
@@ -103,15 +103,17 @@ public:
         currentIndex += step;
     }
     unsigned int get_current_index(){return currentIndex;}
-    std::string get_file_name(){return fileName;}    
+    //std::string get_file_name(){return fileName;}
     const Position* first_position();
-    const Position* next_position();
-    void load();
-    bool is_the_last_pos(){return currentIndex-2>=posVec.size()?true:false;}
+    const Position* next_position();        
     const Position* get_position(unsigned int index);
-    const Position* get_last_position(){return get_position(currentIndex-2);}
+    void load();
+
 private:
     bool is_file_open(ofstream& ofs);
+
+public:
+    std::vector<Position*> holesPosVec;
 
 private:
     unsigned int currentIndex;
@@ -119,6 +121,7 @@ private:
     std::vector<Position*> posVec;
     static const int lineLength = 64;
     const Position* lastPos;
+    std::vector<Position*>::const_iterator iter;
 };
 
 
@@ -159,6 +162,9 @@ private slots:
     void get_first_pos();
     void get_next_pos();
     void cam_run();
+    void set_first_hole();
+    void set_next_hole();
+    void set_all_holes();
 
     //image page
     void focus_point_select(int x, int y);
@@ -198,6 +204,8 @@ private:
     void auto_detect_diamond();
     void clear_diamond_pos();
     void auto_detect_watch();
+
+    void ready_for_watch_scan();
 
     void mark_view_update();
 

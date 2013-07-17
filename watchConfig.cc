@@ -77,6 +77,19 @@ int ProjectManage::load(const char* projectName){
     ini_get_double_param(&inifile, "DIAMOND", "PICKUP_Z", &pickupZD, 0);
     ini_get_double_param(&inifile, "DIAMOND", "FOCUS_Z", &sendZD, 0);
 
+
+
+    ini_get_int_param(&inifile, "WATCH", "BRIGHTNESS", &brightnessW, 0);
+    ini_get_int_param(&inifile, "WATCH", "CONTRAST", &contrastW, 0);
+    ini_get_int_param(&inifile, "WATCH", "EXPOSURE", &exposureW, 20);
+    ini_get_int_param(&inifile, "WATCH", "ADL", &adlW, 0);
+
+    ini_get_int_param(&inifile, "WATCH", "SEARCH_LEFT", &sx, 20);
+    ini_get_int_param(&inifile, "WATCH", "SEARCH_TOP", &sy, 20);
+    ini_get_int_param(&inifile, "WATCH", "SEARCH_WIDTH", &sw, 200);
+    ini_get_int_param(&inifile, "WATCH", "SEARCH_HEIGHT", &sh, 200);
+    searcRectW= cvRect(sx, sy, sw, sh);
+
     return 0;
 }
 
@@ -105,10 +118,10 @@ void ProjectManage::save_watch_camera_param(int adl, int brightness, int contras
     brightnessD=brightness;
     contrastD=contrast;
     exposureD=exposure;
-    write_profile_int("WATCH", "BRIGHTNESS",brightnessD, iniFile);
-    write_profile_int("WATCH", "CONTRAST",contrastD, iniFile);
-    write_profile_int("WATCH", "EXPOSURE",exposureD, iniFile);
-    write_profile_int("WATCH", "ADL",adlD, iniFile);
+    write_profile_int("WATCH", "BRIGHTNESS",brightnessW, iniFile);
+    write_profile_int("WATCH", "CONTRAST",contrastW, iniFile);
+    write_profile_int("WATCH", "EXPOSURE",exposureW, iniFile);
+    write_profile_int("WATCH", "ADL",adlW, iniFile);
 }
 
 void ProjectManage::save_diamond_search_area(){

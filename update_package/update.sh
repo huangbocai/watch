@@ -12,6 +12,7 @@ mkdir -p /home/u/cnc/configs/ppmc/o_nc
 cp -fp ./share/o_nc/* /home/u/cnc/configs/ppmc/o_nc/
 cp -fp ./bin/M10* /home/u/cnc/configs/ppmc/
 cp -f ./configs/watchDiamond.hal /home/u/cnc/configs/ppmc/
+cp -f ./share/watch.ppm /home/u/
 sync
 
 #定位方案

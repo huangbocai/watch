@@ -54,10 +54,12 @@ public:
     void save_scan_param();
     void save_as(const char* projectName);
     void save_diamond_pattern(const IplImage* img);
+    void save_watch_camera_param(int adl, int brightness, int contrast, int exposure);
     void save_watch_pattern(const IplImage* img);
     IplImage* get_diamond_pattern(){return patternD;}
     IplImage* get_watch_pattern(){return patternW;}
     const char* ini_file()const {return iniFile;}
+    const char* project_dir()const {return projectDirectory;}
 
     int brightnessD;
     int contrastD;

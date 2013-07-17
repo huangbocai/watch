@@ -19,6 +19,7 @@ typedef struct
     hal_float_t* posAxis[6];
     hal_u32_t* reachCmd;
     hal_bit_t* posValid;
+    hal_bit_t* watchPosValid;
     hal_s32_t * state;
     hal_u32_t* fps;
 }MarkHalPins;
@@ -36,14 +37,14 @@ class MarkEmcStatus
 public:
     MarkEmcStatus():stopToManual(false),mode(EMC_TASK_MODE_MANUAL){}
     void update();
-    double cmdAxis[3];
+    double cmdAxis[5];
     bool hasStop;
     bool stopToManual;
     enum EMC_TASK_INTERP_ENUM programStaut;
     enum EMC_TASK_MODE_ENUM mode;
 private:
-    double actualAxis[3];
-    double lastActualAxis[3];
+    double actualAxis[5];
+    double lastActualAxis[5];
     bool stopComfirm;
 };
 

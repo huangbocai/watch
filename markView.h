@@ -15,16 +15,16 @@ public:
     void move(double x, double y);
     void rotate(double deg);
     void zoom(float widthRatio, float heightRatio);
-    void set_resizable(bool yes){resizable=yes;};
-    void set_rotatable(bool yes) {rotatable=yes;};
-    void set_visible(bool yes){visible=yes;};
+    void set_resizable(bool yes){resizable=yes;}
+    void set_rotatable(bool yes) {rotatable=yes;}
+    void set_visible(bool yes){visible=yes;}
     const Point& get_conner(int index)const;
     Point get_center()const;
-    bool get_visible()const {return visible;};
-    bool get_resizable() const{return resizable;};
-    bool get_rotatable() const{return rotatable;};
-    const Point& get_top_left()const {return conner[0];};
-    const Point& get_bottom_right()const {return conner[2];};
+    bool get_visible()const {return visible;}
+    bool get_resizable() const{return resizable;}
+    bool get_rotatable() const{return rotatable;}
+    const Point& get_top_left()const {return conner[0];}
+    const Point& get_bottom_right()const {return conner[2];}
     float get_width() const ;
     float get_height() const;
     ChangeType get_ready_change_type(double x, double y, double range)const;

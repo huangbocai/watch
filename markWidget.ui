@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>759</width>
-    <height>474</height>
+    <width>767</width>
+    <height>475</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <rect>
      <x>508</x>
      <y>0</y>
-     <width>251</width>
+     <width>271</width>
      <height>471</height>
     </rect>
    </property>
@@ -35,7 +35,7 @@
     </size>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>3</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
@@ -222,7 +222,7 @@
        <rect>
         <x>3</x>
         <y>20</y>
-        <width>238</width>
+        <width>252</width>
         <height>127</height>
        </rect>
       </property>
@@ -750,7 +750,7 @@
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="QPushButton" name="tb_searchArea0_3">
+     <widget class="QPushButton" name="tb_searchArea1">
       <property name="enabled">
        <bool>true</bool>
       </property>
@@ -1006,9 +1006,9 @@
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="label_19">
+          <widget class="QLabel" name="lb_posNum">
            <property name="text">
-            <string>100</string>
+            <string>0</string>
            </property>
           </widget>
          </item>
@@ -1026,7 +1026,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton">
+          <widget class="QPushButton" name="bt_recordCamPos">
            <property name="text">
             <string>录入拍摄点</string>
            </property>
@@ -1037,7 +1037,7 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_13">
          <item>
-          <widget class="QPushButton" name="pushButton_7">
+          <widget class="QPushButton" name="bt_abandonCurrentPos">
            <property name="maximumSize">
             <size>
              <width>70</width>
@@ -1050,7 +1050,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_3">
+          <widget class="QPushButton" name="bt_abandonAllPos">
            <property name="maximumSize">
             <size>
              <width>70</width>
@@ -1063,7 +1063,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_6">
+          <widget class="QPushButton" name="bt_finishRecord">
            <property name="maximumSize">
             <size>
              <width>70</width>
@@ -1103,7 +1103,7 @@
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_15">
        <item>
-        <widget class="QPushButton" name="pushButton_8">
+        <widget class="QPushButton" name="bt_firstPos">
          <property name="maximumSize">
           <size>
            <width>70</width>
@@ -1116,7 +1116,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_9">
+        <widget class="QPushButton" name="bt_nextPos">
          <property name="maximumSize">
           <size>
            <width>70</width>
@@ -1129,7 +1129,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_10">
+        <widget class="QPushButton" name="bt_camRun">
          <property name="maximumSize">
           <size>
            <width>70</width>
@@ -1331,7 +1331,7 @@
        <rect>
         <x>5</x>
         <y>21</y>
-        <width>206</width>
+        <width>212</width>
         <height>106</height>
        </rect>
       </property>
@@ -1783,9 +1783,9 @@ p, li { white-space: pre-wrap; }
       <property name="geometry">
        <rect>
         <x>70</x>
-        <y>40</y>
+        <y>47</y>
         <width>57</width>
-        <height>17</height>
+        <height>20</height>
        </rect>
       </property>
       <property name="text">

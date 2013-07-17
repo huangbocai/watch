@@ -7,12 +7,148 @@
 #include <sys/ioctl.h>
 #include <linux/hdreg.h>
 
+
 #define MARK2_VERSION "WATCH 1.0.0"
 
 #define OFFSET_WHITE_CIRCLE 0
 #define OFFSET_BLACK_CIRCLE 1
 #define OFFSET_CENTER	2
 #define CCDS_RELATE 3
+
+Recorder::Recorder(std::string prjDir)
+{
+    fileName = prjDir + std::string("/Watch.pos");
+    currentIndex = 0;
+    posVec.clear();
+    lastPos = NULL;
+    std::cout<<fileName<<std::endl;
+}
+
+void Recorder::record_current_pos(double x, double y, double z, double a, double b ,RectangleFrame rect)
+{
+    Position* pos = new Position(x,y,z,a,b,rect);
+    if(posVec.size()>0)
+    {
+        Position* currentPos = posVec.back();
+        if(*currentPos != *pos){
+            posVec.push_back(pos);
+        }
+        else{
+            std::cout<<"This position had aready recorded!"<<std::endl;
+            delete pos;
+        }
+    }
+    else
+        posVec.push_back(pos);
+}
+
+void Recorder::record_current_pos(double pPos[5], RectangleFrame rect)
+{
+    record_current_pos(pPos[0],pPos[1],pPos[2],pPos[3],pPos[4],rect);
+}
+
+void Recorder::abandon_current_pos()
+{
+    posVec.pop_back();
+}
+
+void Recorder::abandon_all_pos()
+{
+    std::string tmpCmdStr = std::string("rm -r ")+fileName;
+    //std::cout<<"cmd: "<<tmpCmdStr<<std::endl;
+    int result = system(tmpCmdStr.c_str());
+    if (result != 0) {
+        printf("ERROR: %s fail\n", tmpCmdStr.c_str());
+        //exit(-1);
+    }
+    posVec.clear();
+    currentIndex = 0;
+}
+
+void Recorder::finish_record_cam_pos()
+{
+    std::ofstream ofs;
+    bool isFileOpen = is_file_open(ofs);
+    std::vector<Position*>::iterator iter;
+    if(isFileOpen){
+        for(iter = posVec.begin(); iter != posVec.end();iter++){
+            RectangleFrame rect = (*iter)->get_search_area();
+            ofs<<(*iter)->x()<<" "<<(*iter)->y()<<" "<<(*iter)->z()<<" "
+              <<(*iter)->a()<<" "<<(*iter)->b()<<" "
+             <<rect.get_top_left().x()<<" "<<rect.get_top_left().y()<<" "
+            <<rect.get_width()<<" "<<rect.get_height()<<std::endl;
+        }
+        ofs.close();
+    }
+}
+
+bool Recorder::is_file_open(ofstream& ofs)
+{
+    if(!ofs.is_open()){
+        ofs.open(fileName.c_str());
+        if(ofs.fail())
+        {
+            std::cout<<"open file "<<fileName<<" fail!"<<std::endl;
+            return false;
+        }
+    }
+    return true;
+}
+
+const Position* Recorder::first_position()
+{
+    currentIndex = 0;
+    return get_position(currentIndex++);
+}
+
+const Position* Recorder::next_position()
+{
+    if(currentIndex>=posVec.size())
+        currentIndex = 0;
+    return get_position(currentIndex++);
+}
+
+const Position* Recorder::get_position(unsigned int index)
+{
+    if(index<posVec.size())
+        return posVec[index];
+    else
+        return NULL;
+}
+
+void Recorder::load()
+{
+    std::ifstream ifs;
+    char buf[lineLength];
+    QString lineStr;
+    QStringList ld;
+    ifs.open(fileName.c_str());
+    if(ifs.fail()){
+        std::cout<<"open file "<<fileName<<" fail!"<<std::endl;
+        return ;
+    }
+
+    ifs.getline(buf,lineLength,'\n');
+    if(buf[0] == '\0'){
+        //std::cout<<"The position file is empty"<<std::endl;
+        return;
+    }
+
+    while(!ifs.eof())
+    {
+        lineStr = QString(buf);
+        ld = lineStr.split(" ",QString::SkipEmptyParts);
+        double x,y,z,a,b,tpx,tpy,w,h;
+        x = ld[0].toDouble(); y = ld[1].toDouble(); z = ld[2].toDouble();
+        a = ld[3].toDouble(); b = ld[4].toDouble(); tpx = ld[5].toDouble();
+        tpy = ld[6].toDouble(); w = ld[7].toDouble(); h = ld[8].toDouble();
+        Position* pos = new Position(x,y,z,a,b,RectangleFrame(Point(tpx,tpy),w,h));
+        posVec.push_back(pos);
+        ifs.getline(buf,lineLength,'\n');
+    }
+}
+
+
 
 MarkWidget::MarkWidget(int argc,  char **argv, QWidget* parent)
     :QWidget(parent)
@@ -27,10 +163,12 @@ MarkWidget::MarkWidget(int argc,  char **argv, QWidget* parent)
         exit(-1);
      };
      param.load(EMC_INIFILE);
+     //printf("inifile : %s\ntest!!!!!!!\n",EMC_INIFILE);
 #else
     param.load("/home/u/cnc/configs/ppmc/ppmc.ini");
 #endif
     prjManage.load(param.projectName);
+
     setupUi(this);
     get_qt_objects();
     start_Capture(param.camGain, param.camBL,param.camExposure,param.camADL, 2);
@@ -38,11 +176,16 @@ MarkWidget::MarkWidget(int argc,  char **argv, QWidget* parent)
     offsetSetting= new OffsetSetting(param.camRelx, param.camRely, param.glueRelx, param.glueRely);
 
     markView= new MarkView(widgetMarkView);
+
+    posRecorder = new Recorder(std::string(prjManage.project_dir()));
+    posRecorder->load();
+
     status_bar_init();
     diamond_page_init();
     watch_page_init();
     image_page_init();
     adjust_page_init();
+
 
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(view_update()));
@@ -56,7 +199,7 @@ MarkWidget::MarkWidget(int argc,  char **argv, QWidget* parent)
 #ifdef WITH_EMC
     QTimer * halTimer = new QTimer(this);
     connect(halTimer, SIGNAL(timeout()), this, SLOT(fast_react_cycle()));
-    halTimer->start(20);
+    halTimer->start(10);
 #endif
 }
 
@@ -117,6 +260,7 @@ void MarkWidget::start_Capture(int contrastVal, int brightnessVal, int exposureV
         //   param.withCamera=false;
         delete capture;
         capture=NULL;
+        //printf("Loading image /home/u/watch.ppm...\n\n");
         srcImage=cvLoadImage("/home/u/watch.ppm",0);
         if(srcImage==NULL){
             printf("can  not open /home/u/watch.ppm\n");
@@ -192,11 +336,41 @@ void MarkWidget::diamond_page_init(){
 void MarkWidget::watch_page_init()
 {
     char buf[16];
+    int posNum = 0;
     le_rotateDeg->setValidator(doubleValidator);
     sprintf(buf, "%.3f",param.degInc);
     le_rotateDeg->setText(QString::fromUtf8(buf));
+
+    posNum = posRecorder->get_pos_num();
+    if(posNum<=0){
+        bt_recordCamPos->setEnabled(true);
+        bt_abandonCurrentPos->setEnabled(false);
+        bt_abandonAllPos->setEnabled(false);
+        bt_finishRecord->setEnabled(false);
+        bt_firstPos->setEnabled(false);
+        bt_nextPos->setEnabled(false);
+        bt_camRun->setEnabled(false);
+    }
+    else{
+        bt_recordCamPos->setEnabled(false);
+        bt_abandonCurrentPos->setEnabled(false);
+        bt_abandonAllPos->setEnabled(true);
+        bt_finishRecord->setEnabled(false);
+        bt_firstPos->setEnabled(true);
+        bt_nextPos->setEnabled(true);
+        bt_camRun->setEnabled(true);
+    }
+
+    connect(tb_searchArea1,SIGNAL(toggled(bool)),this,SLOT(search_area_toggled(bool)));
     connect(bt_rotateForward, SIGNAL(clicked()), this, SLOT(change_angle()));
     connect(bt_rotateBackward, SIGNAL(clicked()), this, SLOT(change_angle()));
+    connect(bt_recordCamPos,SIGNAL(clicked()),this,SLOT(record_cam_pos()));
+    connect(bt_abandonCurrentPos,SIGNAL(clicked()),this,SLOT(abandon_current_pos()));
+    connect(bt_abandonAllPos,SIGNAL(clicked()),this,SLOT(abandon_all_pos()));
+    connect(bt_finishRecord,SIGNAL(clicked()),this,SLOT(finish_record_cam_pos()));
+    connect(bt_firstPos,SIGNAL(clicked()),this,SLOT(get_first_pos()));
+    connect(bt_nextPos,SIGNAL(clicked()),this,SLOT(get_next_pos()));
+    connect(bt_camRun,SIGNAL(clicked()),this,SLOT(cam_run()));
 }
 
 
@@ -358,6 +532,12 @@ void MarkWidget::auto_detect_diamond(){
     markView->set_diamond_sum((int)watchResult.dimamondPos.size());
 }
 
+void MarkWidget::auto_detect_watch(){
+    if(capture)
+        capture->get_image(srcImage);
+     watchResult.scanIndex++;
+}
+
 
 void MarkWidget::clear_diamond_pos(){
     watchResult.dimamondPos.clear();
@@ -406,7 +586,10 @@ void MarkWidget::cv_cmd_cycle()
 
     case MARK_DETECT:
         if(cmd==1){
-          auto_detect_diamond();
+            auto_detect_diamond();
+        }
+        else if(cmd==2){
+            auto_detect_watch();
         }
         *halpins->cvCmd=0;
         state=MARK_IDLE;
@@ -420,11 +603,25 @@ void MarkWidget::cv_cmd_cycle()
 void MarkWidget::fast_react_cycle(){
      MarkHalPins* halpins=halData->halpins;
 
-    if(*halpins->posCmd==1){
+     if(*halpins->posCmd==1){
         Point pos= *watchResult.dimamondPos.begin();
         *halpins->posAxis[0]=pos.x();
         *halpins->posAxis[1]=pos.y();
         *halpins->posAxis[2]=prjManage.pickupZD;
+        *halpins->posCmd=0;
+    }
+    else if(*halpins->posCmd==2){
+        const Position* pos = posRecorder->get_position(posRecorder->get_current_index());
+        if(pos)
+        {
+            *halpins->posAxis[0]=pos->get_value(0);
+            *halpins->posAxis[1]=pos->get_value(1);
+            *halpins->posAxis[2]=pos->get_value(2);
+            *halpins->posAxis[3]=pos->get_value(3);
+            *halpins->posAxis[4]=pos->get_value(4);
+            posRecorder->incr_current_index(1);
+            //std::cout<<"m106 p2: "<<posRecorder->get_current_index()<<std::endl;
+        }
         *halpins->posCmd=0;
     }
 
@@ -433,11 +630,32 @@ void MarkWidget::fast_react_cycle(){
         *halpins->reachCmd=0;
         markView->set_diamond_sum((int)watchResult.dimamondPos.size());
     }
+    else if(*halpins->reachCmd==2){
+        const Position* pos = posRecorder->get_last_position();
+        //std::cout<<"m106 Q2: "<<posRecorder->get_current_index()<<std::endl;
+        if(pos)
+        {
+            RectangleFrame rect = pos->get_search_area();
+            markView->set_search_frame(cvRect(rect.get_top_left().x(),rect.get_top_left().y(),
+                                              rect.get_width(),rect.get_height()));
+        }
+        *halpins->reachCmd=0;        
+    }
 
-    if(watchResult.dimamondPos.size()>0)
+    if(posRecorder->get_current_index()<posRecorder->get_pos_num())
+        *halpins->watchPosValid = 1;
+    else{
+        *halpins->watchPosValid = 0;
+        //posRecorder->set_current_index(0);
+    }
+
+
+    if(watchResult.dimamondPos.size()){
         *halpins->posValid=1;
-    else
+    }
+    else{
         *halpins->posValid=0;
+    }
 }
 
 void MarkWidget::ready_for_diamond_scan(){
@@ -469,7 +687,7 @@ void MarkWidget::select_pattern_toggled(bool checked){
 
 void MarkWidget::search_area_toggled(bool checked){
     QPushButton* button=qobject_cast<QPushButton*>(sender());
-    if(button==tb_searchArea0){
+    if(button==tb_searchArea0 || button == tb_searchArea1){
         if(checked)
             markView->set_default_search_frame();
         else{
@@ -500,8 +718,9 @@ void MarkWidget::set_scan_beginning(){
     char buf[32];
     double pos[3];
     int i;
-    for(i=0;i<3;i++)
+    for(i=0;i<3;i++){
         pos[i]=emcStatus.cmdAxis[i];
+    }
 #ifdef WITH_EMC
     emc_mode(NULL, EMC_TASK_MODE_MDI);
     for(i=0;i<3;i++){
@@ -665,6 +884,130 @@ void MarkWidget::change_angle(){
     }
     val*=sign;
     emc_jog_incr(4,10,val);
+}
+
+void MarkWidget::record_cam_pos()
+{
+    QString tmpNum;
+    RectangleFrame searchArea = markView->get_search_frame();
+    posRecorder->record_current_pos(emcStatus.cmdAxis,searchArea);
+    tmpNum.setNum(posRecorder->get_pos_num());
+    lb_posNum->setText(tmpNum);
+    bt_abandonCurrentPos->setEnabled(true);
+    bt_abandonAllPos->setEnabled(true);
+    bt_finishRecord->setEnabled(true);
+}
+
+void MarkWidget::abandon_current_pos()
+{
+    QString tmpNum;
+    int tmpIntNum;
+    posRecorder->abandon_current_pos();
+    tmpIntNum = posRecorder->get_pos_num();
+    tmpNum.setNum(tmpIntNum);
+    lb_posNum->setText(tmpNum);
+    bt_abandonCurrentPos->setEnabled(false);
+    if(tmpIntNum == 0){
+        bt_abandonCurrentPos->setEnabled(false);
+        bt_abandonAllPos->setEnabled(false);
+        bt_finishRecord->setEnabled(false);
+    }
+    else{
+        bt_abandonCurrentPos->setEnabled(true);
+        bt_abandonAllPos->setEnabled(true);
+        bt_finishRecord->setEnabled(true);
+    }
+}
+
+void MarkWidget::abandon_all_pos()
+{
+    //printf("abandon_all_pos\n");
+    QString tmpNum;
+    posRecorder->abandon_all_pos();
+    tmpNum.setNum(posRecorder->get_pos_num());
+    lb_posNum->setText(tmpNum);
+    bt_abandonCurrentPos->setEnabled(false);
+    bt_abandonAllPos->setEnabled(false);
+    bt_finishRecord->setEnabled(false);
+    bt_firstPos->setEnabled(false);
+    bt_nextPos->setEnabled(false);
+    bt_camRun->setEnabled(false);
+    bt_recordCamPos->setEnabled(true);
+}
+
+void MarkWidget::finish_record_cam_pos()
+{
+    posRecorder->finish_record_cam_pos();
+    bt_abandonCurrentPos->setEnabled(false);
+    bt_finishRecord->setEnabled(false);
+    bt_recordCamPos->setEnabled(false);
+    bt_firstPos->setEnabled(true);
+    bt_nextPos->setEnabled(true);
+    bt_camRun->setEnabled(true);
+}
+
+void MarkWidget::get_first_pos()
+{
+    char buf[128];
+    RectangleFrame rect;
+    const Position* pos = posRecorder->first_position();
+#ifdef WITH_EMC
+    if(pos)
+    {
+        emc_mode(NULL,EMC_TASK_MODE_MDI);
+        emc_mdi("g0 g53 z0");
+        sprintf(buf,"g0 g53 x%.3f y%.3f",pos->get_value(0), pos->get_value(1));
+        emc_mdi(buf);
+        sprintf(buf, "g0 g53 x%.3f y%.3f z%.3f a%.3f b%.3f", pos->get_value(0), pos->get_value(1),
+                pos->get_value(2),pos->get_value(3),pos->get_value(4));
+        emc_mdi(buf);
+        emcStatus.stopToManual=true;
+        rect = pos->get_search_area();
+        markView->set_search_frame(cvRect(rect.get_top_left().x(),rect.get_top_left().y(),rect.get_width(),rect.get_height()));
+    }
+#endif
+
+    QString tmpNumStr;
+    tmpNumStr.setNum(posRecorder->get_current_index());
+    lb_posNum->setText(tmpNumStr);
+
+}
+
+void MarkWidget::get_next_pos()
+{
+    char buf[128];
+    RectangleFrame rect;
+    const Position* pos = posRecorder->next_position();
+#ifdef WITH_EMC
+    if(pos)
+    {
+        emc_mode(NULL,EMC_TASK_MODE_MDI);
+        sprintf(buf, "g0 g53 x%.3f y%.3f z%.3f a%.3f b%.3f", pos->get_value(0), pos->get_value(1),
+                pos->get_value(2),pos->get_value(3),pos->get_value(4));
+        emc_mdi(buf);
+        emcStatus.stopToManual=true;
+        rect = pos->get_search_area();
+        markView->set_search_frame(cvRect(rect.get_top_left().x(),rect.get_top_left().y(),rect.get_width(),rect.get_height()));
+    }
+#endif
+    QString tmpNumStr;
+    tmpNumStr.setNum(posRecorder->get_current_index());
+    lb_posNum->setText(tmpNumStr);
+}
+
+
+void MarkWidget::cam_run()
+{
+#ifdef WITH_EMC    
+    posRecorder->set_current_index(0);
+    MarkHalPins* halpins=halData->halpins;
+    *halpins->watchPosValid = 1;
+    emc_mode(NULL,EMC_TASK_MODE_AUTO);
+    emc_open("/home/u/cnc/configs/ppmc/o_nc/watch.ngc");
+    emc_wait("done");
+    emc_run(0);
+    emcStatus.stopToManual=true;    
+#endif
 }
 
 //void MarkWidget::cancel_area_select(){
@@ -1067,3 +1410,5 @@ void MarkWidget::save_image()
     if(fileName.size()>0)
         cvSaveImage(fileName.toUtf8().constData(), srcImage);
 }
+
+

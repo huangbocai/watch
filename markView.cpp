@@ -85,6 +85,8 @@ RectangleFrame MarkView::get_search_frame(){
     searchFrame.set_resizable(false);
     RectangleFrame tmp=searchFrame;
     tmp.zoom(1/widthRatio, 1/heighRatio);
+    //printf("searchFrame:%f,%f\ntemp:%f,%f\n,ratio:%f,%f\n\n",searchFrame.get_top_left().x(),
+    //       searchFrame.get_top_left().y(),tmp.get_top_left().x(),tmp.get_top_left().y(),widthRatio,heighRatio);
     state=IDEL;
     return tmp;
 }
@@ -110,6 +112,7 @@ void MarkView::mouseMoveEvent(QMouseEvent *event){
     QPoint pos= event->pos();
     int x=pos.x();
     int y=pos.y();
+    //printf("mousemovepos: %d,%d\n",x,y);
     if(x<0 ||y<0 ||x>=width() ||y>=height()){
         event->accept();
         return;

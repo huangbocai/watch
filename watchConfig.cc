@@ -99,6 +99,18 @@ void ProjectManage::save_diamond_camera_param(int adl, int brightness, int contr
     write_profile_int("DIAMOND", "ADL",adlD, iniFile);
 }
 
+void ProjectManage::save_watch_camera_param(int adl, int brightness, int contrast, int exposure)
+{
+    adlD=adl;
+    brightnessD=brightness;
+    contrastD=contrast;
+    exposureD=exposure;
+    write_profile_int("WATCH", "BRIGHTNESS",brightnessD, iniFile);
+    write_profile_int("WATCH", "CONTRAST",contrastD, iniFile);
+    write_profile_int("WATCH", "EXPOSURE",exposureD, iniFile);
+    write_profile_int("WATCH", "ADL",adlD, iniFile);
+}
+
 void ProjectManage::save_diamond_search_area(){
     write_profile_int("DIAMOND", "SEARCH_LEFT", searcRectD.x, iniFile);
     write_profile_int("DIAMOND", "SEARCH_TOP", searcRectD.y, iniFile);

@@ -12,7 +12,9 @@
 #include "markEMC.h"
 #include "watchDetect.h"
 #include "watchConfig.h"
-
+#include <iostream>
+#include <fstream>
+#include <vector>
 
 typedef struct {
     QPushButton* bt_adjustPos[4];
@@ -54,6 +56,71 @@ public:
     double glueOffset[2];
 };
 
+class Position
+{
+public:
+    Position()
+    {
+        val[0] = 0; val[1] = 0; val[2] = 0; val[3] = 0; val[4] = 0;
+    }
+    Position(double xVal, double yVal, double zVal, double aVal, double bVal, RectangleFrame rect)
+    {
+        val[0] = xVal; val[1] = yVal; val[2] = zVal; val[3] = aVal; val[4] = bVal; searchArea = rect;
+    }
+    void set_value(double value, int valueIndex) {val[valueIndex] = value;}
+    double get_value(int valueIndex)const {return val[valueIndex];}
+    RectangleFrame get_search_area()const {return searchArea;}
+    double x(){return val[0];}
+    double y(){return val[1];}
+    double z(){return val[2];}
+    double a(){return val[3];}
+    double b(){return val[4];}
+    bool operator !=(const Position& pos) const
+    {
+        for(int i=0; i<5; i++){
+            if(pos.get_value(i) != val[i])
+                return true;
+        }
+        return false;
+    }
+private:
+    double val[5];
+    RectangleFrame searchArea;
+};
+
+class Recorder
+{
+public:
+    Recorder(std::string prjDir);
+    void record_current_pos(double x, double y, double z, double a, double b, RectangleFrame rect);
+    void record_current_pos(double pPos[5], RectangleFrame rect);
+    void abandon_current_pos();
+    void abandon_all_pos();
+    void finish_record_cam_pos();
+    unsigned int get_pos_num(){return posVec.size();}
+    void set_current_index(unsigned int index) {currentIndex = index;}
+    void incr_current_index(unsigned int step){
+        currentIndex += step;
+    }
+    unsigned int get_current_index(){return currentIndex;}
+    std::string get_file_name(){return fileName;}    
+    const Position* first_position();
+    const Position* next_position();
+    void load();
+    bool is_the_last_pos(){return currentIndex-2>=posVec.size()?true:false;}
+    const Position* get_position(unsigned int index);
+    const Position* get_last_position(){return get_position(currentIndex-2);}
+private:
+    bool is_file_open(ofstream& ofs);
+
+private:
+    unsigned int currentIndex;
+    std::string fileName;
+    std::vector<Position*> posVec;
+    static const int lineLength = 64;
+    const Position* lastPos;
+};
+
 
 class MarkWidget: public QWidget, public Ui::MarkWidget
 {
@@ -85,6 +152,13 @@ private slots:
 
     //watch page
     void change_angle();
+    void record_cam_pos();
+    void abandon_current_pos();
+    void abandon_all_pos();
+    void finish_record_cam_pos();
+    void get_first_pos();
+    void get_next_pos();
+    void cam_run();
 
     //image page
     void focus_point_select(int x, int y);
@@ -123,6 +197,7 @@ private:
     void ready_for_diamond_scan();
     void auto_detect_diamond();
     void clear_diamond_pos();
+    void auto_detect_watch();
 
     void mark_view_update();
 
@@ -141,6 +216,8 @@ private:
     ProjectManage prjManage;
     ImageActualTM* transfMatrix;
     IplImage* srcImage;
+
+    Recorder* posRecorder;
 
     CirclesDetecter* circlesDetecter;
 

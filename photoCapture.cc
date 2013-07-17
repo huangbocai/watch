@@ -11,7 +11,7 @@ void* image_capture_thread(void* arg){
 	Camera* cam=NULL;
 	int frameNum=0;
 	double frequency=cvGetTickFrequency()*1000000.;
-	double t1, t0 = (double)cvGetTickCount(); 
+    double t1, t0 = (double)cvGetTickCount();
 	
 threadBegin:
 	cam=imgCap->cam;

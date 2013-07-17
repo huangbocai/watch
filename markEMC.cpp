@@ -84,6 +84,11 @@ MarkHal::MarkHal()
         return ;
     *halpins->posValid=1;
 
+    retval = hal_pin_bit_new("mark.watchPosValid", HAL_OUT, &halpins->watchPosValid, comp_id);
+    if (retval != 0)
+        return ;
+    *halpins->watchPosValid=1;
+
     retval = hal_pin_s32_new("mark.state", HAL_OUT, &halpins->state, comp_id);
     if (retval != 0)
         return ;
@@ -111,15 +116,23 @@ void MarkEmcStatus::update(){
     emc_abs_act_pos(actualAxis+0, 0);
     emc_abs_act_pos(actualAxis+1, 1);
     emc_abs_act_pos(actualAxis+2, 2);
+    emc_abs_act_pos(actualAxis+3, 3);
+    emc_abs_act_pos(actualAxis+4, 4);
     emc_abs_cmd_pos(cmdAxis+0, 0);
     emc_abs_cmd_pos(cmdAxis+1, 1);
     emc_abs_cmd_pos(cmdAxis+2, 2);
+    emc_abs_cmd_pos(cmdAxis+3, 3);
+    emc_abs_cmd_pos(cmdAxis+4, 4);
     emc_program_status(&programStaut);
     emc_mode(&mode, EMC_TASK_MODE_MANUAL);
 
+    //printf("%.3f %.3f\n",lastActualAxis[4],actualAxis[4]);
+
     if(fabs(lastActualAxis[0]-actualAxis[0])<0.001
         && fabs(lastActualAxis[1]-actualAxis[1])<0.001
-        &&fabs(lastActualAxis[2]-actualAxis[2])<0.001){
+        &&fabs(lastActualAxis[2]-actualAxis[2])<0.001
+            &&fabs(lastActualAxis[3]-actualAxis[3])<0.001
+            &&fabs(lastActualAxis[4]-actualAxis[4])<0.001){
         if(stopComfirm)
             hasStop=true;
         else
@@ -129,7 +142,7 @@ void MarkEmcStatus::update(){
         hasStop=false;
         stopComfirm=false;
     }
-    for(int i=0;i<3; i++)
+    for(int i=0;i<5; i++)
         lastActualAxis[i]=actualAxis[i];
 }
 

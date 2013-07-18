@@ -584,4 +584,97 @@ RectangleFrame::ChangeType RectangleFrame::get_ready_change_type(double x, doubl
    return nochange;
 }
 
+CircleFrame::CircleFrame(double cx, double cy, double radius)
+    :center(cx, cy), r(radius)
+{
+    visible=false;
+    resizable=false;
+    rotatable=false;
+}
 
+void CircleFrame::zoom(float ratio){
+    center.set(center.x()*ratio, center.y()*ratio);
+    r*=ratio;
+}
+
+
+Point CircleFrame::get_conner(int index)const{
+    Point p(center);
+    if(index==0)
+        p.move(Vector2(0, -r));
+    else if(index==1)
+        p.move(Vector2(r, 0));
+    else if(index==2)
+        p.move(Vector2(0, r));
+    else
+        p.move(Vector2(-r, 0));
+    return p;
+}
+
+Point CircleFrame::get_top_left()const{
+    Point p(center);
+    p.move(Vector2(-r, -r));
+    return p;
+}
+
+CircleFrame::ChangeType CircleFrame::get_ready_change_type(double x, double y, double range)const{
+    int i;
+    double dis;
+    Point mp(x, y);
+    for(i=0;i<4;i++){
+        dis=two_points_distance(get_conner(i), mp);
+        if(dis<range){
+            return (ChangeType)(top+2*i);
+        }
+    }
+    dis=two_points_distance(mp, center);
+    if(dis<r+range)
+        return MOVE;
+    return nochange;
+}
+
+void CircleFrame::area_change(ChangeType type, double dx, double dy){
+    switch(type){
+        case MOVE:
+            move(dx, dy);
+            break;
+        case top:
+            top_move(dx, dy);
+            break;
+        case bottom:
+            bottom_move(dx, dy);
+            break;
+        case left:
+            left_move(dx, dy);
+            break;
+        case right:
+            right_move(dx, dy);
+            break;
+        default:
+            ;
+    }
+}
+
+void CircleFrame::move(double x, double y){
+    center.move(Vector2(x, y));
+}
+
+void CircleFrame::top_move(double , double y){
+    center.move(Vector2(0, y/2));
+    r-=y/2;
+}
+
+void CircleFrame::bottom_move(double , double y){
+    center.move(Vector2(0, y/2));
+    r+=y/2;
+}
+
+void CircleFrame::left_move(double x, double ){
+    center.move(Vector2(x/2, 0));
+    r-=x/2;
+}
+
+void CircleFrame::right_move(double x, double ){
+    center.move(Vector2(x/2, 0));
+    r+=x/2;
+}

@@ -7,6 +7,36 @@
 #include "imageMeasure.hh"
 #include "cv.h"
 
+class CircleFrame{
+public:
+    typedef enum{lt=0, top, rt, right, rb,  bottom,  lb, left, MOVE, nochange}ChangeType;
+    CircleFrame(double cx=0, double  cy=0, double radius=0);
+    void area_change(ChangeType type, double dx, double dy);
+    void zoom(float ratio);
+    void set_resizable(bool yes){resizable=yes;};
+    void set_rotatable(bool yes) {rotatable=yes;};
+    void set_visible(bool yes){visible=yes;};
+
+    bool get_visible()const {return visible;};
+    bool get_resizable() const{return resizable;};
+    bool get_rotatable() const{return rotatable;};
+    double get_radius()const {return r;};
+    const Point& get_center()const {return center;};
+    Point get_top_left()const;
+    Point get_conner(int index)const;
+    ChangeType get_ready_change_type(double x, double y, double range) const ;
+private:
+    void left_move(double x, double y);
+    void right_move(double x, double y);
+    void top_move(double x, double y);
+    void bottom_move(double x, double y);
+    void move(double x, double y);
+    Point center;
+    double r;
+    bool visible, resizable, rotatable;
+};
+
+
 class RectangleFrame{
 public:
     typedef enum{lt=0, top, rt, right, rb,  bottom,  lb, left, MOVE, nochange}ChangeType;

@@ -1,0 +1,9 @@
+
+*.[ao]
+moc_*.cpp
+ui_*.h
+*.pro.user
+Makefile
+/update_package/
+qrc_*.cpp
+watchDiamond

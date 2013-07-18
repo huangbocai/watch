@@ -20,6 +20,7 @@ typedef struct
     hal_u32_t* reachCmd;
     hal_bit_t* posValid;
     hal_bit_t* watchPosValid;
+    hal_bit_t* watchHoleValid;
     hal_s32_t * state;
     hal_u32_t* fps;
 }MarkHalPins;

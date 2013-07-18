@@ -91,7 +91,7 @@ private:
 class Recorder
 {
 public:
-    Recorder(std::string prjDir);
+    Recorder(string prjDir);
     void record_current_pos(double x, double y, double z, double a, double b, RectangleFrame rect);
     void record_current_pos(double pPos[5], RectangleFrame rect);
     void abandon_current_pos();
@@ -107,21 +107,23 @@ public:
     const Position* first_position();
     const Position* next_position();        
     const Position* get_position(unsigned int index);
+    const Position* get_last_position(){return get_position(currentIndex-2);}
     void load();
 
 private:
-    bool is_file_open(ofstream& ofs);
+    bool is_file_open(ofstream& ofs, string fileName);
 
 public:
-    std::vector<Position*> holesPosVec;
+    vector<Position*> holesPosVec;
+    vector<Position*>::iterator holeIter;
 
 private:
     unsigned int currentIndex;
-    std::string fileName;
-    std::vector<Position*> posVec;
+    string watchPosFileName;
+    string holePosFileName;
+    vector<Position*> posVec;
     static const int lineLength = 64;
     const Position* lastPos;
-    std::vector<Position*>::const_iterator iter;
 };
 
 

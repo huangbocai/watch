@@ -35,7 +35,7 @@
     </size>
    </property>
    <property name="currentIndex">
-    <number>3</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
@@ -1167,7 +1167,7 @@
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_20">
        <item>
-        <widget class="QPushButton" name="pushButton_11">
+        <widget class="QPushButton" name="bt_setFirstHole">
          <property name="maximumSize">
           <size>
            <width>70</width>
@@ -1180,7 +1180,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_12">
+        <widget class="QPushButton" name="bt_setNextHole">
          <property name="maximumSize">
           <size>
            <width>70</width>
@@ -1193,7 +1193,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_13">
+        <widget class="QPushButton" name="bt_setAllHoles">
          <property name="maximumSize">
           <size>
            <width>70</width>

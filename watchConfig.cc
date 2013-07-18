@@ -75,7 +75,7 @@ int ProjectManage::load(const char* projectName){
     ini_get_int_param(&inifile, "DIAMOND", "SCAN_COL_NUM", &scanColNum, 1);
 
     ini_get_double_param(&inifile, "DIAMOND", "PICKUP_Z", &pickupZD, 0);
-    ini_get_double_param(&inifile, "DIAMOND", "FOCUS_Z", &sendZD, 0);
+    ini_get_double_param(&inifile, "DIAMOND", "SEND_Z", &sendZD, 0);
 
 
 

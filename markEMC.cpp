@@ -89,6 +89,11 @@ MarkHal::MarkHal()
         return ;
     *halpins->watchPosValid=1;
 
+    retval = hal_pin_bit_new("mark.watchHoleValid", HAL_OUT, &halpins->watchHoleValid, comp_id);
+    if (retval != 0)
+        return ;
+    *halpins->watchHoleValid=1;
+
     retval = hal_pin_s32_new("mark.state", HAL_OUT, &halpins->state, comp_id);
     if (retval != 0)
         return ;

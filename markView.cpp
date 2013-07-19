@@ -112,7 +112,6 @@ void MarkView::mouseMoveEvent(QMouseEvent *event){
     QPoint pos= event->pos();
     int x=pos.x();
     int y=pos.y();
-    //printf("mousemovepos: %d,%d\n",x,y);
     if(x<0 ||y<0 ||x>=width() ||y>=height()){
         event->accept();
         return;
@@ -278,7 +277,33 @@ void MarkView::draw_frame(QImage& qImage, const RectangleFrame& frame, const QPe
         }
     }
 }
-
+/*
+void MarkView::draw_frame(QImage &qImage, const CircleFrame &frame, const QPen &pen)
+{
+    QPainter painter(&qImage);
+    painter.setPen(pen);
+    bool resizable = true;
+    bool inWin = true;
+    for(int i=0;i<4;i++){
+        const Point& p1=frame.get_conner(i);
+        if(!(p1.x()>=0 && p1.x()<width() && p1.y()>=0 && p1.y()<height())){
+            inWin=false;
+        }
+    }
+    if(inWin){
+        const Point& center = frame.get_center();
+        double radius = frame.get_radius();
+        painter.drawEllipse(QPointF(center.x(),center.y()),radius,radius);
+        if(resizable){
+            for(int i=0; i<4; i++){
+                const Point& p=frame.get_conner(i);
+                painter.fillRect(p.x()-pointSize/2+0.5,
+                                 p.y()-pointSize/2+0.5, pointSize, pointSize,pen.color());
+            }
+        }
+    }
+}
+*/
 
 void MarkView::draw_status_text(QImage &qImage){
     char buf[128];
@@ -349,6 +374,8 @@ void MarkView::paintEvent(QPaintEvent*){
     draw_cross_line(paintQImage);
     draw_frame(paintQImage,patternFrame, QPen(QColor(0, 255, 0)));
     draw_frame(paintQImage,searchFrame, QPen(QColor(0, 0, 255)));
+    //CircleFrame circleFrame(50,50,30);
+    //draw_frame(paintQImage,circleFrame,QPen(QColor(255,0,0)));
     draw_status_text(paintQImage);
     draw_ccd_status(paintQImage);
     draw_diamond_pos(paintQImage);

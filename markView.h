@@ -117,6 +117,7 @@ private:
     void draw_cross_line(QImage& qImage);
     void draw_diamond_pos(QImage& qImage);
     void draw_frame(QImage& qImage, const RectangleFrame& frame, const QPen& pen);
+    //void draw_frame(QImage &qImage, const CircleFrame &frame, const QPen &pen);
     void draw_status_text(QImage& qImage);
     void draw_ccd_status(QImage& qImage);
     void draw_key_not_passed(QImage& qImage);

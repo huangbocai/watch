@@ -22,8 +22,8 @@ Recorder::Recorder(string prjDir)
     currentIndex = 0;
     posVec.clear();
     lastPos = NULL;
-    cout<<watchPosFileName<<endl;
-    cout<<holePosFileName<<endl;
+    //cout<<watchPosFileName<<endl;
+    //cout<<holePosFileName<<endl;
 }
 
 void Recorder::record_current_pos(double x, double y, double z, double a, double b ,RectangleFrame rect)
@@ -57,21 +57,28 @@ void Recorder::abandon_current_pos()
 void Recorder::abandon_all_pos()
 {
     string tmpCmdStr = string("rm -r ")+watchPosFileName;
-    //std::cout<<"cmd: "<<tmpCmdStr<<std::endl;
     int result = system(tmpCmdStr.c_str());
     if (result != 0) {
-        printf("ERROR: %s fail\n", tmpCmdStr.c_str());
+        printf("ERROR: delete %s fail\n", tmpCmdStr.c_str());
         //exit(-1);
     }
+    tmpCmdStr = string("rm -r ")+holePosFileName;
+    result = system(tmpCmdStr.c_str());
+    if(result != 0){
+        printf("ERROR: delete %s fail\n", tmpCmdStr.c_str());
+    }
+
     posVec.clear();
     currentIndex = 0;
+    holesPosVec.clear();
 }
 
 void Recorder::finish_record_cam_pos()
 {
     ofstream ofs;
-    bool isFileOpen = is_file_open(ofs,watchPosFileName);
     vector<Position*>::iterator iter;
+    bool isFileOpen = is_file_open(ofs,watchPosFileName);
+
     if(isFileOpen){
         for(iter = posVec.begin(); iter != posVec.end();iter++){
             RectangleFrame rect = (*iter)->get_search_area();
@@ -82,16 +89,24 @@ void Recorder::finish_record_cam_pos()
         }
         ofs.close();
     }
-    isFileOpen = is_file_open(ofs,holePosFileName);
+}
+
+void Recorder::finish_record_hole_pos()
+{
+    ofstream ofs;
+    vector<Position*>::iterator iter;
+    bool isFileOpen = is_file_open(ofs,holePosFileName);
+
     if(isFileOpen){
         for(iter = holesPosVec.begin(); iter != holesPosVec.end(); iter++){
             ofs<<(*iter)->x()<<" "<<(*iter)->y()<<" "<<(*iter)->z()<<" "
               <<(*iter)->a()<<" "<<(*iter)->b()<<endl;
         }
     }
+    ofs.close();
 }
 
-bool Recorder::is_file_open(ofstream& ofs, string fileName)
+bool Recorder::is_file_open(ofstream &ofs, string fileName)
 {
     if(!ofs.is_open()){
         ofs.open(fileName.c_str());
@@ -1076,10 +1091,9 @@ void MarkWidget::cam_run()
     emc_open("/home/u/cnc/configs/ppmc/o_nc/watch.ngc");
     emc_wait("done");
     emc_run(0);
-    emcStatus.stopToManual=true;    
+    emcStatus.stopToManual=true;
+    //posRecorder->finish_record_hole_pos();
 #endif
-    if((posRecorder->holesPosVec).size()>0)
-        posRecorder->holeIter = (posRecorder->holesPosVec).begin();
 }
 
 void MarkWidget::set_first_hole()
@@ -1089,33 +1103,31 @@ void MarkWidget::set_first_hole()
     char buf[128];
     posRecorder->holeIter = (posRecorder->holesPosVec).begin();
     const Position* pos = *(posRecorder->holeIter);
-    if(watchResult.dimamondPos.size()==0){
-        cout<<"没有钻石了！"<<endl;
-        return;
-    }
-    Point diamondPos= *watchResult.dimamondPos.begin();
+    //if(watchResult.dimamondPos.size()==0){
+    //    cout<<"没有钻石了！"<<endl;
+    //    return;
+    //}
+    //Point diamondPos= *watchResult.dimamondPos.begin();
 #ifdef WITH_EMC
     if(pos)
     {
-        //printf("test");
         emc_mode(NULL,EMC_TASK_MODE_MDI);
-        sprintf(buf,"g0 g53 z%.3f",prjManage.sendZD);
-        emc_mdi(buf);
-        sprintf(buf,"g0 g53 x%.3f y%.3f",diamondPos.x(),diamondPos.y());
-        emc_mdi(buf);
-        sprintf(buf,"g0 g53 z%.3f",prjManage.pickupZD);
-        emc_mdi(buf);
-        sprintf(buf,"g0 g53 z%.3f",prjManage.sendZD);
-        emc_mdi(buf);
+        //sprintf(buf,"g0 g53 z%.3f",prjManage.sendZD);
+        //emc_mdi(buf);
+        //sprintf(buf,"g0 g53 x%.3f y%.3f",diamondPos.x(),diamondPos.y());
+        //emc_mdi(buf);
+        //sprintf(buf,"g0 g53 z%.3f",prjManage.pickupZD);
+        //emc_mdi(buf);
+        //sprintf(buf,"g0 g53 z%.3f",prjManage.sendZD);
+        //emc_mdi(buf);
 
-        //emc_mdi("g0 g53 z0");
-        sprintf(buf,"g0 g53 x%.3f y%.3f",pos->get_value(0), pos->get_value(1));
+        emc_mdi("g0 g53 z0");
+        sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos->get_value(0), pos->get_value(1), pos->get_value(3),pos->get_value(4));
         emc_mdi(buf);
-        sprintf(buf, "g0 g53 x%.3f y%.3f z%.3f a%.3f b%.3f", pos->get_value(0), pos->get_value(1),
-                pos->get_value(2),pos->get_value(3),pos->get_value(4));
+        sprintf(buf, "g0 g53 z%.3f", pos->get_value(2));
         emc_mdi(buf);
         emcStatus.stopToManual=true;
-        watchResult.dimamondPos.pop_front();
+        //watchResult.dimamondPos.pop_front();
     }
 #endif
 
@@ -1130,31 +1142,31 @@ void MarkWidget::set_next_hole()
     if(posRecorder->holeIter == (posRecorder->holesPosVec).end())
         posRecorder->holeIter = (posRecorder->holesPosVec).begin();
     const Position* pos = *(posRecorder->holeIter);
-    if(watchResult.dimamondPos.size()==0){
-        cout<<"没有钻石了！"<<endl;
-        return;
-    }
-    Point diamondPos= *watchResult.dimamondPos.begin();
+    //if(watchResult.dimamondPos.size()==0){
+    //    cout<<"没有钻石了！"<<endl;
+    //    return;
+    //}
+    //Point diamondPos= *watchResult.dimamondPos.begin();
 #ifdef WITH_EMC
     if(pos)
     {
         emc_mode(NULL,EMC_TASK_MODE_MDI);
-        sprintf(buf,"g0 g53 z%.3f",prjManage.sendZD);
-        emc_mdi(buf);
-        sprintf(buf,"g0 g53 x%.3f y%.3f",diamondPos.x(),diamondPos.y());
-        emc_mdi(buf);
-        sprintf(buf,"g0 g53 z%.3f",prjManage.pickupZD);
-        emc_mdi(buf);
-        sprintf(buf,"g0 g53 z%.3f",prjManage.sendZD);
-        emc_mdi(buf);
+        //sprintf(buf,"g0 g53 z%.3f",prjManage.sendZD);
+        //emc_mdi(buf);
+        //sprintf(buf,"g0 g53 x%.3f y%.3f",diamondPos.x(),diamondPos.y());
+        //emc_mdi(buf);
+        //sprintf(buf,"g0 g53 z%.3f",prjManage.pickupZD);
+        //emc_mdi(buf);
+        //sprintf(buf,"g0 g53 z%.3f",prjManage.sendZD);
+        //emc_mdi(buf);
 
-        sprintf(buf,"g0 g53 x%.3f y%.3f",pos->get_value(0), pos->get_value(1));
+        emc_mdi("g0 g53 z0");
+        sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos->get_value(0), pos->get_value(1), pos->get_value(3),pos->get_value(4));
         emc_mdi(buf);
-        sprintf(buf, "g0 g53 x%.3f y%.3f z%.3f a%.3f b%.3f", pos->get_value(0), pos->get_value(1),
-                pos->get_value(2),pos->get_value(3),pos->get_value(4));
+        sprintf(buf, "g0 g53 z%.3f", pos->get_value(2));
         emc_mdi(buf);
         emcStatus.stopToManual=true;
-        watchResult.dimamondPos.pop_front();
+        //watchResult.dimamondPos.pop_front();
     }
 #endif
 }
@@ -1168,11 +1180,12 @@ void MarkWidget::set_all_holes()
     MarkHalPins* halpins=halData->halpins;
     *halpins->watchHoleValid = 1;
     emc_mode(NULL,EMC_TASK_MODE_AUTO);
-    emc_open("/home/u/cnc/configs/ppmc/o_nc/setdiamond.ngc");
+    emc_open("/home/u/cnc/configs/ppmc/o_nc/scanholes.ngc");
     emc_wait("done");
     emc_run(0);
     emcStatus.stopToManual=true;
 #endif
+    posRecorder->finish_record_hole_pos();
 
 }
 

@@ -97,6 +97,7 @@ public:
     void abandon_current_pos();
     void abandon_all_pos();
     void finish_record_cam_pos();
+    void finish_record_hole_pos();
     unsigned int get_pos_num(){return posVec.size();}
     void set_current_index(unsigned int index) {currentIndex = index;}
     void incr_current_index(unsigned int step){

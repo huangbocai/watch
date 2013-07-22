@@ -61,4 +61,7 @@ OTHER_FILES += \
     update_package/configs/watchDiamond.hal \
     update_package/update.sh \
     create_update.sh \
-    update_package/update(虚拟机).sh
+    update_package/update(虚拟机).sh \
+    update_package/share/o_nc/watch.ngc \
+    update_package/share/o_nc/setdiamond.ngc \
+    update_package/share/o_nc/scanholes.ngc

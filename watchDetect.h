@@ -36,6 +36,27 @@ private:
     CvRect* validArea;
 };
 
+class HolesDetecter : public CirclesDetecter
+{
+public:
+    int detect(const IplImage* img){
+        holesPositions.clear();
+        list<Point> holesPos;
+        holesPos.push_back(Point(500,500));
+        holesPos.push_back(Point(550,500));
+        holesPos.push_back(Point(600,500));
+        holesPos.push_back(Point(650,500));
+        holesPos.push_back(Point(700,500));
+        holesPositions = holesPos;
+        return 0;
+    }
+    const list<Point>& get_positions()const {return holesPositions;}
+
+private:
+    list<Point> holesPositions;
+
+};
+
 
 
 #endif // WATCHDETECT_H

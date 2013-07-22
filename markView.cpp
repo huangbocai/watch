@@ -26,6 +26,7 @@ MarkView::MarkView( QWidget *parent)
     keyPass=false;
     diamondSum=0;
     ccdStatus=single_ccd;
+    showCircle = true;
 }
 
 MarkView::~MarkView(){
@@ -55,15 +56,27 @@ void MarkView::receive_image(const IplImage* img){
 
 
 void MarkView::set_default_pattern_frame(){
-    patternFrame=RectangleFrame(Point(width()/3, height()/3), width()/3, height()/3);
-    patternFrame.set_visible(true);
-    patternFrame.set_resizable(true);
-    searchFrame.set_visible(false);
-    state=READY;
+    if(!showCircle){
+        patternFrame=RectangleFrame(Point(width()/3, height()/3), width()/3, height()/3);
+        patternFrame.set_visible(true);
+        patternFrame.set_resizable(true);
+        searchFrame.set_visible(false);
+        patternCircleFrame = rectangle_to_circle(patternFrame);
+        state=READY;
+    }
+    else{
+        patternCircleFrame = CircleFrame(width()/2,height()/2,width()/8);
+        patternCircleFrame.set_visible(true);
+        patternCircleFrame.set_resizable(true);
+        searchFrame.set_visible(false);
+        patternFrame = circle_to_rectangle(patternCircleFrame);
+        state = READY;
+    }
 }
 
 RectangleFrame MarkView::get_pattern_frame(){
     patternFrame.set_visible(false);
+    patternCircleFrame.set_visible(false);
     patternFrame.zoom(1/widthRatio, 1/heighRatio);
     state=IDEL;
     return patternFrame;
@@ -118,8 +131,12 @@ void MarkView::mouseMoveEvent(QMouseEvent *event){
     }
     if(state==READY){
         RectangleFrame::ChangeType changeType;
-        if(patternFrame.get_visible())
-            changeType=patternFrame.get_ready_change_type(x,y,sensitiveRange);
+        if(patternFrame.get_visible()||patternCircleFrame.get_visible()){
+            if(!showCircle)
+                changeType=patternFrame.get_ready_change_type(x,y,sensitiveRange);
+            else
+                changeType=(RectangleFrame::ChangeType)patternCircleFrame.get_ready_change_type(x,y,sensitiveRange);
+        }
         else
             changeType=searchFrame.get_ready_change_type(x,y,sensitiveRange);
         //change the cursor shape
@@ -152,13 +169,27 @@ void MarkView::mouseMoveEvent(QMouseEvent *event){
     }
     else if(state==CHANGING){
         RectangleFrame temp;
-        if(patternFrame.get_visible()){
-            temp=patternFrame;
-            temp.area_change(oldChangeType, x-cursorx,y-cursory);
-            if(temp.get_top_left().x()>0 && temp.get_top_left().y()>0
-                    && temp.get_bottom_right().x()<width()-1
-                    && temp.get_bottom_right().y()<height()-1)
-                patternFrame=temp;
+        if(patternFrame.get_visible()||patternCircleFrame.get_visible()){
+            if(!showCircle){
+                temp=patternFrame;
+                temp.area_change(oldChangeType, x-cursorx,y-cursory);
+                if(temp.get_top_left().x()>0 && temp.get_top_left().y()>0
+                        && temp.get_bottom_right().x()<width()-1
+                        && temp.get_bottom_right().y()<height()-1){
+                    patternFrame=temp;
+                    patternCircleFrame = rectangle_to_circle(patternFrame);
+                }
+            }
+            else{
+                CircleFrame tempCircle = patternCircleFrame;
+                tempCircle.area_change((CircleFrame::ChangeType)oldChangeType,x-cursorx,y-cursory);
+                if(tempCircle.get_top_left().x()>0&&tempCircle.get_top_left().y()>0
+                        && tempCircle.get_right_bottom().x()<width()-1
+                        &&tempCircle.get_right_bottom().y()<height()-1){
+                    patternCircleFrame = tempCircle;
+                    patternFrame = circle_to_rectangle(patternCircleFrame);
+                }
+            }
         }
         else if(searchFrame.get_visible()){
             temp=searchFrame;
@@ -197,6 +228,10 @@ void MarkView::mouseReleaseEvent(QMouseEvent *event){
 
 void MarkView::set_diamond_pos(const list<Point> &pos){
     diamondPos=pos;
+}
+
+void MarkView::set_hole_pos(const list<Point>& pos){
+    holesPos = pos;
 }
 
 void MarkView::set_diamond_sum(int sum){
@@ -250,6 +285,22 @@ void MarkView::draw_diamond_pos(QImage &qImage){
     }
 }
 
+void MarkView::draw_hole_pos(QImage& qImage){
+    QPainter painter(&qImage);
+    QPen pen(QColor(255,0,0));
+    painter.setPen(pen);
+    list<Point>::iterator it;
+    int x, y;
+    float wr=widthRatio;
+    float hr=heighRatio;
+    for(it=holesPos.begin(); it!=holesPos.end(); it++){
+        x=it->x()*wr+0.5;
+        y=it->y()*hr+0.5;
+        painter.drawLine(x-5, y, x+5, y);
+        painter.drawLine(x, y-5, x, y+5);
+    }
+}
+
 void MarkView::draw_frame(QImage& qImage, const RectangleFrame& frame, const QPen& pen){
     int i;
     bool inWin;
@@ -276,13 +327,16 @@ void MarkView::draw_frame(QImage& qImage, const RectangleFrame& frame, const QPe
                                  (p1.y()+p2.y())/2-pointSize/2+0.5, pointSize, pointSize,pen.color());
         }
     }
+
 }
-/*
+
 void MarkView::draw_frame(QImage &qImage, const CircleFrame &frame, const QPen &pen)
 {
+    if(!frame.get_visible())
+        return;
     QPainter painter(&qImage);
     painter.setPen(pen);
-    bool resizable = true;
+    bool resizable = frame.get_resizable();
     bool inWin = true;
     for(int i=0;i<4;i++){
         const Point& p1=frame.get_conner(i);
@@ -303,7 +357,7 @@ void MarkView::draw_frame(QImage &qImage, const CircleFrame &frame, const QPen &
         }
     }
 }
-*/
+
 
 void MarkView::draw_status_text(QImage &qImage){
     char buf[128];
@@ -368,17 +422,42 @@ void MarkView::draw_focus_box(){
     }
 }
 
+RectangleFrame MarkView::circle_to_rectangle(const CircleFrame& circle)
+{
+    double radius = circle.get_radius();
+    const Point& center = circle.get_center();
+    RectangleFrame rect(Point(center.x()-radius,center.y()-radius),2*radius,2*radius);
+    rect.set_resizable(circle.get_resizable());
+    rect.set_rotatable(circle.get_resizable());
+    rect.set_visible(circle.get_visible());
+    return rect;
+}
+
+CircleFrame MarkView::rectangle_to_circle(const RectangleFrame& rect)
+{
+    Point center = rect.get_center();
+    double radius = rect.get_width()/2;
+    CircleFrame circle(center.x(),center.y(),radius);
+    circle.set_resizable(rect.get_resizable());
+    circle.set_rotatable(rect.get_rotatable());
+    circle.set_visible(rect.get_visible());
+    return circle;
+}
+
 
 void MarkView::paintEvent(QPaintEvent*){
     cvCvtColor(resizeImg, dispImg, CV_GRAY2RGB);
     draw_cross_line(paintQImage);
-    draw_frame(paintQImage,patternFrame, QPen(QColor(0, 255, 0)));
+    if(!showCircle)
+        draw_frame(paintQImage,patternFrame, QPen(QColor(0, 255, 0)));
+    else
+        draw_frame(paintQImage,patternCircleFrame,QPen(QColor(0,255,0)));
+
     draw_frame(paintQImage,searchFrame, QPen(QColor(0, 0, 255)));
-    //CircleFrame circleFrame(50,50,30);
-    //draw_frame(paintQImage,circleFrame,QPen(QColor(255,0,0)));
     draw_status_text(paintQImage);
     draw_ccd_status(paintQImage);
     draw_diamond_pos(paintQImage);
+    draw_hole_pos(paintQImage);
     draw_circle();
     draw_focus_box();
     //draw_key_not_passed(paintQImage);
@@ -386,7 +465,8 @@ void MarkView::paintEvent(QPaintEvent*){
     painter.drawImage(QPoint(0,0),paintQImage);
 }
 
-RectangleFrame::RectangleFrame(const Point& leftTop, double width, double height, double deg){
+RectangleFrame::RectangleFrame(const Point& leftTop, double width, double height, double deg)
+{
    double ang=deg/180.0*PI;
    conner[0]=leftTop;
    Vector2 vw(width, 0);
@@ -641,6 +721,13 @@ Point CircleFrame::get_conner(int index)const{
 Point CircleFrame::get_top_left()const{
     Point p(center);
     p.move(Vector2(-r, -r));
+    return p;
+}
+
+Point CircleFrame::get_right_bottom()const
+{
+    Point p(center);
+    p.move(Vector2(r,r));
     return p;
 }
 

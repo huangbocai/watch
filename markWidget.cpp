@@ -22,6 +22,8 @@ Recorder::Recorder(string prjDir)
     currentIndex = 0;
     posVec.clear();
     lastPos = NULL;
+    recordState = Idle;
+    lastState = EndRecord;
     //cout<<watchPosFileName<<endl;
     //cout<<holePosFileName<<endl;
 }
@@ -108,13 +110,10 @@ void Recorder::finish_record_hole_pos()
 
 bool Recorder::is_file_open(ofstream &ofs, string fileName)
 {
+    ofs.open(fileName.c_str());
     if(!ofs.is_open()){
-        ofs.open(fileName.c_str());
-        if(ofs.fail())
-        {
-            cout<<"open file "<<fileName<<" fail!"<<endl;
-            return false;
-        }
+        cout<<"open file "<<fileName<<" fail!"<<endl;
+        return false;
     }
     return true;
 }
@@ -320,6 +319,9 @@ void MarkWidget::detecter_model_init(){
     circlesDetecter = new CirclesDetecter;
     circlesDetecter->set_pattern(prjManage.get_diamond_pattern());
     circlesDetecter->set_area(&prjManage.searcRectD);
+    holesDetecter = new HolesDetecter;
+    holesDetecter->set_pattern(prjManage.get_watch_pattern());
+    holesDetecter->set_area(&prjManage.searcRectW);
 }
 
 void MarkWidget::status_bar_init(){
@@ -334,6 +336,7 @@ void MarkWidget::diamond_page_init(){
     int h=patternViewFrame0->height();
     patternView = new PatternView(w, h, patternViewFrame0);
     rb_circle->setChecked(true);
+    //rb_rectangle->setChecked(true);
     loadRecordDialog = new LoadRecordDialog(this);
     char buf[16];
     sprintf(buf, "%8.3f", prjManage.scanStartPos[0]);
@@ -374,6 +377,8 @@ void MarkWidget::diamond_page_init(){
     connect(bt_pickupFirst, SIGNAL(clicked()), this, SLOT(pickup_first()));
     connect(bt_pickupNext, SIGNAL(clicked()), this, SLOT(pickup_next()));
     connect(bt_pickupAll, SIGNAL(clicked()), this, SLOT(pickup_all()));
+    connect(rb_circle,SIGNAL(clicked()),this,SLOT(choose_pattern_shap()));
+    connect(rb_rectangle,SIGNAL(clicked()),this,SLOT(choose_pattern_shap()));
 }
 
 void MarkWidget::watch_page_init()
@@ -383,6 +388,10 @@ void MarkWidget::watch_page_init()
     le_rotateDeg->setValidator(doubleValidator);
     sprintf(buf, "%.3f",param.degInc);
     le_rotateDeg->setText(QString::fromUtf8(buf));
+
+    int w=patternViewFrame1->width();
+    int h=patternViewFrame1->height();
+    holePatternView = new PatternView(w, h, patternViewFrame1);
 
     posNum = posRecorder->get_pos_num();
     if(posNum<=0){
@@ -404,7 +413,9 @@ void MarkWidget::watch_page_init()
         bt_camRun->setEnabled(true);
     }
 
-    connect(tb_searchArea1,SIGNAL(toggled(bool)),this,SLOT(search_area_toggled(bool)));
+    connect(tb_selectHolePattern,SIGNAL(toggled(bool)),this,SLOT(select_pattern_toggled(bool)));
+    connect(tb_searchHoleArea,SIGNAL(toggled(bool)),this,SLOT(search_area_toggled(bool)));
+    connect(bt_detectHoles,SIGNAL(toggled(bool)),this,SLOT(diamond_test_toggled(bool)));
     connect(bt_rotateForward, SIGNAL(clicked()), this, SLOT(change_angle()));
     connect(bt_rotateBackward, SIGNAL(clicked()), this, SLOT(change_angle()));
     connect(bt_recordCamPos,SIGNAL(clicked()),this,SLOT(record_cam_pos()));
@@ -538,6 +549,14 @@ void MarkWidget::view_update(){
             patternView->update();
         }
     }
+
+    if(holesDetecter->pattern_is_new()){
+        const IplImage* pattern = holesDetecter->get_pattern();
+        if(pattern){
+            holePatternView->receive_image(pattern);
+            holePatternView->update();
+        }
+    }
 }
 
 
@@ -555,6 +574,11 @@ void MarkWidget::slow_cycle(){
     if(bt_detect0->isChecked()){
         circlesDetecter->detect(srcImage);
         markView->set_diamond_pos(circlesDetecter->get_positions());
+    }
+
+    if(bt_detectHoles->isChecked()){
+        holesDetecter->detect(srcImage);
+        markView->set_hole_pos(holesDetecter->get_positions());
     }
 
     cv_cmd_cycle();
@@ -582,12 +606,8 @@ void MarkWidget::auto_detect_watch(){
     if(capture)
         capture->get_image(srcImage);
      watchResult.scanIndex++;
-     list<Point> holesPos;
-     holesPos.push_back(Point(500,500));
-     holesPos.push_back(Point(550,500));
-     holesPos.push_back(Point(600,500));
-     holesPos.push_back(Point(650,500));
-     holesPos.push_back(Point(700,500));
+     holesDetecter->detect(srcImage);
+     const list<Point>& holesPos = holesDetecter->get_positions();
 
      list<Point>::const_iterator it;
      Point pos;
@@ -653,6 +673,7 @@ void MarkWidget::cv_cmd_cycle()
         }
         else if(cmd==2){
             auto_detect_watch();
+            markView->set_hole_pos(holesDetecter->get_positions());
         }
         *halpins->cvCmd=0;
         state=MARK_IDLE;
@@ -682,8 +703,8 @@ void MarkWidget::fast_react_cycle(){
             *halpins->posAxis[2]=pos->get_value(2);
             *halpins->posAxis[3]=pos->get_value(3);
             *halpins->posAxis[4]=pos->get_value(4);
-            posRecorder->incr_current_index(1);            
         }
+        posRecorder->incr_current_index(1);
         *halpins->posCmd=0;
     }
      else if(*halpins->posCmd==3){
@@ -697,6 +718,7 @@ void MarkWidget::fast_react_cycle(){
              *halpins->posAxis[4]=pos->get_value(4);
              posRecorder->holeIter++;
          }
+
          *halpins->posCmd = 0;
      }
 
@@ -716,10 +738,19 @@ void MarkWidget::fast_react_cycle(){
         *halpins->reachCmd=0;        
     }
 
-    if(posRecorder->get_current_index()<posRecorder->get_pos_num())
+    if(posRecorder->get_current_index()<=posRecorder->get_pos_num()){
         *halpins->watchPosValid = 1;
-    else
-        *halpins->watchPosValid = 0;        
+        posRecorder->set_record_state(Recorder::Recording);
+    }
+    else{
+        *halpins->watchPosValid = 0;
+        if(posRecorder->get_record_state()!= Recorder::Idle)
+            posRecorder->set_record_state(Recorder::EndRecord);
+    }
+
+    if(posRecorder->end_record()){
+        posRecorder->finish_record_hole_pos();
+    }
 
 
     if(watchResult.dimamondPos.size())
@@ -753,7 +784,7 @@ void MarkWidget::ready_for_watch_scan()
 void MarkWidget::select_pattern_toggled(bool checked){
     RectangleFrame frame;
     QPushButton* button=qobject_cast<QPushButton*>(sender());
-    if(button==tb_selectPattern0){
+    if(button==tb_selectPattern0 || button == tb_selectHolePattern){
         if(checked)
             markView->set_default_pattern_frame();
         else{
@@ -762,8 +793,15 @@ void MarkWidget::select_pattern_toggled(bool checked){
             int pw=frame.get_width()+0.5;
             int ph=frame.get_height()+0.5;
             CvRect rect=cvRect(lt.x()+0.5, lt.y()+0.5, pw, ph);
-            circlesDetecter->set_pattern(srcImage, &rect);
-            prjManage.save_diamond_pattern(circlesDetecter->get_pattern());
+            if(button == tb_selectPattern0){
+                circlesDetecter->set_pattern(srcImage, &rect);
+                prjManage.save_diamond_pattern(circlesDetecter->get_pattern());
+            }
+            else{
+                CvRect tmpRect = cvRect(lt.x()-10+0.5,lt.y()-10+0.5, pw+20, ph+20);
+                holesDetecter->set_pattern(srcImage,&tmpRect);
+                prjManage.save_watch_pattern(holesDetecter->get_pattern());
+            }
         }
     }
 
@@ -771,7 +809,7 @@ void MarkWidget::select_pattern_toggled(bool checked){
 
 void MarkWidget::search_area_toggled(bool checked){
     QPushButton* button=qobject_cast<QPushButton*>(sender());
-    if(button==tb_searchArea0 || button == tb_searchArea1){
+    if(button==tb_searchArea0 || button == tb_searchHoleArea){
         if(checked)
             markView->set_default_search_frame();
         else{
@@ -779,21 +817,41 @@ void MarkWidget::search_area_toggled(bool checked){
             Point lt=frame.get_top_left();
             int pw=frame.get_width()+0.5;
             int ph=frame.get_height()+0.5;
-            prjManage.searcRectD=cvRect(lt.x()+0.5, lt.y()+0.5, pw, ph);
-            circlesDetecter->set_area(&prjManage.searcRectD);
-            prjManage.save_diamond_search_area();
+            if(button == tb_searchArea0 ){
+                prjManage.searcRectD=cvRect(lt.x()+0.5, lt.y()+0.5, pw, ph);
+                circlesDetecter->set_area(&prjManage.searcRectD);
+                prjManage.save_diamond_search_area();
+            }
+            else{
+                prjManage.searcRectW = cvRect(lt.x()+0.5, lt.y()+0.5, pw, ph);
+                holesDetecter->set_area(&prjManage.searcRectW);
+                prjManage.save_watch_search_area();
+            }
         }
     }
 }
 
 void MarkWidget::diamond_test_toggled(bool checked){
-    if(checked){
-        markView->set_search_frame(prjManage.searcRectD);
-        prjManage.save_diamond_camera_param(param.camADL, param.camBL, param.camGain, param.camExposure);
+    QPushButton* button=qobject_cast<QPushButton*>(sender());
+    if(button == bt_detect0){
+        if(checked){
+            markView->set_search_frame(prjManage.searcRectD);
+            prjManage.save_diamond_camera_param(param.camADL, param.camBL, param.camGain, param.camExposure);
+        }
+        else{
+            list<Point> empty;
+            markView->set_diamond_pos(empty);
+        }
     }
-    else{
-        list<Point> empty;
-        markView->set_diamond_pos(empty);
+    else if(button == bt_detectHoles){
+        if(checked){
+            markView->set_search_frame(prjManage.searcRectW);
+            prjManage.save_watch_camera_param(param.camADL, param.camBL, param.camGain, param.camExposure);
+        }
+        else{
+            list<Point> empty;
+            markView->set_hole_pos(empty);
+        }
     }
 }
 
@@ -956,6 +1014,15 @@ void MarkWidget::pickup_all(){
 #endif
 }
 
+void MarkWidget::choose_pattern_shap( )
+{
+    QRadioButton* radio = qobject_cast<QRadioButton*>(sender());
+    if(radio == rb_circle)
+        markView->set_show_circle(true);
+    else
+        markView->set_show_circle(false);
+}
+
 void MarkWidget::change_angle(){
     double sign=1;
     if(bt_rotateBackward==qobject_cast<QPushButton*>(sender())){
@@ -1085,14 +1152,15 @@ void MarkWidget::cam_run()
 {
 #ifdef WITH_EMC    
     posRecorder->set_current_index(0);
+    posRecorder->clear_holes_pos();
+    posRecorder->set_record_state(Recorder::Recording);
     MarkHalPins* halpins=halData->halpins;
     *halpins->watchPosValid = 1;
     emc_mode(NULL,EMC_TASK_MODE_AUTO);
     emc_open("/home/u/cnc/configs/ppmc/o_nc/watch.ngc");
     emc_wait("done");
     emc_run(0);
-    emcStatus.stopToManual=true;
-    //posRecorder->finish_record_hole_pos();
+    emcStatus.stopToManual=true;    
 #endif
 }
 
@@ -1185,7 +1253,7 @@ void MarkWidget::set_all_holes()
     emc_run(0);
     emcStatus.stopToManual=true;
 #endif
-    posRecorder->finish_record_hole_pos();
+    //posRecorder->finish_record_hole_pos();
 
 }
 

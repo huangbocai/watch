@@ -35,7 +35,7 @@
     </size>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
@@ -694,7 +694,7 @@
      <property name="title">
       <string>识别</string>
      </property>
-     <widget class="QFrame" name="patternViewFrame0_3">
+     <widget class="QFrame" name="patternViewFrame1">
       <property name="geometry">
        <rect>
         <x>0</x>
@@ -722,7 +722,7 @@
        <enum>QFrame::Raised</enum>
       </property>
      </widget>
-     <widget class="QPushButton" name="tb_selectPattern0_3">
+     <widget class="QPushButton" name="tb_selectHolePattern">
       <property name="enabled">
        <bool>true</bool>
       </property>
@@ -750,7 +750,7 @@
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="QPushButton" name="tb_searchArea1">
+     <widget class="QPushButton" name="tb_searchHoleArea">
       <property name="enabled">
        <bool>true</bool>
       </property>
@@ -778,7 +778,7 @@
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="QPushButton" name="bt_detect0_4">
+     <widget class="QPushButton" name="bt_detectHoles">
       <property name="geometry">
        <rect>
         <x>120</x>

@@ -91,6 +91,7 @@ private:
 class Recorder
 {
 public:
+    typedef enum {Recording=0,EndRecord, Idle} RecordState;
     Recorder(string prjDir);
     void record_current_pos(double x, double y, double z, double a, double b, RectangleFrame rect);
     void record_current_pos(double pPos[5], RectangleFrame rect);
@@ -110,6 +111,25 @@ public:
     const Position* get_position(unsigned int index);
     const Position* get_last_position(){return get_position(currentIndex-2);}
     void load();
+    void clear_holes_pos() {holesPosVec.clear();}
+    void set_record_state(RecordState state){recordState = state;}
+    RecordState get_record_state(){return recordState;}
+    bool end_record(){
+        if(recordState == EndRecord){
+            if(lastState == EndRecord){
+                lastState = Idle;
+                recordState = Idle;
+                return true;
+            }
+            else
+                lastState = EndRecord;
+        }
+        else{
+            lastState = recordState;
+        }
+        return false;
+    }
+
 
 private:
     bool is_file_open(ofstream& ofs, string fileName);
@@ -125,6 +145,7 @@ private:
     vector<Position*> posVec;
     static const int lineLength = 64;
     const Position* lastPos;
+    RecordState recordState, lastState;
 };
 
 
@@ -155,6 +176,7 @@ private slots:
     void pickup_first();
     void pickup_next();
     void pickup_all();
+    void choose_pattern_shap();
 
     //watch page
     void change_angle();
@@ -231,6 +253,7 @@ private:
     Recorder* posRecorder;
 
     CirclesDetecter* circlesDetecter;
+    HolesDetecter* holesDetecter;
 
     MarkQtObjects qtObjects;
     QWidget* adjTable;
@@ -239,6 +262,7 @@ private:
 
     MarkView* markView;
     PatternView* patternView;
+    PatternView* holePatternView;
     FocusAidView* focusAidView;
     QDoubleValidator* doubleValidator;
     QIntValidator* intValidator;

@@ -7,7 +7,9 @@
 #include "imageMeasure.hh"
 #include "cv.h"
 
-class CircleFrame{
+
+class CircleFrame
+{
 public:
     typedef enum{lt=0, top, rt, right, rb,  bottom,  lb, left, MOVE, nochange}ChangeType;
     CircleFrame(double cx=0, double  cy=0, double radius=0);
@@ -20,9 +22,11 @@ public:
     bool get_visible()const {return visible;};
     bool get_resizable() const{return resizable;};
     bool get_rotatable() const{return rotatable;};
+
     double get_radius()const {return r;};
     const Point& get_center()const {return center;};
     Point get_top_left()const;
+    Point get_right_bottom()const;
     Point get_conner(int index)const;
     ChangeType get_ready_change_type(double x, double y, double range) const ;
 private:
@@ -37,7 +41,8 @@ private:
 };
 
 
-class RectangleFrame{
+class RectangleFrame
+{
 public:
     typedef enum{lt=0, top, rt, right, rb,  bottom,  lb, left, MOVE, nochange}ChangeType;
     RectangleFrame(const Point& leftTop=Point(), double width=0, double height=0, double deg=0);
@@ -90,11 +95,13 @@ public:
 
     void set_search_frame(CvRect rect);
     void set_diamond_pos(const list<Point>& pos);
+    void set_hole_pos(const list<Point>& pos);
     void set_diamond_sum(int sum);
     void set_circle(bool visible, double centerx, double centery, double R);
     void set_focus_box(bool visible, CvRect rect= cvRect(0, 0, 0, 0));
     void set_ccd_status(CCDStauts status){ccdStatus=status;}
     void set_pass(bool val);
+    void set_show_circle(bool yes){showCircle = yes;}
     //const QImage& get_view_image(int width, int height);
 
     ~MarkView();
@@ -116,13 +123,17 @@ private:
     static const int pointSize=6;
     void draw_cross_line(QImage& qImage);
     void draw_diamond_pos(QImage& qImage);
+    void draw_hole_pos(QImage& qImage);
     void draw_frame(QImage& qImage, const RectangleFrame& frame, const QPen& pen);
-    //void draw_frame(QImage &qImage, const CircleFrame &frame, const QPen &pen);
+    void draw_frame(QImage &qImage, const CircleFrame &frame, const QPen &pen);
     void draw_status_text(QImage& qImage);
     void draw_ccd_status(QImage& qImage);
     void draw_key_not_passed(QImage& qImage);
     void draw_circle();
     void draw_focus_box();
+
+    RectangleFrame circle_to_rectangle(const CircleFrame& circle);
+    CircleFrame rectangle_to_circle(const RectangleFrame& rect);
 
     IplImage* resizeImg;
     IplImage* dispImg;
@@ -139,12 +150,15 @@ private:
 
     RectangleFrame patternFrame;
     RectangleFrame searchFrame;
+    CircleFrame patternCircleFrame;
 
     //RectangleFrame similarFrame[4];
     //RectangleFrame searchFrame[4];
 
     list<Point> diamondPos;
     int diamondSum;
+
+    list<Point> holesPos;
 
     enum{IDEL, READY, CHANGING}state;
     int cursorx, cursory;

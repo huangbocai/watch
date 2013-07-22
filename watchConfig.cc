@@ -131,6 +131,13 @@ void ProjectManage::save_diamond_search_area(){
     write_profile_int("DIAMOND", "SEARCH_HEIGHT", searcRectD.height, iniFile);
 }
 
+void ProjectManage::save_watch_search_area(){
+    write_profile_int("WATCH", "SEARCH_LEFT", searcRectW.x, iniFile);
+    write_profile_int("WATCH", "SEARCH_TOP", searcRectW.y, iniFile);
+    write_profile_int("WATCH", "SEARCH_WIDTH", searcRectW.width, iniFile);
+    write_profile_int("WATCH", "SEARCH_HEIGHT", searcRectW.height, iniFile);
+}
+
 void ProjectManage::save_scan_param(){
     write_profile_double("DIAMOND", "SCAN_X0", scanStartPos[0], iniFile);
     write_profile_double("DIAMOND", "SCAN_Y0", scanStartPos[1], iniFile);

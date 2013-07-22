@@ -56,6 +56,7 @@ public:
     void save_diamond_pattern(const IplImage* img);
     void save_watch_camera_param(int adl, int brightness, int contrast, int exposure);
     void save_watch_pattern(const IplImage* img);
+    void save_watch_search_area();
     IplImage* get_diamond_pattern(){return patternD;}
     IplImage* get_watch_pattern(){return patternW;}
     const char* ini_file()const {return iniFile;}

@@ -168,3 +168,176 @@ void CirclesDetecter::set_area(CvRect *area){
         *validArea=*area;
     }
 }
+
+WatchCircleDetecter::WatchCircleDetecter()
+    :m_patternIsNew(false),m_patternImage(NULL),m_pattern(NULL),
+      m_roiImage(NULL),m_convolution(NULL),m_roi(cvRect(0, 0, 0, 0)){
+}
+
+WatchCircleDetecter::~WatchCircleDetecter(){
+    if(m_patternImage)
+        cvReleaseImage(&m_patternImage);
+    if(m_pattern)
+        cvReleaseMat(&m_pattern);
+    if(m_roiImage)
+        cvReleaseImage(&m_roiImage);
+    if(m_convolution)
+        cvReleaseImage(&m_convolution);
+}
+
+void WatchCircleDetecter::set_pattern(IplImage *img, const CvRect *area){
+    if(img==NULL || img->nChannels!=1)
+        return;
+    if(m_patternImage)
+        cvReleaseImage(&m_patternImage);
+    if(area==NULL){
+        m_patternImage=cvCloneImage(img);
+    }
+    else{
+        m_patternImage=cvCreateImage(cvSize(area->width, area->height), IPL_DEPTH_8U, 1);
+        cvSetImageROI(img, *area);
+        cvCopy(img, m_patternImage);
+        cvResetImageROI(img);
+    }
+    m_patternIsNew=true;
+    setCirclePattern(m_patternImage, m_patternImage->width/2-10);
+}
+
+void WatchCircleDetecter::setCirclePattern(const IplImage *pattern, float R, int outWidth, float likelihood){
+    assert(R>1 && outWidth>0);
+    m_R=R;
+    int halfwidth=R+outWidth+0.5;
+    int width=2*halfwidth+1;
+    int inWidth=R/2;
+    if(inWidth>5)
+        inWidth=5;
+    else if(inWidth<1)
+        inWidth=1;
+
+    //create ideal pattern
+    if(m_pattern)
+        cvReleaseMat(&m_pattern);
+    m_pattern=cvCreateMat(width, width, CV_32FC1);
+    float d2;
+    float R2=R*R;
+    float OR2=(R+outWidth)*(R+outWidth);
+    float IR2=(R-inWidth)*(R-inWidth);
+    float val;
+    for(int row=0;row<width;row++){
+        for(int col=0;col<width; col++){
+            d2=(row-halfwidth)*(row-halfwidth)+(col-halfwidth)*(col-halfwidth);
+            if(d2<IR2)
+                val=0;
+            else if(d2<R2)
+                val=1;
+            else if(d2<OR2)
+                val=-inWidth/outWidth;
+            else
+                val=0;
+            cvSetReal2D(m_pattern,row, col, val);
+        }
+    }
+
+    //get the threshold from actual pattern
+    IplImage* smooth=cvCreateImage(cvGetSize(pattern),IPL_DEPTH_8U, 1);
+    IplImage* convolution=cvCreateImage(cvGetSize(smooth),IPL_DEPTH_32F, 1);
+    cvSmooth(pattern,smooth, CV_GAUSSIAN);
+    cvFilter2D(smooth, convolution, m_pattern);
+    double minVal, maxVal;
+    cvMinMaxLoc(convolution, &minVal,&maxVal);
+    m_threshold=maxVal*likelihood;
+    cvReleaseImage(&smooth);
+    cvReleaseImage(&convolution);
+}
+
+
+const list<Point>& WatchCircleDetecter::detect(IplImage *image, CvRect *roi){
+    assert(m_pattern);
+    m_centers.clear();
+    vector<double> weightSum;
+    vector<double> xWeight;
+    vector<double> yWeight;
+
+    //copy ROI
+    if(roi)
+        m_roi=*roi;
+    else
+        m_roi=cvRect(0, 0, image->width, image->height);
+    if(m_roiImage==NULL){
+        m_roiImage=cvCreateImage(cvSize(m_roi.width, m_roi.height), IPL_DEPTH_8U, 1);
+        m_convolution=cvCreateImage(cvGetSize(m_roiImage),IPL_DEPTH_32F, 1);
+    }
+    else{
+        if(m_roiImage->width!=roi->width || m_roiImage->height!=roi->height){
+            cvReleaseImage(&m_roiImage);
+            cvReleaseImage(&m_convolution);
+            m_roiImage=cvCreateImage(cvSize(m_roi.width, m_roi.height), IPL_DEPTH_8U, 1);
+            m_convolution=cvCreateImage(cvGetSize(m_roiImage),IPL_DEPTH_32F, 1);
+        }
+    }
+    cvSetImageROI(image, m_roi);
+    cvCopyImage(image, m_roiImage);
+    cvResetImageROI(image);
+
+    //convolution
+    cvSmooth(m_convolution, m_convolution,CV_GAUSSIAN);
+    cvFilter2D(m_roiImage, m_convolution, m_pattern);
+
+    //find center
+    char* rowHead=m_convolution->imageData;
+    float* p=NULL;
+    float maxDistance=0.5*m_R*0.5*m_R;
+    list<Point>::iterator it;
+    for(int row=0; row<m_convolution->height; row++){
+        p=(float*)rowHead;
+        for(int col=0;col<m_convolution->width;col++){
+            if(*p>m_threshold){
+                bool newCenter=true;
+                int index=0;
+                for(it=m_centers.begin();it!=m_centers.end();it++,index++){
+                    int dx=it->x()-col;
+                    int dy=it->y()-row;
+                    if(dx*dx+dy*dy < maxDistance){
+                        newCenter=false;
+                        xWeight[index]+=*p*col;
+                        yWeight[index]+=*p*row;
+                        weightSum[index]+=*p;
+                        double x=xWeight[index]/weightSum[index];
+                        double y=yWeight[index]/weightSum[index];
+                        it->set(x,y);
+                    }
+                }
+                if(newCenter){
+                    m_centers.push_back(Point(col, row));
+                    xWeight.push_back(*p*col);
+                    yWeight.push_back(*p*row);
+                    weightSum.push_back(*p);
+                }
+            }
+            p++;
+        }
+        rowHead+=m_convolution->widthStep;
+    }
+
+    //only retain whole circle
+    Vector2 vct(m_roi.x, m_roi.y);
+    for(it=m_centers.begin();it!=m_centers.end();){
+        if(it->x()<m_R || it->y()<m_R || it->x()>m_convolution->width-m_R || it->y()>m_convolution->height-m_R){
+            list<Point>::iterator rmIt=it;
+            it++;
+            m_centers.erase(rmIt);
+        }
+        else{
+            it->move(vct);
+            it++;
+        }
+    }
+
+    return m_centers;
+}
+
+bool WatchCircleDetecter::pattern_is_new(){
+    bool tmp=m_patternIsNew;
+    m_patternIsNew=false;
+    return tmp;
+}

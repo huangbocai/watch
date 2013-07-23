@@ -230,8 +230,9 @@ void MarkView::set_diamond_pos(const list<Point> &pos){
     diamondPos=pos;
 }
 
-void MarkView::set_hole_pos(const list<Point>& pos){
+void MarkView::set_hole_pos(const list<Point>& pos, float R){
     holesPos = pos;
+    holesR=R;
 }
 
 void MarkView::set_diamond_sum(int sum){
@@ -293,11 +294,14 @@ void MarkView::draw_hole_pos(QImage& qImage){
     int x, y;
     float wr=widthRatio;
     float hr=heighRatio;
+    int wR=holesR*wr+0.5;
+    int hR=holesR*hr+0.5;
     for(it=holesPos.begin(); it!=holesPos.end(); it++){
         x=it->x()*wr+0.5;
         y=it->y()*hr+0.5;
         painter.drawLine(x-5, y, x+5, y);
         painter.drawLine(x, y-5, x, y+5);
+        painter.drawArc(x-wR, y-hR, 2*wR+1, 2*hR+1, 0, 360*16);
     }
 }
 
@@ -404,15 +408,6 @@ void MarkView::draw_key_not_passed(QImage &qImage){
 }
 
 
-void MarkView::draw_circle(){
-    if(showCircle){QPainter painter(&paintQImage);
-        painter.setPen(QColor(255,0,0));
-
-        painter.drawLine(cx+0.5-20, cy+0.5, cx+0.5+20, cy+0.5);
-        painter.drawLine(cx+0.5, cy+0.5-20, cx+0.5, cy+0.5+20);
-        painter.drawArc(cx+0.5-r-1, cy+0.5-r-1,  2*r+0.5+1, 2*r+0.5+1, 0, 360*16);
-    }
-}
 
 void MarkView::draw_focus_box(){
     if(showFocusBox){
@@ -458,7 +453,6 @@ void MarkView::paintEvent(QPaintEvent*){
     draw_ccd_status(paintQImage);
     draw_diamond_pos(paintQImage);
     draw_hole_pos(paintQImage);
-    draw_circle();
     draw_focus_box();
     //draw_key_not_passed(paintQImage);
     QPainter painter(this);

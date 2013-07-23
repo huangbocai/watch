@@ -253,7 +253,7 @@ private:
     Recorder* posRecorder;
 
     CirclesDetecter* circlesDetecter;
-    HolesDetecter* holesDetecter;
+    WatchCircleDetecter* watchCircleDetecter;
 
     MarkQtObjects qtObjects;
     QWidget* adjTable;

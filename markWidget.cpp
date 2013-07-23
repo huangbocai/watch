@@ -319,9 +319,8 @@ void MarkWidget::detecter_model_init(){
     circlesDetecter = new CirclesDetecter;
     circlesDetecter->set_pattern(prjManage.get_diamond_pattern());
     circlesDetecter->set_area(&prjManage.searcRectD);
-    holesDetecter = new HolesDetecter;
-    holesDetecter->set_pattern(prjManage.get_watch_pattern());
-    holesDetecter->set_area(&prjManage.searcRectW);
+    watchCircleDetecter = new WatchCircleDetecter;
+    watchCircleDetecter->set_pattern(prjManage.get_watch_pattern());
 }
 
 void MarkWidget::status_bar_init(){
@@ -550,8 +549,8 @@ void MarkWidget::view_update(){
         }
     }
 
-    if(holesDetecter->pattern_is_new()){
-        const IplImage* pattern = holesDetecter->get_pattern();
+    if(watchCircleDetecter->pattern_is_new()){
+        const IplImage* pattern = watchCircleDetecter->get_pattern();
         if(pattern){
             holePatternView->receive_image(pattern);
             holePatternView->update();
@@ -572,13 +571,14 @@ void MarkWidget::slow_cycle(){
 #endif
 
     if(bt_detect0->isChecked()){
+
         circlesDetecter->detect(srcImage);
         markView->set_diamond_pos(circlesDetecter->get_positions());
     }
 
     if(bt_detectHoles->isChecked()){
-        holesDetecter->detect(srcImage);
-        markView->set_hole_pos(holesDetecter->get_positions());
+        watchCircleDetecter->detect(srcImage, &prjManage.searcRectW);
+        markView->set_hole_pos(watchCircleDetecter->get_positions(),watchCircleDetecter->radious());
     }
 
     cv_cmd_cycle();
@@ -606,8 +606,8 @@ void MarkWidget::auto_detect_watch(){
     if(capture)
         capture->get_image(srcImage);
      watchResult.scanIndex++;
-     holesDetecter->detect(srcImage);
-     const list<Point>& holesPos = holesDetecter->get_positions();
+     watchCircleDetecter->detect(srcImage, &prjManage.searcRectW);
+     const list<Point>& holesPos = watchCircleDetecter->get_positions();
 
      list<Point>::const_iterator it;
      Point pos;
@@ -673,7 +673,7 @@ void MarkWidget::cv_cmd_cycle()
         }
         else if(cmd==2){
             auto_detect_watch();
-            markView->set_hole_pos(holesDetecter->get_positions());
+            markView->set_hole_pos(watchCircleDetecter->get_positions(), watchCircleDetecter->radious());
         }
         *halpins->cvCmd=0;
         state=MARK_IDLE;
@@ -799,8 +799,8 @@ void MarkWidget::select_pattern_toggled(bool checked){
             }
             else{
                 CvRect tmpRect = cvRect(lt.x()-10+0.5,lt.y()-10+0.5, pw+20, ph+20);
-                holesDetecter->set_pattern(srcImage,&tmpRect);
-                prjManage.save_watch_pattern(holesDetecter->get_pattern());
+                watchCircleDetecter->set_pattern(srcImage,&tmpRect);
+                prjManage.save_watch_pattern(watchCircleDetecter->get_pattern());
             }
         }
     }
@@ -824,7 +824,7 @@ void MarkWidget::search_area_toggled(bool checked){
             }
             else{
                 prjManage.searcRectW = cvRect(lt.x()+0.5, lt.y()+0.5, pw, ph);
-                holesDetecter->set_area(&prjManage.searcRectW);
+//                watchCircleDetecter->set_area(&prjManage.searcRectW);
                 prjManage.save_watch_search_area();
             }
         }
@@ -850,7 +850,7 @@ void MarkWidget::diamond_test_toggled(bool checked){
         }
         else{
             list<Point> empty;
-            markView->set_hole_pos(empty);
+            markView->set_hole_pos(empty, 0);
         }
     }
 }

@@ -3,6 +3,7 @@
 
 #include <cv.h>
 #include <list>
+#include <vector>
 #include "imageMeasure.hh"
 
 class CirclesDetecter{
@@ -13,7 +14,6 @@ public:
     void set_pattern(IplImage* img, const CvRect* area=NULL);
     void set_area(CvRect*area=NULL);
 
-    const CvSeq* get_contour()const {return contours;}
     const list<Point>& get_positions()const {return positions;}
     const IplImage* get_pattern()const{return pattern;}
     bool pattern_is_new();
@@ -36,25 +36,32 @@ private:
     CvRect* validArea;
 };
 
-class HolesDetecter : public CirclesDetecter
-{
+
+class WatchCircleDetecter{
 public:
-    int detect(const IplImage* img){
-        holesPositions.clear();
-        list<Point> holesPos;
-        holesPos.push_back(Point(500,500));
-        holesPos.push_back(Point(550,500));
-        holesPos.push_back(Point(600,500));
-        holesPos.push_back(Point(650,500));
-        holesPos.push_back(Point(700,500));
-        holesPositions = holesPos;
-        return 0;
-    }
-    const list<Point>& get_positions()const {return holesPositions;}
+    WatchCircleDetecter();
+    void set_pattern(IplImage* img, const CvRect* area=NULL);
+    const list<Point>& detect(IplImage* image, CvRect* roi=NULL);
+
+    const list<Point>& get_positions()const {return m_centers;}
+    const IplImage* get_pattern()const{return m_patternImage;}
+    float radious()const {return m_R;}
+    bool pattern_is_new();
+
+
+    ~WatchCircleDetecter();
 
 private:
-    list<Point> holesPositions;
-
+     void setCirclePattern(const IplImage* pattern, float R, int outWidth=5, float likelihood=0.6);
+     bool m_patternIsNew;
+     IplImage* m_patternImage;
+     CvMat* m_pattern;
+     IplImage* m_roiImage;
+     IplImage* m_convolution;
+     CvRect m_roi;
+     float m_R;
+     double m_threshold;
+     list<Point> m_centers;
 };
 
 

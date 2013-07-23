@@ -20,10 +20,9 @@ Recorder::Recorder(string prjDir)
     watchPosFileName = prjDir + string("/Watch.pos");
     holePosFileName = prjDir + string("/holes.pos");
     currentIndex = 0;
+    markIndex = 0;
     posVec.clear();
     lastPos = NULL;
-    recordState = Idle;
-    lastState = EndRecord;
     //cout<<watchPosFileName<<endl;
     //cout<<holePosFileName<<endl;
 }
@@ -388,6 +387,8 @@ void MarkWidget::watch_page_init()
     le_rotateDeg->setValidator(doubleValidator);
     sprintf(buf, "%.3f",param.degInc);
     le_rotateDeg->setText(QString::fromUtf8(buf));
+    sprintf(buf,"%.3f",prjManage.glueZPos);
+    le_glueZValue->setText(buf);
 
     int w=patternViewFrame1->width();
     int h=patternViewFrame1->height();
@@ -428,6 +429,7 @@ void MarkWidget::watch_page_init()
     connect(bt_setFirstHole,SIGNAL(clicked()),this,SLOT(set_first_hole()));
     connect(bt_setNextHole,SIGNAL(clicked()),this,SLOT(set_next_hole()));
     connect(bt_setAllHoles,SIGNAL(clicked()),this,SLOT(set_all_holes()));
+    connect(bt_recordGluePosZ,SIGNAL(clicked()),this,SLOT(set_glue_z_pos()));
 }
 
 
@@ -483,6 +485,7 @@ void MarkWidget::adjust_page_init(){
 void MarkWidget::mark_view_update(){
 
     static int autoIndex=-1;
+    static int autoScanHoleIndex = -1;
     ImageCapture* currentCapture = NULL;
 
     currentCapture=capture;
@@ -497,6 +500,7 @@ void MarkWidget::mark_view_update(){
         else
             markView->set_focus_box(false);
         autoIndex=-1;
+        autoScanHoleIndex = -1;
     }
     else{
         if(autoIndex!=watchResult.scanIndex){
@@ -504,6 +508,12 @@ void MarkWidget::mark_view_update(){
             markView->receive_image(srcImage);
             markView->set_diamond_pos(circlesDetecter->get_positions());
             markView->set_search_frame(prjManage.searcRectD);
+        }
+        if(autoScanHoleIndex != watchResult.scanHoleIndex){
+            autoScanHoleIndex = watchResult.scanHoleIndex;
+            markView->receive_image(srcImage);
+            markView->set_hole_pos(holesDetecter->get_positions());
+            markView->set_search_frame(prjManage.searcRectW);
         }
        markView->set_focus_box(false);
     }
@@ -605,7 +615,7 @@ void MarkWidget::auto_detect_diamond(){
 void MarkWidget::auto_detect_watch(){
     if(capture)
         capture->get_image(srcImage);
-     watchResult.scanIndex++;
+     watchResult.scanHoleIndex++;
      holesDetecter->detect(srcImage);
      const list<Point>& holesPos = holesDetecter->get_positions();
 
@@ -615,7 +625,7 @@ void MarkWidget::auto_detect_watch(){
      for(it=holesPos.begin();it!=holesPos.end();it++){
          pos=transfMatrix->transform(it->x(), it->y());
          pos.move(vm);
-         Position* hole = new Position(pos.x(),pos.y(),emcStatus.cmdAxis[2],emcStatus.cmdAxis[3],emcStatus.cmdAxis[4]);
+         Position* hole = new Position(pos.x(),pos.y(),prjManage.glueZPos,emcStatus.cmdAxis[3],emcStatus.cmdAxis[4]);
          posRecorder->holesPosVec.push_back(hole);
      }
 }
@@ -626,6 +636,14 @@ void MarkWidget::clear_diamond_pos(){
     watchResult.scanIndex=0;
     markView->set_diamond_pos(watchResult.dimamondPos);
     markView->set_diamond_sum(0);
+}
+
+void MarkWidget::clear_hole_pos()
+{
+    posRecorder->holesPosVec.clear();
+    watchResult.scanHoleIndex = 0;
+    list<Point> empty;
+    markView->set_hole_pos(empty);
 }
 
 void MarkWidget::cv_cmd_cycle()
@@ -673,7 +691,11 @@ void MarkWidget::cv_cmd_cycle()
         }
         else if(cmd==2){
             auto_detect_watch();
-            markView->set_hole_pos(holesDetecter->get_positions());
+            posRecorder->incr_mark_index(1);
+            if(posRecorder->get_mark_index()==posRecorder->get_pos_num()){
+                posRecorder->finish_record_hole_pos();
+                posRecorder->set_mark_index(0);
+            }
         }
         *halpins->cvCmd=0;
         state=MARK_IDLE;
@@ -740,16 +762,9 @@ void MarkWidget::fast_react_cycle(){
 
     if(posRecorder->get_current_index()<=posRecorder->get_pos_num()){
         *halpins->watchPosValid = 1;
-        posRecorder->set_record_state(Recorder::Recording);
     }
     else{
         *halpins->watchPosValid = 0;
-        if(posRecorder->get_record_state()!= Recorder::Idle)
-            posRecorder->set_record_state(Recorder::EndRecord);
-    }
-
-    if(posRecorder->end_record()){
-        posRecorder->finish_record_hole_pos();
     }
 
 
@@ -775,6 +790,7 @@ void MarkWidget::ready_for_diamond_scan(){
 
 void MarkWidget::ready_for_watch_scan()
 {
+    clear_hole_pos();
     sp_ADLevle->setValue(prjManage.adlW);
     sl_contrast->setValue(prjManage.contrastW);
     sl_brightness->setValue(prjManage.brightnessW);
@@ -1037,13 +1053,22 @@ void MarkWidget::change_angle(){
     emc_jog_incr(4,10,val);
 }
 
+void MarkWidget::set_glue_z_pos()
+{
+    char buf[32];
+    prjManage.glueZPos=emcStatus.cmdAxis[2];
+    sprintf(buf, "%.3f", prjManage.glueZPos);
+    le_glueZValue->setText(QString::fromUtf8(buf));
+    write_profile_double("WATCH", "GLUE_Z_POS", prjManage.glueZPos, prjManage.ini_file());
+}
+
 void MarkWidget::record_cam_pos()
 {
     QString tmpNum;
     RectangleFrame searchArea = markView->get_search_frame();
     posRecorder->record_current_pos(emcStatus.cmdAxis,searchArea);
-    tmpNum.setNum(posRecorder->get_pos_num());
-    lb_posNum->setText(tmpNum);
+    //tmpNum.setNum(posRecorder->get_pos_num());
+    //lb_posNum->setText(tmpNum);
     bt_abandonCurrentPos->setEnabled(true);
     bt_abandonAllPos->setEnabled(true);
     bt_finishRecord->setEnabled(true);    
@@ -1055,8 +1080,8 @@ void MarkWidget::abandon_current_pos()
     int tmpIntNum;
     posRecorder->abandon_current_pos();
     tmpIntNum = posRecorder->get_pos_num();
-    tmpNum.setNum(tmpIntNum);
-    lb_posNum->setText(tmpNum);
+    //tmpNum.setNum(tmpIntNum);
+    //lb_posNum->setText(tmpNum);
     bt_abandonCurrentPos->setEnabled(false);
     if(tmpIntNum == 0){
         bt_abandonCurrentPos->setEnabled(false);
@@ -1075,8 +1100,8 @@ void MarkWidget::abandon_all_pos()
     //printf("abandon_all_pos\n");
     QString tmpNum;
     posRecorder->abandon_all_pos();
-    tmpNum.setNum(posRecorder->get_pos_num());
-    lb_posNum->setText(tmpNum);
+    //tmpNum.setNum(posRecorder->get_pos_num());
+    //lb_posNum->setText(tmpNum);
     bt_abandonCurrentPos->setEnabled(false);
     bt_abandonAllPos->setEnabled(false);
     bt_finishRecord->setEnabled(false);
@@ -1120,8 +1145,8 @@ void MarkWidget::get_first_pos()
 #endif
 
     QString tmpNumStr;
-    tmpNumStr.setNum(posRecorder->get_current_index());
-    lb_posNum->setText(tmpNumStr);
+    //tmpNumStr.setNum(posRecorder->get_current_index());
+    //lb_posNum->setText(tmpNumStr);
 
 }
 
@@ -1143,8 +1168,8 @@ void MarkWidget::get_next_pos()
     }
 #endif
     QString tmpNumStr;
-    tmpNumStr.setNum(posRecorder->get_current_index());
-    lb_posNum->setText(tmpNumStr);
+    //tmpNumStr.setNum(posRecorder->get_current_index());
+    //lb_posNum->setText(tmpNumStr);
 }
 
 
@@ -1153,7 +1178,6 @@ void MarkWidget::cam_run()
 #ifdef WITH_EMC    
     posRecorder->set_current_index(0);
     posRecorder->clear_holes_pos();
-    posRecorder->set_record_state(Recorder::Recording);
     MarkHalPins* halpins=halData->halpins;
     *halpins->watchPosValid = 1;
     emc_mode(NULL,EMC_TASK_MODE_AUTO);

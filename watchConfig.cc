@@ -90,6 +90,8 @@ int ProjectManage::load(const char* projectName){
     ini_get_int_param(&inifile, "WATCH", "SEARCH_HEIGHT", &sh, 200);
     searcRectW= cvRect(sx, sy, sw, sh);
 
+    ini_get_double_param(&inifile,"WATCH", "GLUE_Z_POS",&glueZPos,0);
+
     return 0;
 }
 

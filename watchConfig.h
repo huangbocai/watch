@@ -81,6 +81,7 @@ public:
     int exposureW;
     int adlW;
     CvRect searcRectW;
+    double glueZPos;
 
 private:
     IplImage* patternD;

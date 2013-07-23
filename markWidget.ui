@@ -35,7 +35,7 @@
     </size>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
@@ -923,12 +923,12 @@
      <property name="title">
       <string>拍摄位置录入</string>
      </property>
-     <widget class="QWidget" name="layoutWidget">
+     <widget class="QWidget" name="">
       <property name="geometry">
        <rect>
-        <x>0</x>
-        <y>20</y>
-        <width>239</width>
+        <x>1</x>
+        <y>22</y>
+        <width>247</width>
         <height>101</height>
        </rect>
       </property>
@@ -999,31 +999,21 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_12">
          <item>
-          <widget class="QLabel" name="label_18">
+          <widget class="QPushButton" name="bt_recordGluePosZ">
            <property name="text">
-            <string>拍摄位置序号：</string>
+            <string>上胶高度</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="lb_posNum">
-           <property name="text">
-            <string>0</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
+          <widget class="QLineEdit" name="le_glueZValue">
+           <property name="maximumSize">
             <size>
-             <width>20</width>
-             <height>20</height>
+             <width>61</width>
+             <height>27</height>
             </size>
            </property>
-          </spacer>
+          </widget>
          </item>
          <item>
           <widget class="QPushButton" name="bt_recordCamPos">

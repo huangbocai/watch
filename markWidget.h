@@ -25,10 +25,11 @@ typedef struct {
 class WatchResult
 {
 public:
-    WatchResult():scanIndex(0){pickupIterator=dimamondPos.begin();}
+    WatchResult():scanIndex(0),scanHoleIndex(0){pickupIterator=dimamondPos.begin();}
     list<Point> dimamondPos;
     list<Point>::const_iterator pickupIterator;
     int scanIndex;
+    int scanHoleIndex;
 };
 
 
@@ -91,7 +92,6 @@ private:
 class Recorder
 {
 public:
-    typedef enum {Recording=0,EndRecord, Idle} RecordState;
     Recorder(string prjDir);
     void record_current_pos(double x, double y, double z, double a, double b, RectangleFrame rect);
     void record_current_pos(double pPos[5], RectangleFrame rect);
@@ -112,23 +112,12 @@ public:
     const Position* get_last_position(){return get_position(currentIndex-2);}
     void load();
     void clear_holes_pos() {holesPosVec.clear();}
-    void set_record_state(RecordState state){recordState = state;}
-    RecordState get_record_state(){return recordState;}
-    bool end_record(){
-        if(recordState == EndRecord){
-            if(lastState == EndRecord){
-                lastState = Idle;
-                recordState = Idle;
-                return true;
-            }
-            else
-                lastState = EndRecord;
-        }
-        else{
-            lastState = recordState;
-        }
-        return false;
-    }
+    void set_mark_index(unsigned int index) {markIndex = index;}
+    unsigned int get_mark_index() {return markIndex;}
+    void incr_mark_index(unsigned int step){markIndex += step;}
+
+    void set_glue_z_value(double zValue){glueZPos = zValue;}
+    double get_glue_z_value() {return glueZPos;}
 
 
 private:
@@ -140,12 +129,13 @@ public:
 
 private:
     unsigned int currentIndex;
+    unsigned int markIndex;
     string watchPosFileName;
     string holePosFileName;
     vector<Position*> posVec;
     static const int lineLength = 64;
     const Position* lastPos;
-    RecordState recordState, lastState;
+    double glueZPos;
 };
 
 
@@ -180,6 +170,7 @@ private slots:
 
     //watch page
     void change_angle();
+    void set_glue_z_pos();
     void record_cam_pos();
     void abandon_current_pos();
     void abandon_all_pos();
@@ -227,10 +218,11 @@ private:
 
     void ready_for_diamond_scan();
     void auto_detect_diamond();
-    void clear_diamond_pos();
-    void auto_detect_watch();
+    void clear_diamond_pos();    
 
     void ready_for_watch_scan();
+    void auto_detect_watch();
+    void clear_hole_pos();
 
     void mark_view_update();
 

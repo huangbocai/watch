@@ -645,7 +645,7 @@ void MarkWidget::clear_hole_pos()
     list<Point> empty;
     markView->set_hole_pos(empty);
 }
-
+/*
 void MarkWidget::cv_cmd_cycle()
 {
     MarkHalPins* halpins=halData->halpins;
@@ -779,7 +779,7 @@ void MarkWidget::fast_react_cycle(){
         *halpins->watchHoleValid = 0;
 
 }
-
+*/
 void MarkWidget::ready_for_diamond_scan(){
     clear_diamond_pos();
     sp_ADLevle->setValue(prjManage.adlD);

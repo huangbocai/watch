@@ -95,7 +95,7 @@ public:
 
     void set_search_frame(CvRect rect);
     void set_diamond_pos(const list<Point>& pos);
-    void set_hole_pos(const list<Point>& pos);
+    void set_hole_pos(const list<Point>& pos, float R);
     void set_diamond_sum(int sum);
     void set_circle(bool visible, double centerx, double centery, double R);
     void set_focus_box(bool visible, CvRect rect= cvRect(0, 0, 0, 0));
@@ -129,7 +129,6 @@ private:
     void draw_status_text(QImage& qImage);
     void draw_ccd_status(QImage& qImage);
     void draw_key_not_passed(QImage& qImage);
-    void draw_circle();
     void draw_focus_box();
 
     RectangleFrame circle_to_rectangle(const CircleFrame& circle);
@@ -159,6 +158,7 @@ private:
     int diamondSum;
 
     list<Point> holesPos;
+    float holesR;
 
     enum{IDEL, READY, CHANGING}state;
     int cursorx, cursory;

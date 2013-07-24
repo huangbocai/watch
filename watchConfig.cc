@@ -10,8 +10,10 @@ int Mark2Param::load(const char* iniFile)
 		return -1;
   	}
 	//common ini param
-	ini_get_double_param(&inifile, "MARK", "CAM_REL_SPINDLE_X", &camRelx, 0);
-	ini_get_double_param(&inifile, "MARK", "CAM_REL_SPINDLE_Y", &camRely, 0);
+    ini_get_double_param(&inifile, "MARK", "REFERENCE_X", &referenceX, 0);
+    ini_get_double_param(&inifile, "MARK", "REFERENCE_Y", &referenceY, 0);
+    ini_get_double_param(&inifile, "MARK", "CAM_REL_SPINDLE_X", &pickRelx, 0);
+    ini_get_double_param(&inifile, "MARK", "CAM_REL_SPINDLE_Y", &pickRely, 0);
 	ini_get_double_param(&inifile, "MARK", "MM_PER_PIXEL_WW", &kxx, 0.004);
 	ini_get_double_param(&inifile, "MARK", "MM_PER_PIXEL_WH", &kxy, 0);
 	ini_get_double_param(&inifile, "MARK", "MM_PER_PIXEL_HH", &kyy, 0.004);

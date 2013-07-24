@@ -98,7 +98,7 @@ void Recorder::finish_record_hole_pos()
     ofstream ofs;
     vector<Position*>::iterator iter;
     bool isFileOpen = is_file_open(ofs,holePosFileName);
-
+    holesPosVec = sort();
     if(isFileOpen){
         for(iter = holesPosVec.begin(); iter != holesPosVec.end(); iter++){
             ofs<<(*iter)->x()<<" "<<(*iter)->y()<<" "<<(*iter)->z()<<" "
@@ -106,6 +106,22 @@ void Recorder::finish_record_hole_pos()
         }
     }
     ofs.close();
+
+    /*
+    vector<Position*> tmp =  sort();
+    printf("sort\nvecter size: %d", tmp.size());
+
+    //vector<Position*>::iterator iter;
+    isFileOpen = is_file_open(ofs,string("/home/u/pos"));
+
+    if(isFileOpen){
+        for(iter = tmp.begin(); iter != tmp.end(); iter++){
+            ofs<<(*iter)->x()<<" "<<(*iter)->y()<<" "<<(*iter)->z()<<" "
+              <<(*iter)->a()<<" "<<(*iter)->b()<<endl;
+        }
+    }
+    ofs.close();
+    */
 }
 
 bool Recorder::is_file_open(ofstream &ofs, string fileName)
@@ -192,7 +208,48 @@ void Recorder::load()
     ifs.close();
 }
 
+vector<Position*> Recorder::sort()
+{
+    unsigned int i=0,j=0,k=0,h=0,g=0;
+    Position *pos,*pos1,*pos2,*tmpPos;
+    vector<Position*> tmpVec, tmpHolesVec;
+    double tmpL;
+    for(i = 0; i<holesPosVec.size();){
+        pos = holesPosVec[i];
+        for(j=i;j<holesPosVec.size();j++){
+            pos1 = holesPosVec[j];
+            if(pos1->b()==pos->b()){
+                tmpVec.push_back(pos1);
+            }
+            else
+                break;
+        }
 
+        i = j;
+
+        for(k = 0; k<tmpVec.size();k++){
+            pos1 = tmpVec[k];
+            Vector2 v1(Point(0,0),Point(pos1->x(),pos1->y()));
+            tmpL = v1.length();
+            for(h = k; h<tmpVec.size();h++){
+                pos2 = tmpVec[h];
+                Vector2 v2(Point(0,0),Point(pos2->x(),pos2->y()));
+                if(tmpL>=v2.length()){
+                    tmpL = v2.length();
+                    g = h;
+                }
+            }
+
+            tmpPos = tmpVec[k];
+            tmpVec[k] = tmpVec[g];
+            tmpVec[g] = tmpPos;
+            tmpHolesVec.push_back(tmpVec[k]);
+        }
+        tmpVec.clear();
+    }
+
+    return tmpHolesVec;
+}
 
 
 
@@ -705,6 +762,7 @@ void MarkWidget::cv_cmd_cycle()
             auto_detect_watch();
             if(posRecorder->get_mark_index()==posRecorder->get_pos_num()){
                 posRecorder->finish_record_hole_pos();
+                //vector<Position*> tmp =  posRecorder->sort();
                 posRecorder->set_mark_index(0);
             }
             markView->set_hole_pos(watchCircleDetecter->get_positions(), watchCircleDetecter->radious());

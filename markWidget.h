@@ -124,7 +124,7 @@ public:
     void set_glue_z_value(double zValue){glueZPos = zValue;}
     double get_glue_z_value() {return glueZPos;}
 
-    //vector<Position*> sort();
+    vector<Position*> sort();
 
 
 private:

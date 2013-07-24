@@ -16,8 +16,10 @@ public:
 //    int save_project(const char* directory);
 
     //common param
-    double camRelx;
-    double camRely;
+    double referenceX;
+    double referenceY;
+    double pickRelx;
+    double pickRely;
     double glueRelx;
     double glueRely;
     double kxx;

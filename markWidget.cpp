@@ -276,7 +276,6 @@ MarkWidget::MarkWidget(int argc,  char **argv, QWidget* parent)
     get_qt_objects();
     start_Capture(param.camGain, param.camBL,param.camExposure,param.camADL, 2);
     detecter_model_init();
-    offsetSetting= new OffsetSetting(param.camRelx, param.camRely, param.glueRelx, param.glueRely);
 
     markView= new MarkView(widgetMarkView);
 
@@ -376,7 +375,7 @@ void MarkWidget::start_Capture(int contrastVal, int brightnessVal, int exposureV
 
 void MarkWidget::detecter_model_init(){
     transfMatrix=new ImageActualTM( TransformMatrix(param.kxx, param.kxy, param.kyx, param.kyy),
-        srcImage->width, srcImage->height, param.camRelx, param.camRely);
+        srcImage->width, srcImage->height, 0, 0);
     circlesDetecter = new CirclesDetecter;
     circlesDetecter->set_pattern(prjManage.get_diamond_pattern());
     circlesDetecter->set_area(&prjManage.searcRectD);
@@ -523,9 +522,9 @@ void MarkWidget::image_page_init(){
 
 void MarkWidget::adjust_page_init(){
      char buf[16];
-     sprintf(buf, "%8.3f", param.camRelx);
+     sprintf(buf, "%8.3f", param.pickRelx);
      lb_ccdOffsetX->setText(buf);
-     sprintf(buf, "%8.3f", param.camRely);
+     sprintf(buf, "%8.3f", param.pickRely);
      lb_ccdOffsetY->setText(buf);
      sprintf(buf, "%8.3f", param.glueRelx);
      lb_glueOffsetX->setText(buf);
@@ -539,7 +538,6 @@ void MarkWidget::adjust_page_init(){
      connect(bt_inputHole, SIGNAL(clicked()),this, SLOT(input_hole_pos_pressed()));
      connect(bt_detectHole,SIGNAL(clicked()), this, SLOT(detect_hole_presssed()));
      connect(bt_gluePos,SIGNAL(clicked()), this, SLOT(input_glue_pos_pressed()));
-     connect(bt_setOffset,SIGNAL(clicked()), this, SLOT(set_ccd_offset_pressed()));
 }
 
 
@@ -781,8 +779,8 @@ void MarkWidget::fast_react_cycle(){
 
      if(*halpins->posCmd==1){
         Point pos= *watchResult.dimamondPos.begin();
-        *halpins->posAxis[0]=pos.x();
-        *halpins->posAxis[1]=pos.y();
+        *halpins->posAxis[0]=pos.x()-param.pickRelx;
+        *halpins->posAxis[1]=pos.y()-param.pickRely;
         *halpins->posAxis[2]=prjManage.pickupZD;
         *halpins->posCmd=0;
     }
@@ -803,8 +801,8 @@ void MarkWidget::fast_react_cycle(){
          const Position* pos = (posRecorder->holesPosVec)[posRecorder->get_hole_index()];
          if(pos)
          {
-             *halpins->posAxis[0]=pos->get_value(0);
-             *halpins->posAxis[1]=pos->get_value(1);
+             *halpins->posAxis[0]=pos->get_value(0)-param.pickRelx;
+             *halpins->posAxis[1]=pos->get_value(1)-param.pickRely;
              *halpins->posAxis[2]=pos->get_value(2);
              *halpins->posAxis[3]=pos->get_value(3);
              *halpins->posAxis[4]=pos->get_value(4);
@@ -1051,7 +1049,7 @@ void MarkWidget::pickup_first(){
 #ifdef WITH_EMC
     emc_mode(NULL,EMC_TASK_MODE_MDI);
     emc_mdi("g0 g53 z0");
-    sprintf(buf, "g0 g53 x%f y%f", pos.x(), pos.y());
+    sprintf(buf, "g0 g53 x%f y%f", pos.x()-param.pickRelx, pos.y()-param.pickRely);
     emc_mdi(buf);
     sprintf(buf, "g1 g53 z%f f3000", prjManage.pickupZD);
     emc_mdi(buf);
@@ -1072,7 +1070,7 @@ void MarkWidget::pickup_next(){
     emc_mode(NULL,EMC_TASK_MODE_MDI);
     sprintf(buf, "g0 g53 z%f", prjManage.sendZD);
     emc_mdi(buf);
-    sprintf(buf, "g0 g53 x%f y%f", pos.x(), pos.y());
+    sprintf(buf, "g0 g53 x%f y%f", pos.x()-param.pickRelx, pos.y()-param.pickRely);
     emc_mdi(buf);
     sprintf(buf, "g1 g53 z%f f3000", prjManage.pickupZD);
     emc_mdi(buf);
@@ -1263,7 +1261,7 @@ void MarkWidget::set_first_hole()
         //emc_mdi(buf);
 
         emc_mdi("g0 g53 z0");
-        sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos->get_value(0), pos->get_value(1), pos->get_value(3),pos->get_value(4));
+        sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos->get_value(0)-param.pickRelx, pos->get_value(1)-param.pickRely, pos->get_value(3),pos->get_value(4));
         emc_mdi(buf);
         sprintf(buf, "g0 g53 z%.3f", pos->get_value(2));
         emc_mdi(buf);
@@ -1302,7 +1300,7 @@ void MarkWidget::set_next_hole()
         //emc_mdi(buf);
 
         emc_mdi("g0 g53 z0");
-        sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos->get_value(0), pos->get_value(1), pos->get_value(3),pos->get_value(4));
+        sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos->get_value(0)-param.pickRelx, pos->get_value(1)-param.pickRely, pos->get_value(3),pos->get_value(4));
         emc_mdi(buf);
         sprintf(buf, "g0 g53 z%.3f", pos->get_value(2));
         emc_mdi(buf);
@@ -1496,14 +1494,19 @@ void MarkWidget::input_hole_pos_pressed(){
 
     x=emcStatus.cmdAxis[0];
     y=emcStatus.cmdAxis[1];
-    offsetSetting->holePosOk=true;
-    offsetSetting->holeDetectOk=0;
-    offsetSetting->holePos[0]=x;
-    offsetSetting->holePos[1]=y;
+    param.pickRelx=x-param.referenceX;
+    param.pickRely=y-param.referenceY;
     sprintf(buf, "%8.3lf", x);
     lb_holeX->setText(buf);
     sprintf(buf, "%8.3lf", y);
-    lb_holeY->setText(buf);
+    lb_holeY->setText(buf);  
+    sprintf(buf, "%8.3lf", param.pickRelx);
+    lb_ccdOffsetX->setText(buf);
+    sprintf(buf, "%8.3lf", param.pickRely);
+    lb_ccdOffsetY->setText(buf);
+
+    write_profile_double( "MARK", "CAM_REL_SPINDLE_X", param.pickRelx, EMC_INIFILE);
+    write_profile_double( "MARK", "CAM_REL_SPINDLE_Y", param.pickRely, EMC_INIFILE);
 
 }
 
@@ -1525,71 +1528,43 @@ void MarkWidget::detect_hole_presssed(){
         }
     }
 
-
     if(!res){
-        offsetSetting->holeDetePos[0]=cx;
-        offsetSetting->holeDetePos[1]=cy;
-        offsetSetting->holeDetectOk=true;
+        param.referenceX=cx;
+        param.referenceY=cy;
         sprintf(buf, "%8.3lf", cx);
         lb_holeDetectX->setText(buf);
         sprintf(buf, "%8.3lf", cy);
         lb_holeDetectY->setText(buf);
-
-        if(offsetSetting->holePosOk){
-            offsetSetting->ccdOffset[0]=offsetSetting->holePos[0]-offsetSetting->holeDetePos[0]+param.camRelx;
-            offsetSetting->ccdOffset[1]=offsetSetting->holePos[1]-offsetSetting->holeDetePos[1]+param.camRely;
-            sprintf(buf, "%8.3lf", offsetSetting->ccdOffset[0]);
-            lb_ccdOffsetX->setText(buf);
-            sprintf(buf, "%8.3lf", offsetSetting->ccdOffset[1]);
-            lb_ccdOffsetY->setText(buf);
-        }
+        write_profile_double( "MARK", "REFERENCE_X", param.referenceX, EMC_INIFILE);
+        write_profile_double( "MARK", "REFERENCE_Y", param.referenceY, EMC_INIFILE);
     }
     else{
-        offsetSetting->holeDetectOk=false;
         lb_holeDetectX->setText(QString::fromUtf8("无效"));
         lb_holeDetectY->setText(QString::fromUtf8("无效"));
-        lb_ccdOffsetX->clear();
-        lb_ccdOffsetY->clear();
     }
 }
 
 void MarkWidget::input_glue_pos_pressed(){
     char buf[32];
-    offsetSetting->gluePos[0]=emcStatus.cmdAxis[0];
-    offsetSetting->gluePos[1]=emcStatus.cmdAxis[1];
-    sprintf(buf, "%8.3lf", offsetSetting->gluePos[0]);
+    double x=emcStatus.cmdAxis[0];
+    double y=emcStatus.cmdAxis[1];
+    param.glueRelx=x-param.referenceX;
+    param.glueRely=y-param.referenceY;
+
+    sprintf(buf, "%8.3lf", x);
     lb_glueX->setText(buf);
-    sprintf(buf, "%8.3lf", offsetSetting->gluePos[1]);
+    sprintf(buf, "%8.3lf", y);
     lb_glueY->setText(buf);
 
-    offsetSetting->glueOffset[0]=offsetSetting->holePos[0]-offsetSetting->gluePos[0];
-    offsetSetting->glueOffset[1]=offsetSetting->holePos[1]-offsetSetting->gluePos[1];
-    sprintf(buf, "%8.3lf", offsetSetting->glueOffset[0]);
+    sprintf(buf, "%8.3lf", param.glueRelx);
     lb_glueOffsetX->setText(buf);
-    sprintf(buf, "%8.3lf", offsetSetting->glueOffset[1]);
+    sprintf(buf, "%8.3lf", param.glueRely);
     lb_glueOffsetY->setText(buf);
+
+    write_profile_double( "MARK", "GLUE_REL_SPINDLE_X", param.glueRelx, EMC_INIFILE);
+    write_profile_double( "MARK", "GLUE_REL_SPINDLE_Y", param.glueRely, EMC_INIFILE);
 }
 
-void MarkWidget::set_ccd_offset_pressed()
-{
-
-    int r=QMessageBox::information(this,QString::fromUtf8("提示"),
-                                   QString::fromUtf8("修改并保存偏移值"),
-                                   QMessageBox::Yes|QMessageBox::No);
-    if(r==QMessageBox::Yes){
-        param.camRelx=offsetSetting->ccdOffset[0];
-        param.camRely=offsetSetting->ccdOffset[1];
-        write_profile_double( "MARK", "CAM_REL_SPINDLE_X", param.camRelx, EMC_INIFILE);
-        write_profile_double( "MARK", "CAM_REL_SPINDLE_Y", param.camRely, EMC_INIFILE);
-        offsetSetting->holeDetectOk=0;
-        *transfMatrix=ImageActualTM( TransformMatrix(param.kxx, param.kxy, param.kyx, param.kyy),
-                                     srcImage->width, srcImage->height, param.camRelx, param.camRely);
-        param.glueRelx=offsetSetting->glueOffset[0];
-        param.glueRely=offsetSetting->glueOffset[1];
-        write_profile_double( "MARK", "GLUE_REL_SPINDLE_X", param.glueRelx, EMC_INIFILE);
-        write_profile_double( "MARK", "GLUE_REL_SPINDLE_Y", param.glueRely, EMC_INIFILE);
-    }
-}
 
 
 void MarkWidget::mark_adjust_param()
@@ -1648,7 +1623,7 @@ void MarkWidget::mark_adjust_param()
     sprintf(buf,"%.8lf",param.kyy);
     write_profile_string( "MARK", "MM_PER_PIXEL_HH",buf, EMC_INIFILE);
     *transfMatrix=ImageActualTM( TransformMatrix(param.kxx, param.kxy, param.kyx, param.kyy),
-                                 srcImage->width, srcImage->height, param.camRelx, param.camRely);
+                                 srcImage->width, srcImage->height, 0, 0);
     printf("CCD0 param: kxx=%.8lf, kxy=%.8lf, kyx=%.8lf, kyy=%.8lf\n", param.kxx,param.kxy,param.kyx,param.kyy);
 
     adjust.posBitmap=0;

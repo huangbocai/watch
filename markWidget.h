@@ -42,20 +42,7 @@ public:
     char posBitmap;
 };
 
-class OffsetSetting
-{
-public:
-    OffsetSetting(double ccdRelX, double ccdRelY, double glueRelX, double glueRely):
-        holePosOk(false), holeDetectOk(false){
-        ccdOffset[0]=ccdRelX; ccdOffset[1]=ccdRelY; glueOffset[0]=glueRelX; glueOffset[1]=glueRely;}
-    double holePos[2];
-    bool holePosOk;
-    double holeDetePos[2];
-    bool holeDetectOk;
-    double ccdOffset[2];
-    double gluePos[2];
-    double glueOffset[2];
-};
+
 
 class Position
 {
@@ -204,7 +191,6 @@ private slots:
     void detect_hole_presssed();
     void input_hole_pos_pressed();
     void input_glue_pos_pressed();
-    void set_ccd_offset_pressed();
     void exit_adjust_intf();
 
     //timer update
@@ -243,7 +229,6 @@ private:
     WatchResult watchResult;
 
     Mark2Adjust adjust;
-    OffsetSetting* offsetSetting;
     ImageCapture* capture;
     Mark2Param param;
     ProjectManage prjManage;

@@ -71,6 +71,8 @@ public:
     void set_value(double value, int valueIndex) {val[valueIndex] = value;}
     double get_value(int valueIndex)const {return val[valueIndex];}
     RectangleFrame get_search_area()const {return searchArea;}
+    CvRect get_search_cv_area()const {return cvRect(searchArea.get_top_left().x(),searchArea.get_top_left().y(),
+                                                 searchArea.get_width(),searchArea.get_height());}
     double x(){return val[0];}
     double y(){return val[1];}
     double z(){return val[2];}
@@ -112,12 +114,17 @@ public:
     const Position* get_last_position(){return get_position(currentIndex-2);}
     void load();
     void clear_holes_pos() {holesPosVec.clear();}
-    void set_mark_index(unsigned int index) {markIndex = index;}
-    unsigned int get_mark_index() {return markIndex;}
-    void incr_mark_index(unsigned int step){markIndex += step;}
+    void set_mark_index(unsigned int index) {currentMarkIndex = index;}
+    unsigned int get_mark_index() {return currentMarkIndex;}
+    void incr_mark_index(unsigned int step){currentMarkIndex += step;}
+    void set_hole_index(unsigned int index) {currentHoleIndex = index;}
+    unsigned int get_hole_index() {return currentHoleIndex;}
+    void incr_hole_index(unsigned int step){currentHoleIndex += step;}
 
     void set_glue_z_value(double zValue){glueZPos = zValue;}
     double get_glue_z_value() {return glueZPos;}
+
+    //vector<Position*> sort();
 
 
 private:
@@ -129,7 +136,8 @@ public:
 
 private:
     unsigned int currentIndex;
-    unsigned int markIndex;
+    unsigned int currentMarkIndex;
+    unsigned int currentHoleIndex;
     string watchPosFileName;
     string holePosFileName;
     vector<Position*> posVec;

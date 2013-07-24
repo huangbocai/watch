@@ -116,10 +116,10 @@ void ProjectManage::save_diamond_camera_param(int adl, int brightness, int contr
 
 void ProjectManage::save_watch_camera_param(int adl, int brightness, int contrast, int exposure)
 {
-    adlD=adl;
-    brightnessD=brightness;
-    contrastD=contrast;
-    exposureD=exposure;
+    adlW=adl;
+    brightnessW=brightness;
+    contrastW=contrast;
+    exposureW=exposure;
     write_profile_int("WATCH", "BRIGHTNESS",brightnessW, iniFile);
     write_profile_int("WATCH", "CONTRAST",contrastW, iniFile);
     write_profile_int("WATCH", "EXPOSURE",exposureW, iniFile);

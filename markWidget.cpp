@@ -20,7 +20,8 @@ Recorder::Recorder(string prjDir)
     watchPosFileName = prjDir + string("/Watch.pos");
     holePosFileName = prjDir + string("/holes.pos");
     currentIndex = 0;
-    markIndex = 0;
+    currentMarkIndex = 0;
+    currentHoleIndex = 0;
     posVec.clear();
     lastPos = NULL;
     //cout<<watchPosFileName<<endl;
@@ -114,6 +115,7 @@ bool Recorder::is_file_open(ofstream &ofs, string fileName)
         cout<<"open file "<<fileName<<" fail!"<<endl;
         return false;
     }
+    ofs.precision(6);
     return true;
 }
 
@@ -145,16 +147,17 @@ void Recorder::load()
     char buf[lineLength];
     QString lineStr;
     QStringList ld;
+
     ifs.open(watchPosFileName.c_str());
     if(ifs.fail()){
         cout<<"open file "<<watchPosFileName<<" fail!"<<endl;
         return ;
     }
 
-    ifs.getline(buf,lineLength,'\n');
+    ifs.getline(buf,lineLength);
 
     while(!ifs.eof())
-    {
+    {        
         lineStr = QString(buf);
         ld = lineStr.split(" ",QString::SkipEmptyParts);
         double x,y,z,a,b,tpx,tpy,w,h;
@@ -162,8 +165,8 @@ void Recorder::load()
         a = ld[3].toDouble(); b = ld[4].toDouble(); tpx = ld[5].toDouble();
         tpy = ld[6].toDouble(); w = ld[7].toDouble(); h = ld[8].toDouble();
         Position* pos = new Position(x,y,z,a,b,RectangleFrame(Point(tpx,tpy),w,h));
-        posVec.push_back(pos);
-        ifs.getline(buf,lineLength,'\n');
+        posVec.push_back(pos);        
+        ifs.getline(buf,lineLength);
     }
     ifs.close();
 
@@ -188,6 +191,8 @@ void Recorder::load()
     }
     ifs.close();
 }
+
+
 
 
 
@@ -511,7 +516,7 @@ void MarkWidget::mark_view_update(){
         if(autoScanHoleIndex != watchResult.scanHoleIndex){
             autoScanHoleIndex = watchResult.scanHoleIndex;
             markView->receive_image(srcImage);
-            markView->set_hole_pos(holesDetecter->get_positions());
+            markView->set_hole_pos(watchCircleDetecter->get_positions(),watchCircleDetecter->radious());
             markView->set_search_frame(prjManage.searcRectW);
         }
        markView->set_focus_box(false);
@@ -617,10 +622,13 @@ void MarkWidget::auto_detect_watch(){
         capture->get_image(srcImage);
      watchResult.scanHoleIndex++;
 
-     watchResult.scanIndex++;
+     unsigned int markIndex = posRecorder->get_mark_index();
+     const Position* position = posRecorder->get_position(markIndex-1);
+     CvRect roi = position->get_search_cv_area();
+
+     prjManage.searcRectW = roi;
      watchCircleDetecter->detect(srcImage, &prjManage.searcRectW);
      const list<Point>& holesPos = watchCircleDetecter->get_positions();
-
 
      list<Point>::const_iterator it;
      Point pos;
@@ -646,7 +654,7 @@ void MarkWidget::clear_hole_pos()
     posRecorder->holesPosVec.clear();
     watchResult.scanHoleIndex = 0;
     list<Point> empty;
-    markView->set_hole_pos(empty);
+    markView->set_hole_pos(empty,0);
 }
 
 void MarkWidget::cv_cmd_cycle()
@@ -693,8 +701,8 @@ void MarkWidget::cv_cmd_cycle()
             auto_detect_diamond();
         }
         else if(cmd==2){
-            auto_detect_watch();
             posRecorder->incr_mark_index(1);
+            auto_detect_watch();
             if(posRecorder->get_mark_index()==posRecorder->get_pos_num()){
                 posRecorder->finish_record_hole_pos();
                 posRecorder->set_mark_index(0);
@@ -734,7 +742,7 @@ void MarkWidget::fast_react_cycle(){
         *halpins->posCmd=0;
     }
      else if(*halpins->posCmd==3){
-         const Position* pos = *(posRecorder->holeIter);
+         const Position* pos = (posRecorder->holesPosVec)[posRecorder->get_hole_index()];
          if(pos)
          {
              *halpins->posAxis[0]=pos->get_value(0);
@@ -742,7 +750,8 @@ void MarkWidget::fast_react_cycle(){
              *halpins->posAxis[2]=pos->get_value(2);
              *halpins->posAxis[3]=pos->get_value(3);
              *halpins->posAxis[4]=pos->get_value(4);
-             posRecorder->holeIter++;
+             //posRecorder->holeIter++;
+             posRecorder->incr_hole_index(1);
          }
 
          *halpins->posCmd = 0;
@@ -753,31 +762,20 @@ void MarkWidget::fast_react_cycle(){
         *halpins->reachCmd=0;
         markView->set_diamond_sum((int)watchResult.dimamondPos.size());
     }
-    else if(*halpins->reachCmd==2){
-        const Position* pos = posRecorder->get_last_position();
-        if(pos)
-        {
-            RectangleFrame rect = pos->get_search_area();
-            markView->set_search_frame(cvRect(rect.get_top_left().x(),rect.get_top_left().y(),
-                                              rect.get_width(),rect.get_height()));
-        }
-        *halpins->reachCmd=0;        
-    }
 
-    if(posRecorder->get_current_index()<=posRecorder->get_pos_num()){
+
+    if(posRecorder->get_current_index()<=posRecorder->get_pos_num())
         *halpins->watchPosValid = 1;
-    }
-    else{
+    else
         *halpins->watchPosValid = 0;
-    }
-
 
     if(watchResult.dimamondPos.size())
         *halpins->posValid=1;   
     else
         *halpins->posValid=0;  
 
-    if(posRecorder->holeIter!=(posRecorder->holesPosVec).end())
+    //if(posRecorder->holeIter!=(posRecorder->holesPosVec).end())
+    if(posRecorder->get_hole_index()<=(posRecorder->holesPosVec).size())
         *halpins->watchHoleValid = 1;
     else
         *halpins->watchHoleValid = 0;
@@ -1143,21 +1141,14 @@ void MarkWidget::get_first_pos()
                 pos->get_value(2),pos->get_value(3),pos->get_value(4));
         emc_mdi(buf);
         emcStatus.stopToManual=true;
-        rect = pos->get_search_area();
-        markView->set_search_frame(cvRect(rect.get_top_left().x(),rect.get_top_left().y(),rect.get_width(),rect.get_height()));
+        markView->set_search_frame(pos->get_search_cv_area());
     }
 #endif
-
-    QString tmpNumStr;
-    //tmpNumStr.setNum(posRecorder->get_current_index());
-    //lb_posNum->setText(tmpNumStr);
-
 }
 
 void MarkWidget::get_next_pos()
 {
     char buf[128];
-    RectangleFrame rect;
     const Position* pos = posRecorder->next_position();
 #ifdef WITH_EMC
     if(pos)
@@ -1167,13 +1158,9 @@ void MarkWidget::get_next_pos()
                 pos->get_value(2),pos->get_value(3),pos->get_value(4));
         emc_mdi(buf);
         emcStatus.stopToManual=true;
-        rect = pos->get_search_area();
-        markView->set_search_frame(cvRect(rect.get_top_left().x(),rect.get_top_left().y(),rect.get_width(),rect.get_height()));
+        markView->set_search_frame(pos->get_search_cv_area());
     }
 #endif
-    QString tmpNumStr;
-    //tmpNumStr.setNum(posRecorder->get_current_index());
-    //lb_posNum->setText(tmpNumStr);
 }
 
 
@@ -1271,7 +1258,8 @@ void MarkWidget::set_all_holes()
 {
     if((posRecorder->holesPosVec).size()<=0)
         return;
-    posRecorder->holeIter = (posRecorder->holesPosVec).begin();
+    //posRecorder->holeIter = (posRecorder->holesPosVec).begin();
+    posRecorder->set_hole_index(0);
 #ifdef WITH_EMC
     MarkHalPins* halpins=halData->halpins;
     *halpins->watchHoleValid = 1;
@@ -1281,8 +1269,6 @@ void MarkWidget::set_all_holes()
     emc_run(0);
     emcStatus.stopToManual=true;
 #endif
-    //posRecorder->finish_record_hole_pos();
-
 }
 
 

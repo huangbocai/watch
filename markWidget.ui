@@ -923,7 +923,7 @@
      <property name="title">
       <string>拍摄位置录入</string>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>1</x>
@@ -1001,7 +1001,7 @@
          <item>
           <widget class="QPushButton" name="bt_recordGluePosZ">
            <property name="text">
-            <string>上胶高度</string>
+            <string>滴胶高度</string>
            </property>
           </widget>
          </item>

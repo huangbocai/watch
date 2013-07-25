@@ -98,7 +98,7 @@ void Recorder::finish_record_hole_pos()
     ofstream ofs;
     vector<Position*>::iterator iter;
     bool isFileOpen = is_file_open(ofs,holePosFileName);
-    holesPosVec = sort();
+    sort();
     if(isFileOpen){
         for(iter = holesPosVec.begin(); iter != holesPosVec.end(); iter++){
             ofs<<(*iter)->x()<<" "<<(*iter)->y()<<" "<<(*iter)->z()<<" "
@@ -106,22 +106,6 @@ void Recorder::finish_record_hole_pos()
         }
     }
     ofs.close();
-
-    /*
-    vector<Position*> tmp =  sort();
-    printf("sort\nvecter size: %d", tmp.size());
-
-    //vector<Position*>::iterator iter;
-    isFileOpen = is_file_open(ofs,string("/home/u/pos"));
-
-    if(isFileOpen){
-        for(iter = tmp.begin(); iter != tmp.end(); iter++){
-            ofs<<(*iter)->x()<<" "<<(*iter)->y()<<" "<<(*iter)->z()<<" "
-              <<(*iter)->a()<<" "<<(*iter)->b()<<endl;
-        }
-    }
-    ofs.close();
-    */
 }
 
 bool Recorder::is_file_open(ofstream &ofs, string fileName)
@@ -208,47 +192,41 @@ void Recorder::load()
     ifs.close();
 }
 
-vector<Position*> Recorder::sort()
+void Recorder::sort()
 {
-    unsigned int i=0,j=0,k=0,h=0,g=0;
-    Position *pos,*pos1,*pos2,*tmpPos;
-    vector<Position*> tmpVec, tmpHolesVec;
-    double tmpL;
-    for(i = 0; i<holesPosVec.size();){
+    unsigned int i,j, g=0;
+    Position* pos;
+    Position* pos1;
+    Position* tmpPos;
+    double tmpB,tmpL;
+
+    for(i=0; i<holesPosVec.size()-1; i++){
         pos = holesPosVec[i];
-        for(j=i;j<holesPosVec.size();j++){
+        Vector2 v1(Point(0,0),Point(pos->x(),pos->y()));
+        tmpB = pos->b();
+        tmpL = v1.length();
+        g = i;
+        for(j = i+1; j<holesPosVec.size();j++){
             pos1 = holesPosVec[j];
-            if(pos1->b()==pos->b()){
-                tmpVec.push_back(pos1);
+            Vector2 v2(Point(0,0),Point(pos1->x(),pos1->y()));
+            if(tmpB-pos1->b()>0.0001){
+                g = j;
+                tmpB = pos1->b();
+                tmpL = v2.length();
             }
-            else
-                break;
-        }
-
-        i = j;
-
-        for(k = 0; k<tmpVec.size();k++){
-            pos1 = tmpVec[k];
-            Vector2 v1(Point(0,0),Point(pos1->x(),pos1->y()));
-            tmpL = v1.length();
-            for(h = k; h<tmpVec.size();h++){
-                pos2 = tmpVec[h];
-                Vector2 v2(Point(0,0),Point(pos2->x(),pos2->y()));
-                if(tmpL>=v2.length()){
+            else if(fabs(tmpB - pos1->b())<0.0001){
+                if(tmpL>v2.length()){
+                    g = j;
+                    tmpB = pos1->b();
                     tmpL = v2.length();
-                    g = h;
                 }
             }
 
-            tmpPos = tmpVec[k];
-            tmpVec[k] = tmpVec[g];
-            tmpVec[g] = tmpPos;
-            tmpHolesVec.push_back(tmpVec[k]);
         }
-        tmpVec.clear();
+        tmpPos = holesPosVec[i];
+        holesPosVec[i] = holesPosVec[g];
+        holesPosVec[g] = tmpPos;
     }
-
-    return tmpHolesVec;
 }
 
 
@@ -522,6 +500,10 @@ void MarkWidget::image_page_init(){
 
 void MarkWidget::adjust_page_init(){
      char buf[16];
+     sprintf(buf, "%8.3lf", param.referenceX);
+     lb_holeDetectX->setText(buf);
+     sprintf(buf, "%8.3lf", param.referenceY);
+     lb_holeDetectY->setText(buf);
      sprintf(buf, "%8.3f", param.pickRelx);
      lb_ccdOffsetX->setText(buf);
      sprintf(buf, "%8.3f", param.pickRely);
@@ -806,9 +788,9 @@ void MarkWidget::fast_react_cycle(){
              *halpins->posAxis[2]=pos->get_value(2);
              *halpins->posAxis[3]=pos->get_value(3);
              *halpins->posAxis[4]=pos->get_value(4);
-             //posRecorder->holeIter++;
-             posRecorder->incr_hole_index(1);
+             //posRecorder->holeIter++;             
          }
+         posRecorder->incr_hole_index(1);
 
          *halpins->posCmd = 0;
      }
@@ -1494,8 +1476,8 @@ void MarkWidget::input_hole_pos_pressed(){
 
     x=emcStatus.cmdAxis[0];
     y=emcStatus.cmdAxis[1];
-    param.pickRelx=x-param.referenceX;
-    param.pickRely=y-param.referenceY;
+    param.pickRelx=param.referenceX-x;
+    param.pickRely=param.referenceY-y;
     sprintf(buf, "%8.3lf", x);
     lb_holeX->setText(buf);
     sprintf(buf, "%8.3lf", y);
@@ -1548,8 +1530,8 @@ void MarkWidget::input_glue_pos_pressed(){
     char buf[32];
     double x=emcStatus.cmdAxis[0];
     double y=emcStatus.cmdAxis[1];
-    param.glueRelx=x-param.referenceX;
-    param.glueRely=y-param.referenceY;
+    param.glueRelx=param.referenceX-x;
+    param.glueRely=param.referenceY-y;
 
     sprintf(buf, "%8.3lf", x);
     lb_glueX->setText(buf);

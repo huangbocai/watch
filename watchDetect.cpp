@@ -259,8 +259,15 @@ const list<Point>& WatchCircleDetecter::detect(IplImage *image, CvRect *roi){
     vector<double> yWeight;
 
     //copy ROI
-    if(roi)
+    if(roi){
+        if(roi->x<0 ||roi->y<0 ||roi->width<m_pattern->width || roi->height<m_pattern->height
+                || roi->x+roi->width>image->width || roi->y+roi->height>image->height)
+        {
+            printf("intersting area is error\n");
+            return m_centers;
+        }
         m_roi=*roi;
+    }
     else
         m_roi=cvRect(0, 0, image->width, image->height);
     if(m_roiImage==NULL){

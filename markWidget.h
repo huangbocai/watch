@@ -128,7 +128,7 @@ private:
     string watchPosFileName;
     string holePosFileName;
     vector<Position*> posVec;
-    static const int lineLength = 64;
+    static const int lineLength = 128;
     const Position* lastPos;
     double glueZPos;
 };
@@ -143,6 +143,32 @@ public:
     const char* get_version();
     const char* get_current_project()const;
    ~MarkWidget();
+
+    //emc controler
+    void machine_open(int cmd);
+    void home();
+    void zero();
+    double get_fast_velocity(){return param.fastVel;}
+    double get_slow_velocity(){return param.slowVel;}
+    void set_fast_velocity(double vel);
+    void set_slow_velocity(double vel);
+    void jog(int axis, double velocity);
+    void end_jog(int axis);
+
+    void scan_diamon();
+    void scan_watch();
+    void set_glue();
+    void set_diamond();
+    void auto_run();
+    void pause();
+    void stop();
+
+    void set_io(int index , bool on);
+
+
+signals:
+    void update_emc_status(const MarkEmcStatus& status);
+    void update_infor(const Information& infor);
 
 private slots:  
 
@@ -176,6 +202,9 @@ private slots:
     void set_first_hole();
     void set_next_hole();
     void set_all_holes();
+    void set_diamond_in_all_holes();
+    void auto_set_diamond();
+    void half_auto_set_diamond();
 
     //image page
     void focus_point_select(int x, int y);
@@ -236,6 +265,7 @@ private:
     IplImage* srcImage;
 
     Recorder* posRecorder;
+    Information infor;
 
     CirclesDetecter* circlesDetecter;
     WatchCircleDetecter* watchCircleDetecter;

@@ -52,16 +52,21 @@ public:
     ~WatchCircleDetecter();
 
 private:
-     void setCirclePattern(const IplImage* pattern, float R, int outWidth=5, float likelihood=0.6);
-     bool m_patternIsNew;
-     IplImage* m_patternImage;
-     CvMat* m_pattern;
-     IplImage* m_roiImage;
-     IplImage* m_convolution;
-     CvRect m_roi;
-     float m_R;
-     double m_threshold;
-     list<Point> m_centers;
+    static const int maxLevel=10;
+    static const int blockRange=5;
+    CvMat* createIdealPattern(float R, float outWidth);
+    void setCirclePattern(const IplImage* pattern, float R, float outWidth=5, float likelihood=0.6);
+    bool m_patternIsNew;
+    IplImage* m_patternImage;
+    int level;
+    CvMat* m_pattern[maxLevel];
+    IplImage* m_roiImage[maxLevel];
+    IplImage* m_convolution[maxLevel];
+    IplImage* m_blockImage[maxLevel];
+    CvRect m_roi;
+    float m_R;
+    double m_threshold;
+    list<Point> m_centers;
 };
 
 

@@ -27,8 +27,20 @@ int Mark2Param::load(const char* iniFile)
     ini_get_double_param(&inifile, "MARK", "DEGREE_INCREASE", &degInc, 0);
     ini_get_string_param(&inifile, "RS274NGC", "PARAMETER_FILE", varFile,"");
     ini_get_string_param(&inifile, "MARK", "CURRENT_PROJECT", projectName, "test1");
+    ini_get_double_param(&inifile, "DISPLAY", "MAX_LINEAR_VELOCITY", &fastVel,200);
+    ini_get_double_param(&inifile, "DISPLAY", "MIN_LINEAR_VELOCITY", &slowVel,100);
 	inifile.Close();
 	return 0;
+}
+
+void Mark2Param::save_fast_velocity(const char* iniFile)
+{
+    write_profile_double("DISPLAY", "MAX_LINEAR_VELOCITY", fastVel,iniFile);
+}
+
+void Mark2Param::save_slow_velocity(const char* iniFile)
+{
+    write_profile_double("DISPLAY", "MIN_LINEAR_VELOCITY", slowVel,iniFile);
 }
 
 

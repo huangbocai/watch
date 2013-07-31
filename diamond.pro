@@ -20,8 +20,7 @@ HEADERS += markWidget.h \
     camera.hh \
     photoCapture.hh \
     displayModel.h  \
-    imageMeasure.hh \
-    patternEditerWidget.h \
+    imageMeasure.hh \    
     markView.h \
     markEMC.h \
     loadRecordDialog.h \
@@ -30,10 +29,14 @@ HEADERS += markWidget.h \
     diamodWidget.h \
     emcsecnml.hh \
     emcsec.hh \
-    iniwrite.hh
+    iniwrite.hh \
+    watchdiamondwidget.h \
+
 
 FORMS += markWidget.ui \
-    loadRecordDialog.ui
+    loadRecordDialog.ui \
+    watchdiamondwidget.ui \
+
 
 SOURCES += markWidget.cpp \
     dhCamera.cc \
@@ -49,7 +52,9 @@ SOURCES += markWidget.cpp \
     watchDetect.cpp \
     main.cpp \
     watchConfig.cc \
-    diamodWidget.cpp
+    diamodWidget.cpp \
+    watchdiamondwidget.cpp \
+
 
 RESOURCES +=
 

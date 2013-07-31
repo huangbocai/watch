@@ -15,6 +15,12 @@ public:
 //    void save_sim();
 //    int save_project(const char* directory);
 
+    //velocity
+    double fastVel;
+    double slowVel;
+    void save_fast_velocity(const char* iniFile);
+    void save_slow_velocity(const char* iniFile);
+
     //common param
     double referenceX;
     double referenceY;

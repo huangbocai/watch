@@ -116,7 +116,7 @@ MarkHal::MarkHal()
 
 
 
-void MarkEmcStatus::update(){
+void MarkEmcStatus::update(){    
     emc_update(NULL);
     emc_abs_act_pos(actualAxis+0, 0);
     emc_abs_act_pos(actualAxis+1, 1);
@@ -147,6 +147,16 @@ void MarkEmcStatus::update(){
         hasStop=false;
         stopComfirm=false;
     }
+    if(homeing){
+        if(fabs(lastActualAxis[2]-actualAxis[2])<0.001&&fabs(actualAxis[2]-0)<0.001){
+            emc_home(0);
+            emc_home(1);
+            emc_home(3);
+            emc_home(4);
+            homeing = false;
+        }
+    }
+
     for(int i=0;i<5; i++)
         lastActualAxis[i]=actualAxis[i];
 }

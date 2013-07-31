@@ -36,17 +36,36 @@ public:
 class MarkEmcStatus
 {
 public:
-    MarkEmcStatus():stopToManual(false),mode(EMC_TASK_MODE_MANUAL){}
+    MarkEmcStatus():stopToManual(false),homeing(false),mode(EMC_TASK_MODE_MANUAL){}
     void update();
     double cmdAxis[5];
     bool hasStop;
     bool stopToManual;
+    bool homeing;
     enum EMC_TASK_INTERP_ENUM programStaut;
     enum EMC_TASK_MODE_ENUM mode;
 private:
     double actualAxis[5];
     double lastActualAxis[5];
-    bool stopComfirm;
+    bool stopComfirm;    
+};
+
+class Information
+{
+public:
+    Information():watchPosIndex(0),gluePosIndex(0),holePosIndex(0),
+        diamondNum(0),watchPosNum(0),holePosNum(0),endAutoRun(true){}
+
+    int watchPosIndex;
+    int gluePosIndex;
+    int holePosIndex;
+
+    int diamondNum;
+    int watchPosNum;    
+    int holePosNum;
+
+    bool endAutoRun;
+
 };
 
 

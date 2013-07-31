@@ -55,7 +55,7 @@ private:
     static const int maxLevel=10;
     static const int blockRange=5;
     CvMat* createIdealPattern(float R, float outWidth);
-    void setCirclePattern(const IplImage* pattern, float R, float outWidth=5, float likelihood=0.6);
+    void setCirclePattern(const IplImage* pattern, float R, float outWidth=5, float likelihood=0.75);
     bool m_patternIsNew;
     IplImage* m_patternImage;
     int level;

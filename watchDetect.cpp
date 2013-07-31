@@ -334,6 +334,11 @@ const list<Point>& WatchCircleDetecter::detect(IplImage *image, CvRect *roi){
     if(m_convolution[level]==NULL){
         m_convolution[level]=cvCreateImage(cvGetSize(m_roiImage[level]), IPL_DEPTH_32F, 1);
     }
+    else if(m_convolution[level]->width!=m_roiImage[level]->width
+            || m_convolution[level]->height!=m_roiImage[level]->height){
+        cvReleaseImage(&m_convolution[level]);
+        m_convolution[level]=cvCreateImage(cvGetSize(m_roiImage[level]), IPL_DEPTH_32F, 1);
+    }
     cvFilter2D(m_roiImage[level], m_convolution[level], m_pattern[level], cvPoint(0,0));
 
 
@@ -452,7 +457,7 @@ const list<Point>& WatchCircleDetecter::detect(IplImage *image, CvRect *roi){
     }
 
     for(it=m_centers.begin();it!=m_centers.end();it++){
-        it->set(it->x()+(m_pattern[0]->width-1)/2.0, it->y()+(m_pattern[0]->height-1)/2.0);
+        it->set(it->x()+(m_pattern[0]->width-1)/2.0+roi->x, it->y()+(m_pattern[0]->height-1)/2.0+roi->y);
     }
 
     return m_centers;

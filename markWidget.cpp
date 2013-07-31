@@ -649,8 +649,7 @@ void MarkWidget::slow_cycle(){
 }
 
 void MarkWidget::auto_detect_diamond(){
-    if(capture)
-        capture->get_image(srcImage);
+
     circlesDetecter->detect(srcImage);
     const list<Point>& imgPos =circlesDetecter->get_positions();
     watchResult.scanIndex++;
@@ -667,10 +666,7 @@ void MarkWidget::auto_detect_diamond(){
 }
 
 void MarkWidget::auto_detect_watch(){
-    if(capture)
-        capture->get_image(srcImage);
      watchResult.scanHoleIndex++;
-
      unsigned int markIndex = posRecorder->get_mark_index();
      const Position* position = posRecorder->get_position(markIndex-1);
      assert(position!=NULL);
@@ -748,13 +744,18 @@ void MarkWidget::cv_cmd_cycle()
 
     case MARK_DETECT:
         if(cmd==1){
+            if(capture)
+                capture->get_image(srcImage);
+            *halpins->cvCmd=0;
             auto_detect_diamond();
             infor.diamondNum = watchResult.dimamondPos.size();
         }
         else if(cmd==2){
+            if(capture)
+                capture->get_image(srcImage);
+            *halpins->cvCmd=0;
             posRecorder->incr_mark_index(1);
             auto_detect_watch();
-            //infor.holePosNum = (posRecorder->holesPosVec).size();
             infor.holePosIndex = 0;
             infor.gluePosIndex = 0;
             if(posRecorder->get_mark_index()==posRecorder->get_pos_num()){
@@ -763,8 +764,8 @@ void MarkWidget::cv_cmd_cycle()
             }
             markView->set_hole_pos(watchCircleDetecter->get_positions(), watchCircleDetecter->radious());
         }
-
-        *halpins->cvCmd=0;
+        else
+            *halpins->cvCmd=0;
         state=MARK_IDLE;
         break;
 

@@ -430,6 +430,8 @@ void MarkWidget::watch_page_init()
     le_rotateDeg->setText(QString::fromUtf8(buf));
     sprintf(buf,"%.3f",prjManage.glueZPos);
     le_glueZValue->setText(buf);
+    sprintf(buf,"%.3f",prjManage.setDiamondZPos);
+    le_setDZVlaue->setText(buf);
 
     int w=patternViewFrame1->width();
     int h=patternViewFrame1->height();
@@ -471,6 +473,7 @@ void MarkWidget::watch_page_init()
     connect(bt_setNextHole,SIGNAL(clicked()),this,SLOT(set_next_hole()));
     connect(bt_setAllHoles,SIGNAL(clicked()),this,SLOT(set_all_holes()));
     connect(bt_recordGluePosZ,SIGNAL(clicked()),this,SLOT(set_glue_z_pos()));
+    connect(bt_recordSetDPosZ,SIGNAL(clicked()),this,SLOT(set_setdiamond_z_pos()));
 }
 
 
@@ -683,7 +686,7 @@ void MarkWidget::auto_detect_watch(){
      for(it=holesPos.begin();it!=holesPos.end();it++){
          pos=transfMatrix->transform(it->x(), it->y());
          pos.move(vm);
-         Position* hole = new Position(pos.x(),pos.y(),prjManage.glueZPos,emcStatus.cmdAxis[3],emcStatus.cmdAxis[4]);
+         Position* hole = new Position(pos.x(),pos.y(),emcStatus.cmdAxis[2],emcStatus.cmdAxis[3],emcStatus.cmdAxis[4]);
          posRecorder->holesPosVec.push_back(hole);
      }
 }
@@ -802,7 +805,8 @@ void MarkWidget::fast_react_cycle(){
              {
                  *halpins->posAxis[0]=pos->get_value(0)-param.glueRelx;
                  *halpins->posAxis[1]=pos->get_value(1)-param.glueRely;
-                 *halpins->posAxis[2]=pos->get_value(2);
+                 //*halpins->posAxis[2]=pos->get_value(2);
+                 *halpins->posAxis[2]=prjManage.glueZPos;
                  *halpins->posAxis[3]=pos->get_value(3);
                  *halpins->posAxis[4]=pos->get_value(4);
              }             
@@ -819,7 +823,7 @@ void MarkWidget::fast_react_cycle(){
              {
                  *halpins->posAxis[0]=pos->get_value(0)-param.pickRelx;
                  *halpins->posAxis[1]=pos->get_value(1)-param.pickRely;
-                 *halpins->posAxis[2]=pos->get_value(2);
+                 *halpins->posAxis[2]=prjManage.setDiamondZPos;
                  *halpins->posAxis[3]=pos->get_value(3);
                  *halpins->posAxis[4]=pos->get_value(4);
              }
@@ -1147,6 +1151,15 @@ void MarkWidget::set_glue_z_pos()
     sprintf(buf, "%.3f", prjManage.glueZPos);
     le_glueZValue->setText(QString::fromUtf8(buf));
     write_profile_double("WATCH", "GLUE_Z_POS", prjManage.glueZPos, prjManage.ini_file());
+}
+//设置镶钻高度
+void MarkWidget::set_setdiamond_z_pos()
+{
+    char buf[32];
+    prjManage.setDiamondZPos=emcStatus.cmdAxis[2];
+    sprintf(buf, "%.3f", prjManage.setDiamondZPos);
+    le_setDZVlaue->setText(QString::fromUtf8(buf));
+    write_profile_double("WATCH", "SET_DIAMOND_Z_POS", prjManage.setDiamondZPos, prjManage.ini_file());
 }
 
 void MarkWidget::record_cam_pos()

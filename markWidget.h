@@ -192,6 +192,7 @@ private slots:
     //watch page
     void change_angle();
     void set_glue_z_pos();
+    void set_setdiamond_z_pos();
     void record_cam_pos();
     void abandon_current_pos();
     void abandon_all_pos();

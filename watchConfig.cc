@@ -106,6 +106,8 @@ int ProjectManage::load(const char* projectName){
 
     ini_get_double_param(&inifile,"WATCH", "GLUE_Z_POS",&glueZPos,0);
 
+    ini_get_double_param(&inifile,"WATCH", "SET_DIAMOND_Z_POS",&setDiamondZPos,0);
+
     return 0;
 }
 

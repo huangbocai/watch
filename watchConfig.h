@@ -90,6 +90,7 @@ public:
     int adlW;
     CvRect searcRectW;
     double glueZPos;
+    double setDiamondZPos; //镶钻高度
 
 private:
     IplImage* patternD;

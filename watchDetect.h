@@ -42,6 +42,8 @@ public:
     WatchCircleDetecter();
     void set_pattern(IplImage* img, const CvRect* area=NULL);
     const list<Point>& detect(IplImage* image, CvRect* roi=NULL);
+    void set_similar(double val){m_threshold=val;}
+    void set_level(int val){m_topLevel=val;}
 
     const list<Point>& get_positions()const {return m_centers;}
     const IplImage* get_pattern()const{return m_patternImage;}
@@ -54,12 +56,12 @@ public:
 private:
     static const int maxLevel=10;
     static const int blockRange=5;
-    CvMat* createIdealPattern(float R, float outWidth);
-    void setCirclePattern(const IplImage* pattern, float R, float outWidth=5, float likelihood=0.75);
+    IplImage* createIdealPattern(float R, float outWidth);
+    void setCirclePattern(const IplImage* pattern, float R, float outWidth=5);
     bool m_patternIsNew;
     IplImage* m_patternImage;
     int level;
-    CvMat* m_pattern[maxLevel];
+    IplImage* m_pattern[maxLevel];
     IplImage* m_roiImage[maxLevel];
     IplImage* m_convolution[maxLevel];
     IplImage* m_blockImage[maxLevel];
@@ -67,6 +69,7 @@ private:
     float m_R;
     double m_threshold;
     list<Point> m_centers;
+    int m_topLevel;
 };
 
 

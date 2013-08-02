@@ -461,6 +461,7 @@ bool WatchCircleDetecter::pattern_is_new(){
 }
 
 IplImage* DiamondCircleDetecter::createIdealPattern(float R, float outWidth){
+    outWidth=10;
     assert(R>1 && outWidth>0);
     int width=2*(outWidth+R)+0.5;
     float center=(width-1)/2.0;

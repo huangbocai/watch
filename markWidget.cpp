@@ -358,9 +358,10 @@ void MarkWidget::start_Capture(int contrastVal, int brightnessVal, int exposureV
 void MarkWidget::detecter_model_init(){
     transfMatrix=new ImageActualTM( TransformMatrix(param.kxx, param.kxy, param.kyx, param.kyy),
         srcImage->width, srcImage->height, 0, 0);
-    circlesDetecter = new CirclesDetecter;
-    circlesDetecter->set_pattern(prjManage.get_diamond_pattern());
-    circlesDetecter->set_area(&prjManage.searcRectD);
+    diamondCirclesDetecter = new DiamondCircleDetecter;
+    diamondCirclesDetecter->set_level(1);
+    diamondCirclesDetecter->set_pattern(prjManage.get_diamond_pattern());
+//    diamondCirclesDetecter->set_area(&prjManage.searcRectD);
     watchCircleDetecter = new WatchCircleDetecter;
     watchCircleDetecter->set_pattern(prjManage.get_watch_pattern());
 }
@@ -554,7 +555,7 @@ void MarkWidget::mark_view_update(){
         if(autoIndex!=watchResult.scanIndex){
             autoIndex=watchResult.scanIndex;
             markView->receive_image(srcImage);
-            markView->set_diamond_pos(circlesDetecter->get_positions());
+            markView->set_diamond_pos(diamondCirclesDetecter->get_positions());
             markView->set_search_frame(prjManage.searcRectD);
         }
         if(autoScanHoleIndex != watchResult.scanHoleIndex){
@@ -600,8 +601,8 @@ void MarkWidget::view_update(){
 
     //pattern image update
 
-    if(circlesDetecter->pattern_is_new()){
-        const IplImage* pattern=circlesDetecter->get_pattern();
+    if(diamondCirclesDetecter->pattern_is_new()){
+        const IplImage* pattern=diamondCirclesDetecter->get_pattern();
         if(pattern){
             patternView->receive_image(pattern);
             patternView->update();
@@ -695,8 +696,8 @@ void MarkWidget::slow_cycle(){
 
     if(bt_detect0->isChecked()){
 
-        circlesDetecter->detect(srcImage);
-        markView->set_diamond_pos(circlesDetecter->get_positions());
+        diamondCirclesDetecter->detect(srcImage, &prjManage.searcRectD);
+        markView->set_diamond_pos(diamondCirclesDetecter->get_positions());
     }
 
     if(bt_detectHoles->isChecked()){
@@ -714,8 +715,8 @@ void MarkWidget::slow_cycle(){
 
 void MarkWidget::auto_detect_diamond(){
 
-    circlesDetecter->detect(srcImage);
-    const list<Point>& imgPos =circlesDetecter->get_positions();
+    diamondCirclesDetecter->detect(srcImage, &prjManage.searcRectD);
+    const list<Point>& imgPos =diamondCirclesDetecter->get_positions();
     watchResult.scanIndex++;
 
     list<Point>::const_iterator it;
@@ -970,8 +971,8 @@ void MarkWidget::select_pattern_toggled(bool checked){
             int ph=frame.get_height()+0.5;
             CvRect rect=cvRect(lt.x()+0.5, lt.y()+0.5, pw, ph);
             if(button == tb_selectPattern0){
-                circlesDetecter->set_pattern(srcImage, &rect);
-                prjManage.save_diamond_pattern(circlesDetecter->get_pattern());
+                diamondCirclesDetecter->set_pattern(srcImage, &rect);
+                prjManage.save_diamond_pattern(diamondCirclesDetecter->get_pattern());
             }
             else{
                 CvRect tmpRect = cvRect(lt.x()-10+0.5,lt.y()-10+0.5, pw+20, ph+20);
@@ -995,7 +996,7 @@ void MarkWidget::search_area_toggled(bool checked){
             int ph=frame.get_height()+0.5;
             if(button == tb_searchArea0 ){
                 prjManage.searcRectD=cvRect(lt.x()+0.5, lt.y()+0.5, pw, ph);
-                circlesDetecter->set_area(&prjManage.searcRectD);
+//                diamondCirclesDetecter->set_area(&prjManage.searcRectD);
                 prjManage.save_diamond_search_area();
             }
             else{
@@ -1617,9 +1618,10 @@ void MarkWidget::adjPos_pressed()
 
     Vector2 vm(emcStatus.cmdAxis[0], emcStatus.cmdAxis[1]);
     if(rb_circle->isChecked()){
-        res=circlesDetecter->detect(srcImage);
-        if(!res){
-            pos=*circlesDetecter->get_positions().begin();
+        const list<Point> positions=diamondCirclesDetecter->detect(srcImage,&prjManage.searcRectD);
+        if(positions.size()>0){
+            res=0;
+            pos=*positions.begin();
             markView->set_diamond_pos(list<Point>(1, pos));
             pos=transfMatrix->transform(pos.x(), pos.y());
             pos.move(vm);
@@ -1703,9 +1705,10 @@ void MarkWidget::detect_hole_presssed(){
     Point pos;
     Vector2 vm(emcStatus.cmdAxis[0], emcStatus.cmdAxis[1]);
     if(rb_circle->isChecked()){
-        res=circlesDetecter->detect(srcImage);
-        if(!res){
-            pos=*circlesDetecter->get_positions().begin();
+        const list<Point>& positions=diamondCirclesDetecter->detect(srcImage, &prjManage.searcRectD);
+        if(positions.size()>0){
+            res=0;
+            pos=*diamondCirclesDetecter->get_positions().begin();
             markView->set_diamond_pos(list<Point>(1, pos));
             pos=transfMatrix->transform(pos.x(), pos.y());
             pos.move(vm);

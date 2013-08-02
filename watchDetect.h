@@ -6,35 +6,37 @@
 #include <vector>
 #include "imageMeasure.hh"
 
-class CirclesDetecter{
-public:
-    CirclesDetecter();
-    void set_figure(int gray, float len, float r);
-    int detect(const IplImage* img);
-    void set_pattern(IplImage* img, const CvRect* area=NULL);
-    void set_area(CvRect*area=NULL);
+//class CirclesDetecter{
+//public:
+//    CirclesDetecter();
+//    void set_figure(int gray, float len, float r);
+//    int detect(const IplImage* img);
+//    void set_pattern(IplImage* img, const CvRect* area=NULL);
+//    void set_area(CvRect*area=NULL);
 
-    const list<Point>& get_positions()const {return positions;}
-    const IplImage* get_pattern()const{return pattern;}
-    bool pattern_is_new();
+//    const list<Point>& get_positions()const {return positions;}
+//    const IplImage* get_pattern()const{return pattern;}
+//    bool pattern_is_new();
 
-    ~CirclesDetecter();
-private:
-    static const int threshold=200;
-    void learn_pattern();
-    IplImage* bitImage;
-    float length;
-    float radious;
-    IplConvKernel* kernel;
-    CvMemStorage* storage;
-    CvSeq*contours;
-    list<Point> positions;
+//    ~CirclesDetecter();
+//private:
+//    static const int threshold=200;
+//    void learn_pattern();
+//    IplImage* bitImage;
+//    float length;
+//    float radious;
+//    IplConvKernel* kernel;
+//    CvMemStorage* storage;
+//    CvSeq*contours;
+//    list<Point> positions;
 
-    IplImage* pattern;
-    bool patternIsNew;
+//    IplImage* pattern;
+//    bool patternIsNew;
 
-    CvRect* validArea;
-};
+//    CvRect* validArea;
+//};
+
+
 
 
 class WatchCircleDetecter{
@@ -44,6 +46,7 @@ public:
     const list<Point>& detect(IplImage* image, CvRect* roi=NULL);
     void set_similar(double val){m_threshold=val;}
     void set_level(int val){m_topLevel=val;}
+    IplImage* createIdealPattern(float R, float outWidth);
 
     const list<Point>& get_positions()const {return m_centers;}
     const IplImage* get_pattern()const{return m_patternImage;}
@@ -56,7 +59,6 @@ public:
 private:
     static const int maxLevel=10;
     static const int blockRange=5;
-    IplImage* createIdealPattern(float R, float outWidth);
     void setCirclePattern(const IplImage* pattern, float R, float outWidth=5);
     bool m_patternIsNew;
     IplImage* m_patternImage;
@@ -72,6 +74,10 @@ private:
     int m_topLevel;
 };
 
-
+class DiamondCircleDetecter : public WatchCircleDetecter
+{
+public:
+     IplImage* createIdealPattern(float R, float outWidth=0);
+};
 
 #endif // WATCHDETECT_H

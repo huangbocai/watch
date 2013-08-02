@@ -297,7 +297,7 @@ private:
     Recorder* posRecorder;
     Information infor;
 
-    CirclesDetecter* circlesDetecter;
+    DiamondCircleDetecter* diamondCirclesDetecter;
     WatchCircleDetecter* watchCircleDetecter;
 
     MarkQtObjects qtObjects;

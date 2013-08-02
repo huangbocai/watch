@@ -94,7 +94,7 @@ public:
     RectangleFrame get_search_frame();
 
     void set_search_frame(CvRect rect);
-    void set_diamond_pos(const list<Point>& pos);
+    void set_diamond_pos(const list<Point>& pos, float R);
     void set_hole_pos(const list<Point>& pos, float R);
     void set_diamond_sum(int sum);
     void set_circle(bool visible, double centerx, double centery, double R);
@@ -155,6 +155,7 @@ private:
     //RectangleFrame searchFrame[4];
 
     list<Point> diamondPos;
+    float diamondR;
     int diamondSum;
 
     list<Point> holesPos;

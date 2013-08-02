@@ -226,8 +226,9 @@ void MarkView::mouseReleaseEvent(QMouseEvent *event){
     }
 }
 
-void MarkView::set_diamond_pos(const list<Point> &pos){
+void MarkView::set_diamond_pos(const list<Point> &pos, float R){
     diamondPos=pos;
+    diamondR=R;
 }
 
 void MarkView::set_hole_pos(const list<Point>& pos, float R){
@@ -278,11 +279,14 @@ void MarkView::draw_diamond_pos(QImage &qImage){
     int x, y;
     float wr=widthRatio;
     float hr=heighRatio;
+    int wR=diamondR*wr+0.5;
+    int hR=diamondR*hr+0.5;
     for(it=diamondPos.begin(); it!=diamondPos.end(); it++){
         x=it->x()*wr+0.5;
         y=it->y()*hr+0.5;
         painter.drawLine(x-5, y, x+5, y);
         painter.drawLine(x, y-5, x, y+5);
+        painter.drawArc(x-wR, y-hR, 2*wR+1, 2*hR+1, 0, 360*16);
     }
 }
 

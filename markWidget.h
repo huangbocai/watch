@@ -69,7 +69,7 @@ public:
     bool operator !=(const Position& pos) const
     {
         for(int i=0; i<5; i++){
-            if(pos.get_value(i) != val[i])
+            if((pos.get_value(i) - val[i])>0.001)
                 return true;
         }
         return false;
@@ -96,10 +96,10 @@ public:
     }
     unsigned int get_current_index(){return currentIndex;}
     //std::string get_file_name(){return fileName;}
-    const Position* first_position();
-    const Position* next_position();        
-    const Position* get_position(unsigned int index);
-    const Position* get_last_position(){return get_position(currentIndex-2);}
+    const Position& first_position();
+    const Position& next_position();
+    const Position& get_position(unsigned int index);
+    const Position& get_last_position(){return get_position(currentIndex-2);}
     void load();
     void clear_holes_pos() {holesPosVec.clear();}
     void set_mark_index(unsigned int index) {currentMarkIndex = index;}
@@ -123,8 +123,8 @@ private:
     bool is_file_open(ofstream& ofs, string fileName);
 
 public:
-    vector<Position*> holesPosVec;
-    vector<Position*>::iterator holeIter;
+    vector<Position> holesPosVec;
+    vector<Position>::iterator holeIter;
 
 private:
     unsigned int currentIndex;
@@ -133,7 +133,7 @@ private:
     unsigned int currentGlueHoleIndex;
     string watchPosFileName;
     string holePosFileName;
-    vector<Position*> posVec;
+    vector<Position> posVec;
     static const int lineLength = 128;
     const Position* lastPos;
     double glueZPos;

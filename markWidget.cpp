@@ -31,16 +31,16 @@ Recorder::Recorder(string prjDir)
 
 void Recorder::record_current_pos(double x, double y, double z, double a, double b ,RectangleFrame rect)
 {
-    Position* pos = new Position(x,y,z,a,b,rect);
+    Position pos (x,y,z,a,b,rect);
     if(posVec.size()>0)
     {
-        Position* currentPos = posVec.back();
-        if(*currentPos != *pos){
+        Position currentPos = posVec.back();
+        if(currentPos != pos){
             posVec.push_back(pos);
         }
         else{
             cout<<"This position had aready recorded!"<<endl;
-            delete pos;
+            //delete pos;
         }
     }
     else
@@ -79,14 +79,14 @@ void Recorder::abandon_all_pos()
 void Recorder::finish_record_cam_pos()
 {
     ofstream ofs;
-    vector<Position*>::iterator iter;
+    vector<Position>::iterator iter;
     bool isFileOpen = is_file_open(ofs,watchPosFileName);
 
     if(isFileOpen){
         for(iter = posVec.begin(); iter != posVec.end();iter++){
-            RectangleFrame rect = (*iter)->get_search_area();
-            ofs<<(*iter)->x()<<" "<<(*iter)->y()<<" "<<(*iter)->z()<<" "
-              <<(*iter)->a()<<" "<<(*iter)->b()<<" "
+            RectangleFrame rect = (*iter).get_search_area();
+            ofs<<(*iter).x()<<" "<<(*iter).y()<<" "<<(*iter).z()<<" "
+              <<(*iter).a()<<" "<<(*iter).b()<<" "
              <<rect.get_top_left().x()<<" "<<rect.get_top_left().y()<<" "
             <<rect.get_width()<<" "<<rect.get_height()<<endl;
         }
@@ -97,13 +97,13 @@ void Recorder::finish_record_cam_pos()
 void Recorder::finish_record_hole_pos()
 {
     ofstream ofs;
-    vector<Position*>::iterator iter;
+    vector<Position>::iterator iter;
     bool isFileOpen = is_file_open(ofs,holePosFileName);
-    sort();
+    sort();    
     if(isFileOpen){
         for(iter = holesPosVec.begin(); iter != holesPosVec.end(); iter++){
-            ofs<<(*iter)->x()<<" "<<(*iter)->y()<<" "<<(*iter)->z()<<" "
-              <<(*iter)->a()<<" "<<(*iter)->b()<<endl;
+            ofs<<(*iter).x()<<" "<<(*iter).y()<<" "<<(*iter).z()<<" "
+              <<(*iter).a()<<" "<<(*iter).b()<<endl;
         }
     }
     ofs.close();
@@ -120,25 +120,25 @@ bool Recorder::is_file_open(ofstream &ofs, string fileName)
     return true;
 }
 
-const Position* Recorder::first_position()
+const Position &Recorder::first_position()
 {
     currentIndex = 0;
     return get_position(currentIndex++);
 }
 
-const Position* Recorder::next_position()
+const Position& Recorder::next_position()
 {
     if(currentIndex>=posVec.size())
         currentIndex = 0;
     return get_position(currentIndex++);
 }
 
-const Position* Recorder::get_position(unsigned int index)
+const Position &Recorder::get_position(unsigned int index)
 {
     if(index<posVec.size())
         return posVec[index];
-    else
-        return NULL;
+    //else
+    //    return NULL;
 }
 
 
@@ -165,7 +165,7 @@ void Recorder::load()
         x = ld[0].toDouble(); y = ld[1].toDouble(); z = ld[2].toDouble();
         a = ld[3].toDouble(); b = ld[4].toDouble(); tpx = ld[5].toDouble();
         tpy = ld[6].toDouble(); w = ld[7].toDouble(); h = ld[8].toDouble();
-        Position* pos = new Position(x,y,z,a,b,RectangleFrame(Point(tpx,tpy),w,h));
+        Position pos(x,y,z,a,b,RectangleFrame(Point(tpx,tpy),w,h));
         posVec.push_back(pos);        
         ifs.getline(buf,lineLength);
     }
@@ -186,7 +186,7 @@ void Recorder::load()
         double x,y,z,a,b;
         x = ld[0].toDouble(); y = ld[1].toDouble(); z = ld[2].toDouble();
         a = ld[3].toDouble(); b = ld[4].toDouble();
-        Position* pos = new Position(x,y,z,a,b);
+        Position pos(x,y,z,a,b);
         holesPosVec.push_back(pos);
         ifs.getline(buf,lineLength,'\n');
     }
@@ -196,29 +196,33 @@ void Recorder::load()
 void Recorder::sort()
 {
     unsigned int i,j, g=0;
-    Position* pos;
-    Position* pos1;
-    Position* tmpPos;
+    Position pos;
+    Position pos1;
+    Position tmpPos;
     double tmpB,tmpL;
+
+    //printf("\nsize: %d\n\n",holesPosVec.size());
+    if(holesPosVec.size()==0)
+        return;
 
     for(i=0; i<holesPosVec.size()-1; i++){
         pos = holesPosVec[i];
-        Vector2 v1(Point(0,0),Point(pos->x(),pos->y()));
-        tmpB = pos->b();
+        Vector2 v1(Point(0,0),Point(pos.x(),pos.y()));
+        tmpB = pos.b();
         tmpL = v1.length();
         g = i;
         for(j = i+1; j<holesPosVec.size();j++){
             pos1 = holesPosVec[j];
-            Vector2 v2(Point(0,0),Point(pos1->x(),pos1->y()));
-            if(tmpB-pos1->b()>0.0001){
+            Vector2 v2(Point(0,0),Point(pos1.x(),pos1.y()));
+            if(tmpB-pos1.b()>0.0001){
                 g = j;
-                tmpB = pos1->b();
+                tmpB = pos1.b();
                 tmpL = v2.length();
             }
-            else if(fabs(tmpB - pos1->b())<0.0001){
+            else if(fabs(tmpB - pos1.b())<0.0001){
                 if(tmpL>v2.length()){
                     g = j;
-                    tmpB = pos1->b();
+                    tmpB = pos1.b();
                     tmpL = v2.length();
                 }
             }
@@ -732,10 +736,8 @@ void MarkWidget::auto_detect_diamond(){
 void MarkWidget::auto_detect_watch(){
      watchResult.scanHoleIndex++;
      unsigned int markIndex = posRecorder->get_mark_index();
-     const Position* position = posRecorder->get_position(markIndex-1);
-     assert(position!=NULL);
-     CvRect roi = position->get_search_cv_area();
-
+     const Position& position = posRecorder->get_position(markIndex-1);
+     CvRect roi = position.get_search_cv_area();
      prjManage.searcRectW = roi;     
      watchCircleDetecter->detect(srcImage, &prjManage.searcRectW);     
      const list<Point>& holesPos = watchCircleDetecter->get_positions();
@@ -746,7 +748,7 @@ void MarkWidget::auto_detect_watch(){
      for(it=holesPos.begin();it!=holesPos.end();it++){
          pos=transfMatrix->transform(it->x(), it->y());
          pos.move(vm);
-         Position* hole = new Position(pos.x(),pos.y(),emcStatus.cmdAxis[2],emcStatus.cmdAxis[3],emcStatus.cmdAxis[4]);
+         Position hole(pos.x(),pos.y(),emcStatus.cmdAxis[2],emcStatus.cmdAxis[3],emcStatus.cmdAxis[4]);
          posRecorder->holesPosVec.push_back(hole);
      }
 }
@@ -822,10 +824,13 @@ void MarkWidget::cv_cmd_cycle()
             auto_detect_watch();
             infor.holePosIndex = 0;
             infor.gluePosIndex = 0;
+
             if(posRecorder->get_mark_index()==posRecorder->get_pos_num()){
+
                 posRecorder->finish_record_hole_pos();                
                 posRecorder->set_mark_index(0);
             }
+
             markView->set_hole_pos(watchCircleDetecter->get_positions(), watchCircleDetecter->radious());
         }
         else
@@ -849,15 +854,16 @@ void MarkWidget::fast_react_cycle(){
         *halpins->posCmd=0;
     }
     else if(*halpins->posCmd==2){
-        const Position* pos = posRecorder->get_position(posRecorder->get_current_index());
-        if(pos)
-        {
-            *halpins->posAxis[0]=pos->get_value(0);
-            *halpins->posAxis[1]=pos->get_value(1);
-            *halpins->posAxis[2]=pos->get_value(2);
-            *halpins->posAxis[3]=pos->get_value(3);
-            *halpins->posAxis[4]=pos->get_value(4);
-        }
+         //static int n=0;
+         //printf("get %d\n",n++);
+         const Position& pos = posRecorder->get_position(posRecorder->get_current_index());
+
+         *halpins->posAxis[0]=pos.get_value(0);
+         *halpins->posAxis[1]=pos.get_value(1);
+         *halpins->posAxis[2]=pos.get_value(2);
+         *halpins->posAxis[3]=pos.get_value(3);
+         *halpins->posAxis[4]=pos.get_value(4);
+
         posRecorder->incr_current_index(1);
         *halpins->posCmd=0;
     }
@@ -865,16 +871,15 @@ void MarkWidget::fast_react_cycle(){
          //static int n=0;
          //printf("get %d\n",n++);
          if(posRecorder->get_glue_hole_index()<(posRecorder->holesPosVec).size()){
-             const Position* pos = (posRecorder->holesPosVec)[posRecorder->get_glue_hole_index()];
-             if(pos)
-             {
-                 *halpins->posAxis[0]=pos->get_value(0)-param.glueRelx;
-                 *halpins->posAxis[1]=pos->get_value(1)-param.glueRely;
-                 //*halpins->posAxis[2]=pos->get_value(2);
-                 *halpins->posAxis[2]=prjManage.glueZPos;
-                 *halpins->posAxis[3]=pos->get_value(3);
-                 *halpins->posAxis[4]=pos->get_value(4);
-             }             
+             const Position& pos = (posRecorder->holesPosVec)[posRecorder->get_glue_hole_index()];
+
+             *halpins->posAxis[0]=pos.get_value(0)-param.glueRelx;
+             *halpins->posAxis[1]=pos.get_value(1)-param.glueRely;
+             //*halpins->posAxis[2]=pos->get_value(2);
+             *halpins->posAxis[2]=prjManage.glueZPos;
+             *halpins->posAxis[3]=pos.get_value(3);
+             *halpins->posAxis[4]=pos.get_value(4);
+
          }
 
          posRecorder->incr_glue_hole_index(1);
@@ -883,15 +888,14 @@ void MarkWidget::fast_react_cycle(){
      else if(*halpins->posCmd == 4){
          unsigned int index = posRecorder->get_hole_index();
          if(index<(posRecorder->holesPosVec).size()){
-             const Position* pos = (posRecorder->holesPosVec)[index];
-             if(pos)
-             {
-                 *halpins->posAxis[0]=pos->get_value(0)-param.pickRelx;
-                 *halpins->posAxis[1]=pos->get_value(1)-param.pickRely;
-                 *halpins->posAxis[2]=prjManage.setDiamondZPos;
-                 *halpins->posAxis[3]=pos->get_value(3);
-                 *halpins->posAxis[4]=pos->get_value(4);
-             }
+             const Position& pos = (posRecorder->holesPosVec)[index];
+
+             *halpins->posAxis[0]=pos.get_value(0)-param.pickRelx;
+             *halpins->posAxis[1]=pos.get_value(1)-param.pickRely;
+             *halpins->posAxis[2]=prjManage.setDiamondZPos;
+             *halpins->posAxis[3]=pos.get_value(3);
+             *halpins->posAxis[4]=pos.get_value(4);
+
          }
 
          posRecorder->incr_hole_index(1);
@@ -1293,37 +1297,37 @@ void MarkWidget::get_first_pos()
 {
     char buf[128];
     RectangleFrame rect;
-    const Position* pos = posRecorder->first_position();
+    const Position& pos = posRecorder->first_position();
 #ifdef WITH_EMC
-    if(pos)
-    {
+    //if(pos)
+    //{
         emc_mode(NULL,EMC_TASK_MODE_MDI);
         emc_mdi("g0 g53 z0");
-        sprintf(buf,"g0 g53 x%.3f y%.3f",pos->get_value(0), pos->get_value(1));
+        sprintf(buf,"g0 g53 x%.3f y%.3f",pos.get_value(0), pos.get_value(1));
         emc_mdi(buf);
-        sprintf(buf, "g0 g53 x%.3f y%.3f z%.3f a%.3f b%.3f", pos->get_value(0), pos->get_value(1),
-                pos->get_value(2),pos->get_value(3),pos->get_value(4));
+        sprintf(buf, "g0 g53 x%.3f y%.3f z%.3f a%.3f b%.3f", pos.get_value(0), pos.get_value(1),
+                pos.get_value(2),pos.get_value(3),pos.get_value(4));
         emc_mdi(buf);
         emcStatus.stopToManual=true;
-        markView->set_search_frame(pos->get_search_cv_area());
-    }
+        markView->set_search_frame(pos.get_search_cv_area());
+    //}
 #endif
 }
 
 void MarkWidget::get_next_pos()
 {
     char buf[128];
-    const Position* pos = posRecorder->next_position();
+    const Position pos = posRecorder->next_position();
 #ifdef WITH_EMC
-    if(pos)
-    {
+    //if(pos)
+    //{
         emc_mode(NULL,EMC_TASK_MODE_MDI);
-        sprintf(buf, "g0 g53 x%.3f y%.3f z%.3f a%.3f b%.3f", pos->get_value(0), pos->get_value(1),
-                pos->get_value(2),pos->get_value(3),pos->get_value(4));
+        sprintf(buf, "g0 g53 x%.3f y%.3f z%.3f a%.3f b%.3f", pos.get_value(0), pos.get_value(1),
+                pos.get_value(2),pos.get_value(3),pos.get_value(4));
         emc_mdi(buf);
         emcStatus.stopToManual=true;
-        markView->set_search_frame(pos->get_search_cv_area());
-    }
+        markView->set_search_frame(pos.get_search_cv_area());
+    //}
 #endif
 }
 
@@ -1350,15 +1354,15 @@ void MarkWidget::set_first_hole()
         return;
     char buf[128];
     posRecorder->holeIter = (posRecorder->holesPosVec).begin();
-    const Position* pos = *(posRecorder->holeIter);
+    const Position pos = *(posRecorder->holeIter);
     //if(watchResult.dimamondPos.size()==0){
     //    cout<<"没有钻石了！"<<endl;
     //    return;
     //}
     //Point diamondPos= *watchResult.dimamondPos.begin();
 #ifdef WITH_EMC
-    if(pos)
-    {
+    //if(pos)
+    //{
         emc_mode(NULL,EMC_TASK_MODE_MDI);
         //sprintf(buf,"g0 g53 z%.3f",prjManage.sendZD);
         //emc_mdi(buf);
@@ -1370,13 +1374,13 @@ void MarkWidget::set_first_hole()
         //emc_mdi(buf);
 
         emc_mdi("g0 g53 z0");
-        sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos->get_value(0)-param.pickRelx, pos->get_value(1)-param.pickRely, pos->get_value(3),pos->get_value(4));
+        sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos.get_value(0)-param.pickRelx, pos.get_value(1)-param.pickRely, pos.get_value(3),pos.get_value(4));
         emc_mdi(buf);
-        sprintf(buf, "g0 g53 z%.3f", pos->get_value(2));
+        sprintf(buf, "g0 g53 z%.3f", pos.get_value(2));
         emc_mdi(buf);
         emcStatus.stopToManual=true;
         //watchResult.dimamondPos.pop_front();
-    }
+    //}
 #endif
 
 }
@@ -1389,15 +1393,15 @@ void MarkWidget::set_next_hole()
     posRecorder->holeIter++;
     if(posRecorder->holeIter == (posRecorder->holesPosVec).end())
         posRecorder->holeIter = (posRecorder->holesPosVec).begin();
-    const Position* pos = *(posRecorder->holeIter);
+    const Position pos = *(posRecorder->holeIter);
     //if(watchResult.dimamondPos.size()==0){
     //    cout<<"没有钻石了！"<<endl;
     //    return;
     //}
     //Point diamondPos= *watchResult.dimamondPos.begin();
 #ifdef WITH_EMC
-    if(pos)
-    {
+    //if(pos)
+    //{
         emc_mode(NULL,EMC_TASK_MODE_MDI);
         //sprintf(buf,"g0 g53 z%.3f",prjManage.sendZD);
         //emc_mdi(buf);
@@ -1409,13 +1413,13 @@ void MarkWidget::set_next_hole()
         //emc_mdi(buf);
 
         emc_mdi("g0 g53 z0");
-        sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos->get_value(0)-param.pickRelx, pos->get_value(1)-param.pickRely, pos->get_value(3),pos->get_value(4));
+        sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos.get_value(0)-param.pickRelx, pos.get_value(1)-param.pickRely, pos.get_value(3),pos.get_value(4));
         emc_mdi(buf);
-        sprintf(buf, "g0 g53 z%.3f", pos->get_value(2));
+        sprintf(buf, "g0 g53 z%.3f", pos.get_value(2));
         emc_mdi(buf);
         emcStatus.stopToManual=true;
         //watchResult.dimamondPos.pop_front();
-    }
+    //}
 #endif
 }
 

@@ -30,6 +30,25 @@ public:
 private:
     QLabel* lb[5];
 };
+/*
+class TextEditor : public QTextEdit
+{
+public:
+    TextEditor(QTextEdit* parent=0):QTextEdit(parent){}
+protected:
+    void contextMenuEvent(QContextMenuEvent *e)
+    {
+        popupMenu = new QMenu(this);
+        QAction* clear = new QAction(QString::fromUtf8("清除所有"),this);
+        popupMenu->addAction(clear);
+        popupMenu->popup(e->pos());
+        popupMenu->exec();
+    }
+private:
+    QMenu* popupMenu;
+
+};
+*/
 
 class WatchDiamondWidget : public QMainWindow, public Ui::WatchDiamondWidget
 {
@@ -66,6 +85,8 @@ private slots:
     void hal_meter();
     void hal_scope();
 
+    void clear_error_message();
+
 protected:
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent * event);
@@ -85,6 +106,7 @@ private:
     QDoubleValidator* doubleValidator;
     QPushButton* jogButtons[10];
     QPushButton* ioButtons[6];
+    //TextEditor* message;
     double fastVel;
     double slowVel;
     double currentVel;

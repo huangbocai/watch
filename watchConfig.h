@@ -53,7 +53,7 @@ public:
 class ProjectManage
 {
 public:
-    enum{SCAN_X0=3301, SCAN_Y0, SCAN_Z, SCAN_ROW_NUM, SCAN_COL_NUM, SCAN_ROW_DIS, SCAN_COL_DIS, PICKUP_Z, SEND_ZD};
+    enum{SCAN_X0=3301, SCAN_Y0, SCAN_Z, SCAN_ROW_NUM, SCAN_COL_NUM, SCAN_ROW_DIS, SCAN_COL_DIS, PICKUP_Z, SETDIAMOND_Z};
     ProjectManage();
     //ProjectManage(const char* projectName);
     int load(const char* projectName);

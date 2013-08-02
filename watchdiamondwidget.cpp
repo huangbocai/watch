@@ -18,13 +18,17 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
 
     slowVel = markWidget->get_slow_velocity();
     fastVel = markWidget->get_fast_velocity();
-    currentVel = slowVel;
+    currentVel = fastVel;
     QString vel = double_to_qstring(currentVel);
     le_setVelocity->setText(vel);
     autoRun = false;
 
+    //message = new TextEditor(te_sysMessage);
+    //message->setContextMenuPolicy(Qt::ActionsContextMenu);
 
-
+    QAction* clear = new QAction(QString::fromUtf8("清除所有"),this);
+    te_sysMessage->addAction(clear);
+    te_sysMessage->setContextMenuPolicy(Qt::ActionsContextMenu);
     te_sysMessage->setTextColor(QColor(Qt::red));
     te_sysMessage->setReadOnly(true);
     te_sysMessage->setText(QString("system Message:\n"));
@@ -53,6 +57,7 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
     connect(bt_autoRun,SIGNAL(toggled(bool)),this,SLOT(auto_run(bool)));
     connect(bt_pause,SIGNAL(toggled(bool)),this,SLOT(pause(bool)));
     connect(bt_stop,SIGNAL(clicked()),this,SLOT(stop()));
+    connect(clear,SIGNAL(triggered()),this,SLOT(clear_error_message()));
 
     for(int i=0; i<10; i++){
         connect(jogButtons[i],SIGNAL(pressed()),this,SLOT(jog()));
@@ -73,7 +78,20 @@ WatchDiamondWidget::~WatchDiamondWidget()
 
 void WatchDiamondWidget::update_emc_slot(const MarkEmcStatus& status)
 {
+    char buf[256];
     set_axis(status.cmdAxis);
+    if(status.errorMsg[0]!='\0'){
+        sprintf(buf,"%s\n",status.errorMsg);
+        te_sysMessage->append(QString::fromUtf8(buf));
+    }
+    if(status.operatorText[0]!='\0'){
+        sprintf(buf,"%s\n",status.operatorText);
+        te_sysMessage->append(QString::fromUtf8(buf));
+    }
+    if(status.operatorDisplay[0]!='\0'){
+        sprintf(buf,"%s\n",status.operatorDisplay);
+        te_sysMessage->append(QString::fromUtf8(buf));
+    }
 }
 
 void WatchDiamondWidget::update_infor_slot(const Information& infor){
@@ -86,6 +104,8 @@ void WatchDiamondWidget::update_infor_slot(const Information& infor){
     lb_glueIndex->setText(QString(buf));
     sprintf(buf,"%d/%d",infor.holePosIndex,infor.holePosNum);
     lb_holesIndex->setText(QString(buf));
+    //sprintf(buf,"%d:%d",(infor.runTime),infor.runTime.second());
+    lb_runTime->setText(infor.runTime);
     if(autoRun && infor.endAutoRun){
         autoRun = false;
         if(bt_autoRun->isChecked())
@@ -129,14 +149,14 @@ void WatchDiamondWidget::change_vel_toggled(bool checked)
     QPushButton* button = qobject_cast<QPushButton*>(sender());
     if(button == bt_changeVelocity){
         if(checked){
-            button->setText(QString::fromUtf8("快速"));
-            currentVel = fastVel;
+            button->setText(QString::fromUtf8("慢速"));
+            currentVel = slowVel;
             QString vel = double_to_qstring(currentVel);
             le_setVelocity->setText(vel);
         }
         else{
-            button->setText(QString::fromUtf8("慢速"));
-            currentVel = slowVel;
+            button->setText(QString::fromUtf8("快速"));
+            currentVel = fastVel;
             QString vel = double_to_qstring(currentVel);
             le_setVelocity->setText(vel);
         }
@@ -229,11 +249,11 @@ void WatchDiamondWidget::keyPressEvent(QKeyEvent *event)
         break;
 
     case Qt::Key_Up:
-        axis = 1;
-        velocity *= (-1);
+        axis = 1;        
         break;
     case Qt::Key_Down:
         axis = 1;
+        velocity *= (-1);
         break;
 
     case Qt::Key_PageUp:
@@ -340,7 +360,8 @@ void WatchDiamondWidget::auto_run(bool checked)
     QPushButton* button = qobject_cast<QPushButton*>(sender());
     if(button == bt_autoRun){
         if(checked){
-            markWidget->auto_run();
+            bool type = cb_scanWatch->isChecked();
+            markWidget->auto_run(type);
             bt_pause->setChecked(false);
             autoRun = true;
         }
@@ -364,6 +385,8 @@ void WatchDiamondWidget::pause(bool checked)
 void WatchDiamondWidget::stop()
 {
     markWidget->stop();
+    bt_autoRun->setChecked(false);
+    bt_pause->setChecked(false);
 }
 
 void WatchDiamondWidget::hal_config()
@@ -385,4 +408,9 @@ void WatchDiamondWidget::hal_scope()
     int val=system("halscope &");
     if(val)
         printf("open halscope fail\n");
+}
+
+void WatchDiamondWidget::clear_error_message()
+{
+    te_sysMessage->clear();
 }

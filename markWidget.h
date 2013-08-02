@@ -15,6 +15,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+class QTime;
 
 typedef struct {
     QPushButton* bt_adjustPos[4];
@@ -108,6 +109,10 @@ public:
     unsigned int get_hole_index() {return currentHoleIndex;}
     void incr_hole_index(unsigned int step){currentHoleIndex += step;}
 
+    void set_glue_hole_index(unsigned int index) {currentGlueHoleIndex = index;}
+    unsigned int get_glue_hole_index() {return currentGlueHoleIndex;}
+    void incr_glue_hole_index(unsigned int step){currentGlueHoleIndex += step;}
+
     void set_glue_z_value(double zValue){glueZPos = zValue;}
     double get_glue_z_value() {return glueZPos;}
 
@@ -125,12 +130,34 @@ private:
     unsigned int currentIndex;
     unsigned int currentMarkIndex;
     unsigned int currentHoleIndex;
+    unsigned int currentGlueHoleIndex;
     string watchPosFileName;
     string holePosFileName;
     vector<Position*> posVec;
     static const int lineLength = 128;
     const Position* lastPos;
     double glueZPos;
+};
+
+//for interface update
+class Information
+{
+public:
+    Information():watchPosIndex(0),gluePosIndex(0),holePosIndex(0),
+        diamondNum(0),watchPosNum(0),holePosNum(0),endAutoRun(true),runTime("00:00"){}
+
+    int watchPosIndex;
+    int gluePosIndex;
+    int holePosIndex;
+
+    int diamondNum;
+    int watchPosNum;
+    int holePosNum;
+
+    bool endAutoRun;
+
+    QString runTime;
+
 };
 
 
@@ -159,7 +186,7 @@ public:
     void scan_watch();
     void set_glue();
     void set_diamond();
-    void auto_run();
+    void auto_run(bool type);
     void pause();
     void stop();
 
@@ -253,6 +280,8 @@ private:
 
     void mark_adjust_param();
     int detectHole_pressed(int type, double& cx, double& cy);
+
+    QString int_to_time(int sec);
 
     MarkHal*halData;
     MarkEmcStatus emcStatus;

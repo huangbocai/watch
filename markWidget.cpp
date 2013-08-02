@@ -22,6 +22,7 @@ Recorder::Recorder(string prjDir)
     currentIndex = 0;
     currentMarkIndex = 0;
     currentHoleIndex = 0;
+    currentGlueHoleIndex = 0;
     posVec.clear();
     lastPos = NULL;
     //cout<<watchPosFileName<<endl;
@@ -616,11 +617,74 @@ void MarkWidget::view_update(){
     }
 }
 
+QString MarkWidget::int_to_time(int sec)
+{
+    int mm=0, ss=0;
+    char timeBuf[24];
+    if(sec>=60){
+        ss = sec%60;
+        mm = (sec-ss)/60;
+        if(mm>=10){
+            if(ss>=10){
+                sprintf(timeBuf,"%d:%d",mm,ss);
+            }
+            else{
+                sprintf(timeBuf,"%d,0%d",mm,ss);
+            }
+        }
+        else{
+            if(ss>=10){
+                sprintf(timeBuf,"0%d:%d",mm,ss);
+            }
+            else{
+                sprintf(timeBuf,"0%d:0%d",mm,ss);
+            }
+
+        }
+
+    }
+    else if(sec>=10){
+        sprintf(timeBuf,"00:%d",sec);
+    }
+    else{
+        sprintf(timeBuf,"00:0%d",sec);
+    }
+    return QString(timeBuf);
+}
 
 void MarkWidget::slow_cycle(){
 
 #ifdef WITH_EMC
+    static QTime time(0,0,0,0);
+    static QTime tt(0,0,0,0);
+    char timeBuf[24];
     emcStatus.update();
+    switch(emcStatus.timeState)
+    {
+    case MarkEmcStatus::Start:{
+        infor.runTime = QString("00:00");
+        time = QTime::currentTime();
+        //cout<<"start: "<<time.toString("mm:ss").toStdString()<<endl;
+    }
+        break;
+    case MarkEmcStatus::runing:{
+        tt = QTime::currentTime();
+        int sec = time.secsTo(tt);
+        sprintf(timeBuf,"%ds",sec);
+        //infor.runTime = QString(timeBuf);
+        infor.runTime = int_to_time(sec);
+        //cout<<"running: "<<infor.runTime.toStdString()<<endl;
+    }
+        break;
+    case MarkEmcStatus::End:
+        int sec = time.secsTo(tt);
+        sprintf(timeBuf,"%ds",sec);
+        //infor.runTime = QString(timeBuf);
+        infor.runTime = int_to_time(sec);
+        //cout<<"end: "<<infor.runTime.toStdString()<<endl;
+        break;
+    }
+
     emit(update_emc_status(emcStatus));
     if(emcStatus.stopToManual && emcStatus.hasStop
             && emcStatus.programStaut==EMC_TASK_INTERP_IDLE){
@@ -800,8 +864,8 @@ void MarkWidget::fast_react_cycle(){
      else if(*halpins->posCmd==3){
          //static int n=0;
          //printf("get %d\n",n++);
-         if(posRecorder->get_hole_index()<(posRecorder->holesPosVec).size()){
-             const Position* pos = (posRecorder->holesPosVec)[posRecorder->get_hole_index()];
+         if(posRecorder->get_glue_hole_index()<(posRecorder->holesPosVec).size()){
+             const Position* pos = (posRecorder->holesPosVec)[posRecorder->get_glue_hole_index()];
              if(pos)
              {
                  *halpins->posAxis[0]=pos->get_value(0)-param.glueRelx;
@@ -813,7 +877,7 @@ void MarkWidget::fast_react_cycle(){
              }             
          }
 
-         posRecorder->incr_hole_index(1);
+         posRecorder->incr_glue_hole_index(1);
          *halpins->posCmd = 0;
      }
      else if(*halpins->posCmd == 4){
@@ -870,6 +934,10 @@ void MarkWidget::fast_react_cycle(){
         if(!infor.endAutoRun)
             infor.endAutoRun = true;
     }
+    if(posRecorder->get_glue_hole_index()<=(posRecorder->holesPosVec).size())
+        *halpins->glueHoleValid = 1;
+    else
+        *halpins->glueHoleValid = 0;
 }
 
 void MarkWidget::ready_for_diamond_scan(){
@@ -1065,12 +1133,6 @@ void MarkWidget::set_send_diamnod_z(){
     sprintf(buf, "%.3f", prjManage.sendZD);
     le_sendZD->setText(QString::fromUtf8(buf));
     write_profile_double("DIAMOND", "SEND_Z", prjManage.sendZD, prjManage.ini_file());
-#ifdef WITH_EMC
-    emc_mode(NULL,EMC_TASK_MODE_MDI);
-    sprintf(buf, "#%d=%f", ProjectManage::SEND_ZD, prjManage.sendZD);
-    emc_mdi(buf);
-    emc_mode(NULL,EMC_TASK_MODE_MANUAL);
-#endif
 }
 
 
@@ -1161,6 +1223,13 @@ void MarkWidget::set_setdiamond_z_pos()
     sprintf(buf, "%.3f", prjManage.setDiamondZPos);
     le_setDZVlaue->setText(QString::fromUtf8(buf));
     write_profile_double("WATCH", "SET_DIAMOND_Z_POS", prjManage.setDiamondZPos, prjManage.ini_file());
+
+#ifdef WITH_EMC
+    emc_mode(NULL,EMC_TASK_MODE_MDI);
+    sprintf(buf, "#%d=%f", ProjectManage::SETDIAMOND_Z, prjManage.setDiamondZPos);
+    emc_mdi(buf);
+    emc_mode(NULL,EMC_TASK_MODE_MANUAL);
+#endif
 }
 
 void MarkWidget::record_cam_pos()
@@ -1355,12 +1424,13 @@ void MarkWidget::set_all_holes()
 {
     if((posRecorder->holesPosVec).size()<=0)
         return;
-    //posRecorder->holeIter = (posRecorder->holesPosVec).begin();
     posRecorder->set_hole_index(0);
+    posRecorder->set_glue_hole_index(0);
     infor.gluePosIndex = 0;
 #ifdef WITH_EMC
     MarkHalPins* halpins=halData->halpins;
     *halpins->watchHoleValid = 1;
+    *halpins->glueHoleValid = 1;
     emc_mode(NULL,EMC_TASK_MODE_AUTO);
     emc_open("/home/u/cnc/configs/ppmc/o_nc/setglue.ngc");
     emc_wait("done");
@@ -1399,11 +1469,13 @@ void MarkWidget::half_auto_set_diamond()
         if((posRecorder->holesPosVec).size()==0)
             return;
         posRecorder->set_hole_index(0);
+        posRecorder->set_glue_hole_index(0);
         infor.holePosIndex = 0;
+        infor.gluePosIndex = 0;
         infor.endAutoRun = false;
 
         MarkHalPins* halpins=halData->halpins;
-        *halpins->watchHoleValid = 1;
+        *halpins->glueHoleValid = 1;
         emc_mode(NULL,EMC_TASK_MODE_AUTO);
         emc_open("/home/u/cnc/configs/ppmc/o_nc/autorun.ngc");
         emc_wait("done");
@@ -1421,7 +1493,8 @@ void MarkWidget::auto_set_diamond()
         emc_resume();
     }
     else if(emcStatus.programStaut == EMC_TASK_INTERP_IDLE){
-        posRecorder->set_current_index(0);
+        posRecorder->set_current_index(0);        
+        posRecorder->set_glue_hole_index(0);
         posRecorder->set_hole_index(0);
         infor.watchPosIndex = 0;
         infor.holePosIndex = 0;
@@ -1834,6 +1907,11 @@ void MarkWidget::machine_open(int cmd){
 
 void MarkWidget::home(){
 #ifdef WITH_EMC
+    emc_unhome(0);
+    emc_unhome(1);
+    emc_unhome(2);
+    emc_unhome(3);
+    emc_unhome(4);
     emc_home(2);
     emcStatus.homeing = true;
 #endif
@@ -1890,10 +1968,12 @@ void MarkWidget::set_diamond()
     set_diamond_in_all_holes();
 }
 
-void MarkWidget::auto_run()
+void MarkWidget::auto_run(bool type)
 {
-    //auto_set_diamond();
-    half_auto_set_diamond();
+    if(type)
+        auto_set_diamond();
+    else
+        half_auto_set_diamond();
 }
 
 void MarkWidget::pause()

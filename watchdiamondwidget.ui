@@ -256,6 +256,9 @@
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
+      <property name="verticalSpacing">
+       <number>0</number>
+      </property>
       <item row="0" column="0">
        <widget class="QLabel" name="label_11">
         <property name="text">
@@ -309,6 +312,20 @@
        <widget class="QLabel" name="lb_holesIndex">
         <property name="text">
          <string>0/0</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>运  行  时   间  ：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QLabel" name="lb_runTime">
+        <property name="text">
+         <string>00:00</string>
         </property>
        </widget>
       </item>
@@ -646,7 +663,7 @@
          </size>
         </property>
         <property name="text">
-         <string>慢速</string>
+         <string>快速</string>
         </property>
         <property name="checkable">
          <bool>true</bool>

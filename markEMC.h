@@ -21,6 +21,7 @@ typedef struct
     hal_bit_t* posValid;
     hal_bit_t* watchPosValid;
     hal_bit_t* watchHoleValid;
+    hal_bit_t* glueHoleValid;
     hal_s32_t * state;
     hal_u32_t* fps;
 }MarkHalPins;
@@ -36,37 +37,24 @@ public:
 class MarkEmcStatus
 {
 public:
-    MarkEmcStatus():stopToManual(false),homeing(false),mode(EMC_TASK_MODE_MANUAL){}
+    typedef enum {Idle,Start, runing, Pause, End} TimeState;
+    MarkEmcStatus():stopToManual(false),homeing(false),mode(EMC_TASK_MODE_MANUAL),timeState(Idle){}
     void update();
     double cmdAxis[5];
     bool hasStop;
     bool stopToManual;
     bool homeing;
     enum EMC_TASK_INTERP_ENUM programStaut;
+    enum EMC_TASK_INTERP_ENUM lastProgramStaut;
     enum EMC_TASK_MODE_ENUM mode;
+    char errorMsg[256];
+    char operatorText[256];
+    char operatorDisplay[256];
+    TimeState timeState;
 private:
     double actualAxis[5];
     double lastActualAxis[5];
     bool stopComfirm;    
 };
-
-class Information
-{
-public:
-    Information():watchPosIndex(0),gluePosIndex(0),holePosIndex(0),
-        diamondNum(0),watchPosNum(0),holePosNum(0),endAutoRun(true){}
-
-    int watchPosIndex;
-    int gluePosIndex;
-    int holePosIndex;
-
-    int diamondNum;
-    int watchPosNum;    
-    int holePosNum;
-
-    bool endAutoRun;
-
-};
-
 
 #endif // MARKEMC_H

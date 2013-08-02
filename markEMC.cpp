@@ -94,6 +94,11 @@ MarkHal::MarkHal()
         return ;
     *halpins->watchHoleValid=1;
 
+    retval = hal_pin_bit_new("mark.glueHoleValid", HAL_OUT, &halpins->glueHoleValid, comp_id);
+    if (retval != 0)
+        return ;
+    *halpins->glueHoleValid=1;
+
     retval = hal_pin_s32_new("mark.state", HAL_OUT, &halpins->state, comp_id);
     if (retval != 0)
         return ;
@@ -131,6 +136,10 @@ void MarkEmcStatus::update(){
     emc_program_status(&programStaut);
     emc_mode(&mode, EMC_TASK_MODE_MANUAL);
 
+    emc_error(errorMsg,1);
+    emc_operator_text(operatorText,1);
+    emc_operator_display(operatorDisplay,1);
+
     //printf("%.3f %.3f\n",lastActualAxis[4],actualAxis[4]);
 
     if(fabs(lastActualAxis[0]-actualAxis[0])<0.001
@@ -148,7 +157,9 @@ void MarkEmcStatus::update(){
         stopComfirm=false;
     }
     if(homeing){
-        if(fabs(lastActualAxis[2]-actualAxis[2])<0.001&&fabs(actualAxis[2]-0)<0.001){
+        int homed;
+        emc_joint_homed(2,&homed);
+        if(homed){
             emc_home(0);
             emc_home(1);
             emc_home(3);
@@ -156,6 +167,25 @@ void MarkEmcStatus::update(){
             homeing = false;
         }
     }
+
+    if(lastProgramStaut !=EMC_TASK_INTERP_READING
+            && programStaut == EMC_TASK_INTERP_READING){
+        timeState = Start;
+    }
+    if(lastProgramStaut ==EMC_TASK_INTERP_READING &&
+            programStaut == EMC_TASK_INTERP_PAUSED ){
+        timeState = Pause;
+    }
+    if(lastProgramStaut ==EMC_TASK_INTERP_READING &&
+            programStaut == EMC_TASK_INTERP_READING){
+        timeState = runing;
+    }
+    if(lastProgramStaut ==EMC_TASK_INTERP_READING &&
+            programStaut != EMC_TASK_INTERP_READING){
+        timeState = End;
+    }
+
+    lastProgramStaut = programStaut;
 
     for(int i=0;i<5; i++)
         lastActualAxis[i]=actualAxis[i];

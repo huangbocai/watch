@@ -99,6 +99,26 @@ MarkHal::MarkHal()
         return ;
     *halpins->glueHoleValid=1;
 
+    retval = hal_pin_bit_new("mark.setGlue", HAL_IN, &halpins->setGlue, comp_id);
+    if (retval != 0)
+        return ;
+    *halpins->setGlue=0;
+
+    retval = hal_pin_bit_new("mark.pickupDiamond", HAL_IN, &halpins->pickupDiamond, comp_id);
+    if (retval != 0)
+        return ;
+    *halpins->pickupDiamond=0;
+
+    retval = hal_pin_bit_new("mark.dropDiamond", HAL_IN, &halpins->dropDiamond, comp_id);
+    if (retval != 0)
+        return ;
+    *halpins->dropDiamond=0;
+
+    retval = hal_pin_bit_new("mark.lightControl", HAL_IN, &halpins->lightControl, comp_id);
+    if (retval != 0)
+        return ;
+    *halpins->lightControl=0;
+
     retval = hal_pin_s32_new("mark.state", HAL_OUT, &halpins->state, comp_id);
     if (retval != 0)
         return ;
@@ -121,7 +141,8 @@ MarkHal::MarkHal()
 
 
 
-void MarkEmcStatus::update(){    
+void MarkEmcStatus::update(){
+
     emc_update(NULL);
     emc_abs_act_pos(actualAxis+0, 0);
     emc_abs_act_pos(actualAxis+1, 1);
@@ -156,16 +177,32 @@ void MarkEmcStatus::update(){
         hasStop=false;
         stopComfirm=false;
     }
-    if(homeing){
-        int homed;
-        emc_joint_homed(2,&homed);
-        if(homed){
+    if(homing){
+        int h[5] = {0,0,0,0,0},sum=0;
+        emc_joint_homed(0,h);
+        emc_joint_homed(1,(h+1));
+        emc_joint_homed(2,(h+2));
+        emc_joint_homed(3,(h+3));
+        emc_joint_homed(4,(h+4));
+        for(int i=0; i<5; i++){
+            if(h[i] == 1){
+                homeState[i] = Homed;
+            }
+            sum += h[i];
+        }
+        if(sum==5){
+            homing = false;
+        }
+
+        //when homing, the following code execute only once
+        if(h[2]&&homeIndex==0){
             emc_home(0);
             emc_home(1);
             emc_home(3);
             emc_home(4);
-            homeing = false;
+            homeIndex++;
         }
+
     }
 
     if(lastProgramStaut !=EMC_TASK_INTERP_READING

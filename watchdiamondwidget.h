@@ -21,34 +21,19 @@ public:
         lb[4] = lbb;
     }
 
-    void set_value(double Val, int index){
+    void set_value(int index, double Val, int color){
         char buf[64];
+        QString colorStyle[3] = {"color:red","color:Fuchsia","color:black"};
+        //sprintf(buf,"<font color=red>%.3f</font>",Val);
         sprintf(buf,"%.3f",Val);
         lb[index]->setText(QString(buf));
+        lb[index]->setStyleSheet(colorStyle[color]);
+
     }
 
 private:
     QLabel* lb[5];
 };
-/*
-class TextEditor : public QTextEdit
-{
-public:
-    TextEditor(QTextEdit* parent=0):QTextEdit(parent){}
-protected:
-    void contextMenuEvent(QContextMenuEvent *e)
-    {
-        popupMenu = new QMenu(this);
-        QAction* clear = new QAction(QString::fromUtf8("清除所有"),this);
-        popupMenu->addAction(clear);
-        popupMenu->popup(e->pos());
-        popupMenu->exec();
-    }
-private:
-    QMenu* popupMenu;
-
-};
-*/
 
 class WatchDiamondWidget : public QMainWindow, public Ui::WatchDiamondWidget
 {
@@ -61,12 +46,14 @@ public:
 private slots:
     void update_emc_slot(const MarkEmcStatus& status);
     void update_infor_slot(const Information& infor);
-    void set_axis(const double* val);
+    void set_axis(const double* val, int *colors);
     void machine_open_toggled(bool checked);
     void home();
+    void ask_home();
     void zero();
     void change_vel_toggled(bool checked);
-    void finish_set_velocity();
+    void set_velocity(int value);
+    //void finish_set_velocity();
     void jog();
     void end_jog();
     void io_button_toggled(bool checked);
@@ -79,6 +66,10 @@ private slots:
     void auto_run(bool checked);
     void pause(bool checked);
     void stop();
+    void set_height();
+    void set_time();
+    void set_var_param(int varNum, double value=0);
+
 
     //menu action
     void hal_config();
@@ -90,6 +81,7 @@ private slots:
 protected:
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent * event);
+    void closeEvent(QCloseEvent *event);
 
 
 private:
@@ -106,10 +98,11 @@ private:
     QDoubleValidator* doubleValidator;
     QPushButton* jogButtons[10];
     QPushButton* ioButtons[6];
-    //TextEditor* message;
+    QTimer* timer;    
     double fastVel;
     double slowVel;
     double currentVel;
+    double axisPos[5];
     bool autoRun;
 };
 

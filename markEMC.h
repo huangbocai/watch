@@ -24,6 +24,10 @@ typedef struct
     hal_bit_t* glueHoleValid;
     hal_s32_t * state;
     hal_u32_t* fps;
+    hal_bit_t* setGlue;
+    hal_bit_t* pickupDiamond;
+    hal_bit_t* dropDiamond;
+    hal_bit_t* lightControl;
 }MarkHalPins;
 
 class MarkHal
@@ -38,12 +42,19 @@ class MarkEmcStatus
 {
 public:
     typedef enum {Idle,Start, runing, Pause, End} TimeState;
-    MarkEmcStatus():stopToManual(false),homeing(false),mode(EMC_TASK_MODE_MANUAL),timeState(Idle){}
+    typedef enum {Unhomed=0, Homeing, Homed} AxisHomeState;
+    MarkEmcStatus():stopToManual(false),homing(false),homeIndex(0),
+        mode(EMC_TASK_MODE_MANUAL),timeState(Idle){
+        for(int i=0; i<5; i++)
+            homeState[i] = Homeing;
+    }
     void update();
     double cmdAxis[5];
     bool hasStop;
     bool stopToManual;
-    bool homeing;
+    bool homing; //homing is true,when one of the axis is unhomed
+    int homeIndex; //to ensure it's the first time to call emc_home after the z axis homed.
+    AxisHomeState homeState[5]; //decide to use which kind of colors to display axis
     enum EMC_TASK_INTERP_ENUM programStaut;
     enum EMC_TASK_INTERP_ENUM lastProgramStaut;
     enum EMC_TASK_MODE_ENUM mode;
@@ -52,6 +63,7 @@ public:
     char operatorDisplay[256];
     TimeState timeState;
 private:
+    //HomeState currentHomeState();
     double actualAxis[5];
     double lastActualAxis[5];
     bool stopComfirm;    

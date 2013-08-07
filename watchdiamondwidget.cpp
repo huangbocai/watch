@@ -13,18 +13,21 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
     markWidget = new MarkWidget(argc,argv,wg_mark);
     coordinate = new Coordinate(lb_x,lb_y,lb_z,lb_a,lb_b);
 
+    for(int i=0; i<5; i++)
+        axisPos[i] = 0;
+
     doubleValidator = new QDoubleValidator(this);
-    le_setVelocity->setValidator(doubleValidator);
+    le_setDiamondT->setValidator(doubleValidator);
+    le_getDiamondT->setValidator(doubleValidator);
+    le_glueT->setValidator(doubleValidator);
+    le_afterGlueT->setValidator(doubleValidator);
 
     slowVel = markWidget->get_slow_velocity();
     fastVel = markWidget->get_fast_velocity();
     currentVel = fastVel;
     QString vel = double_to_qstring(currentVel);
-    le_setVelocity->setText(vel);
+    //le_setVelocity->setText(vel);
     autoRun = false;
-
-    //message = new TextEditor(te_sysMessage);
-    //message->setContextMenuPolicy(Qt::ActionsContextMenu);
 
     QAction* clear = new QAction(QString::fromUtf8("清除所有"),this);
     te_sysMessage->addAction(clear);
@@ -46,7 +49,7 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
     connect(bt_home,SIGNAL(clicked()),this,SLOT(home()));
     connect(bt_zero,SIGNAL(clicked()),this,SLOT(zero()));
     connect(bt_changeVelocity,SIGNAL(toggled(bool)),this,SLOT(change_vel_toggled(bool)));
-    connect(le_setVelocity,SIGNAL(editingFinished()),this,SLOT(finish_set_velocity()));
+    //connect(le_setVelocity,SIGNAL(editingFinished()),this,SLOT(finish_set_velocity()));
     connect(bt_scanDiamond,SIGNAL(clicked()),this,SLOT(scan_diamond()));
     connect(bt_scanWatch,SIGNAL(clicked()),this,SLOT(scan_watch()));
     connect(bt_setGlue,SIGNAL(clicked()),this,SLOT(set_glue()));
@@ -59,6 +62,25 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
     connect(bt_stop,SIGNAL(clicked()),this,SLOT(stop()));
     connect(clear,SIGNAL(triggered()),this,SLOT(clear_error_message()));
 
+    connect(bt_getDiamondZ,SIGNAL(clicked()),this,SLOT(set_height()));
+    connect(bt_setGlueZ,SIGNAL(clicked()),this,SLOT(set_height()));
+    connect(bt_setDiamondZ,SIGNAL(clicked()),this,SLOT(set_height()));
+    connect(sp_getDiamondZ,SIGNAL(editingFinished()),this,SLOT(set_height()));
+    connect(sp_setDiamondZ,SIGNAL(editingFinished()),this,SLOT(set_height()));
+    connect(sp_setGlueZ,SIGNAL(editingFinished()),this,SLOT(set_height()));
+
+    connect(le_setDiamondT,SIGNAL(editingFinished()),this,SLOT(set_time()));
+    connect(le_getDiamondT,SIGNAL(editingFinished()),this,SLOT(set_time()));
+    connect(le_glueT,SIGNAL(editingFinished()),this,SLOT(set_time()));
+    connect(le_afterGlueT,SIGNAL(editingFinished()),this,SLOT(set_time()));
+
+    connect(hs_slowVel,SIGNAL(valueChanged(int)),this,SLOT(set_velocity(int)));
+    connect(hs_fastVel,SIGNAL(valueChanged(int)),this,SLOT(set_velocity(int)));
+
+
+
+
+
     for(int i=0; i<10; i++){
         connect(jogButtons[i],SIGNAL(pressed()),this,SLOT(jog()));
         connect(jogButtons[i],SIGNAL(released()),this,SLOT(end_jog()));
@@ -69,6 +91,11 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
     }
 
     bt_machineRun->setChecked(true);
+    timer = new QTimer(this);
+    connect(timer,SIGNAL(timeout()),this,SLOT(ask_home()));
+    timer->start(500);
+
+    //bt_home->setChecked(true);
 }
 
 WatchDiamondWidget::~WatchDiamondWidget()
@@ -79,7 +106,14 @@ WatchDiamondWidget::~WatchDiamondWidget()
 void WatchDiamondWidget::update_emc_slot(const MarkEmcStatus& status)
 {
     char buf[256];
-    set_axis(status.cmdAxis);
+    int colors[5];
+
+    for(int i=0; i<5; i++){
+        colors[i] = (int)status.homeState[i];
+        axisPos[i] = status.cmdAxis[i];
+    }
+
+    set_axis(status.cmdAxis,colors);
     if(status.errorMsg[0]!='\0'){
         sprintf(buf,"%s\n",status.errorMsg);
         te_sysMessage->append(QString::fromUtf8(buf));
@@ -95,6 +129,7 @@ void WatchDiamondWidget::update_emc_slot(const MarkEmcStatus& status)
 }
 
 void WatchDiamondWidget::update_infor_slot(const Information& infor){
+    static int loadHeightAndTime = 0;
     char buf[12];
     sprintf(buf,"%d",infor.diamondNum);
     lb_diamondNum->setText(QString(buf));
@@ -103,20 +138,53 @@ void WatchDiamondWidget::update_infor_slot(const Information& infor){
     sprintf(buf,"%d/%d",infor.gluePosIndex,infor.holePosNum);
     lb_glueIndex->setText(QString(buf));
     sprintf(buf,"%d/%d",infor.holePosIndex,infor.holePosNum);
-    lb_holesIndex->setText(QString(buf));
-    //sprintf(buf,"%d:%d",(infor.runTime),infor.runTime.second());
+    lb_holesIndex->setText(QString(buf));    
     lb_runTime->setText(infor.runTime);
+
     if(autoRun && infor.endAutoRun){
         autoRun = false;
         if(bt_autoRun->isChecked())
             bt_autoRun->setChecked(false);
     }
+
+    for(int i=0; i<4; i++){
+        if(infor.ioState[i])
+            ioButtons[i]->setChecked(true);
+        else
+            ioButtons[i]->setChecked(false);
+    }
+
+
+
+    //只执行一次
+    if(loadHeightAndTime == 0){
+        sp_setGlueZ->setValue(infor.setGlueZ);
+        sp_setDiamondZ->setValue(infor.setDiamondZ);
+        sp_getDiamondZ->setValue(infor.getDiamondZ);
+        sprintf(buf,"%.3f",infor.glueT);
+        le_glueT->setText(buf);
+        sprintf(buf,"%.3f",infor.afterGlueT);
+        le_afterGlueT->setText(buf);
+        sprintf(buf,"%.3f",infor.setDiamondT);
+        le_setDiamondT->setText(buf);
+        sprintf(buf,"%.3f",infor.getDiamondT);
+        le_getDiamondT->setText(buf);
+        sprintf(buf,"%.1f",infor.slowVel);
+        lb_slowVel->setText(buf);
+        sprintf(buf,"%d",(int)infor.fastVel);
+        lb_faseVel->setText(buf);
+        hs_slowVel->setValue((int)(infor.slowVel*10));
+        hs_fastVel->setValue((int)infor.fastVel);
+        loadHeightAndTime++;
+
+    }
+
 }
 
-void WatchDiamondWidget::set_axis(const double* val)
+void WatchDiamondWidget::set_axis(const double* val, int* colors)
 {
     for(int i=0 ; i<5; i++)
-        coordinate->set_value(*(val+i),i);
+        coordinate->set_value(i,*(val+i), *(colors+i));
 }
 
 void WatchDiamondWidget::machine_open_toggled(bool checked){
@@ -136,7 +204,18 @@ void WatchDiamondWidget::machine_open_toggled(bool checked){
 
 void WatchDiamondWidget::home()
 {
-    markWidget->home();
+    int r=QMessageBox::information(this,QString::fromUtf8("回零对话框"),
+                                QString::fromUtf8("所有轴回零？"),
+                                QMessageBox::Yes|QMessageBox::No);
+    if(QMessageBox::Yes==r){
+        markWidget->home();
+    }
+}
+
+void WatchDiamondWidget::ask_home()
+{
+    bt_home->click();
+    timer->stop();
 }
 
 void WatchDiamondWidget::zero()
@@ -151,31 +230,34 @@ void WatchDiamondWidget::change_vel_toggled(bool checked)
         if(checked){
             button->setText(QString::fromUtf8("慢速"));
             currentVel = slowVel;
-            QString vel = double_to_qstring(currentVel);
-            le_setVelocity->setText(vel);
         }
         else{
             button->setText(QString::fromUtf8("快速"));
-            currentVel = fastVel;
-            QString vel = double_to_qstring(currentVel);
-            le_setVelocity->setText(vel);
+            currentVel = fastVel;            
         }
     }
+
 }
 
-void WatchDiamondWidget::finish_set_velocity()
+
+void WatchDiamondWidget::set_velocity(int value)
 {
-    if(bt_changeVelocity->isChecked()){
-        QString str = le_setVelocity->text();
-        fastVel = str.toDouble();
-        currentVel = fastVel;
-        markWidget->set_fast_velocity(fastVel);
-    }
-    else{
-        QString str = le_setVelocity->text();
-        slowVel = str.toDouble();
-        currentVel = slowVel;
+    char buf[32];
+    QSlider* sd = qobject_cast<QSlider*>(sender());
+    if(sd == hs_slowVel){
+        //int value = hs_slowVel->value();
+        slowVel = (double)value/10;
+        sprintf(buf,"%.1f",slowVel);
+        lb_slowVel->setText(buf);
         markWidget->set_slow_velocity(slowVel);
+
+    }
+    else if(sd == hs_fastVel){
+        //int value = hs_fastVel->value();
+        fastVel = value;
+        sprintf(buf,"%d",value);
+        lb_faseVel->setText(buf);
+        markWidget->set_fast_velocity(fastVel);
     }
 }
 
@@ -335,6 +417,18 @@ void WatchDiamondWidget::keyReleaseEvent(QKeyEvent *event)
 
 }
 
+void WatchDiamondWidget::closeEvent(QCloseEvent *event){
+    int r = QMessageBox::information(this,QString::fromUtf8("关闭对话框"),
+                                     QString::fromUtf8("关闭系统？"),
+                                     QMessageBox::Yes|QMessageBox::No);
+    if(QMessageBox::Yes==r){
+        close();
+    }
+    else{
+        event->ignore();
+    }
+}
+
 void WatchDiamondWidget::scan_diamond()
 {
     markWidget->scan_diamon();
@@ -387,6 +481,58 @@ void WatchDiamondWidget::stop()
     markWidget->stop();
     bt_autoRun->setChecked(false);
     bt_pause->setChecked(false);
+}
+
+void WatchDiamondWidget::set_height()
+{
+    QPushButton* bt = qobject_cast<QPushButton*>(sender());
+    QDoubleSpinBox* sp = qobject_cast<QDoubleSpinBox*>(sender());
+    if(bt == bt_getDiamondZ){
+        sp_getDiamondZ->setValue(axisPos[2]);
+        set_var_param(3308,0);
+    }
+    else if(bt == bt_setDiamondZ){
+        sp_setDiamondZ->setValue(axisPos[2]);
+        set_var_param(3309,0);
+    }
+    else if(bt == bt_setGlueZ){
+        sp_setGlueZ->setValue(axisPos[2]);
+        set_var_param(3310,0);
+    }
+    else if(sp == sp_getDiamondZ){
+        set_var_param(3308,sp->value());
+    }
+    else if(sp == sp_setDiamondZ){
+        set_var_param(3309,sp->value());
+    }
+    else if(sp == sp_setGlueZ){
+        set_var_param(3310,sp->value());
+    }
+}
+
+void WatchDiamondWidget::set_time()
+{
+    QLineEdit* le = qobject_cast<QLineEdit*>(sender());
+    double value = le->text().toDouble();
+
+    if(le == le_glueT){
+        markWidget->set_time(0,3311,value);
+    }
+    else if(le == le_afterGlueT){
+        markWidget->set_time(1,3312,value);
+
+    }
+    else if(le == le_getDiamondT){
+        markWidget->set_time(2,3313,value);
+    }
+    else if(le == le_setDiamondT){
+        markWidget->set_time(3,3314,value);
+    }
+}
+
+void WatchDiamondWidget::set_var_param(int varNum, double value)
+{
+    markWidget->set_var_param(varNum,value);
 }
 
 void WatchDiamondWidget::hal_config()

@@ -26,6 +26,8 @@ public:
     double referenceY;
     double pickRelx;
     double pickRely;
+    double camRelx;
+    double camRely;
     double glueRelx;
     double glueRely;
     double kxx;
@@ -53,18 +55,26 @@ public:
 class ProjectManage
 {
 public:
-    enum{SCAN_X0=3301, SCAN_Y0, SCAN_Z, SCAN_ROW_NUM, SCAN_COL_NUM, SCAN_ROW_DIS, SCAN_COL_DIS, PICKUP_Z, SETDIAMOND_Z};
+    typedef enum{SCAN_X0=3301, SCAN_Y0, SCAN_Z, SCAN_ROW_NUM, SCAN_COL_NUM, SCAN_ROW_DIS, SCAN_COL_DIS,
+         PICKUP_Z,
+         SETDIAMOND_Z,
+         SET_GLUE_Z,
+         GLUE_T,
+         AFTER_GLUE_T,
+         GET_DIAMOND_T,
+         SET_DIAMOND_T
+        } VAR_PARAM;
     ProjectManage();
     //ProjectManage(const char* projectName);
     int load(const char* projectName);
     void save_diamond_camera_param(int adl, int brightness, int contrast, int exposure);
+    void save_watch_camera_param(int adl, int brightness, int contrast, int exposure);
     void save_diamond_search_area();
+    void save_watch_search_area();
     void save_scan_param();
     void save_as(const char* projectName);
     void save_diamond_pattern(const IplImage* img);
-    void save_watch_camera_param(int adl, int brightness, int contrast, int exposure);
     void save_watch_pattern(const IplImage* img);
-    void save_watch_search_area();
     IplImage* get_diamond_pattern(){return patternD;}
     IplImage* get_watch_pattern(){return patternW;}
     const char* ini_file()const {return iniFile;}
@@ -91,6 +101,11 @@ public:
     CvRect searcRectW;
     double glueZPos;
     double setDiamondZPos; //镶钻高度
+
+    double glueTime;
+    double afterGlueTime;
+    double setDiamondTime;
+    double getDiamondTime;
 
 private:
     IplImage* patternD;

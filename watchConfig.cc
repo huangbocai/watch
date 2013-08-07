@@ -88,11 +88,6 @@ int ProjectManage::load(const char* projectName){
     ini_get_int_param(&inifile, "DIAMOND", "SCAN_ROW_NUM", &scanRowNum, 1);
     ini_get_int_param(&inifile, "DIAMOND", "SCAN_COL_NUM", &scanColNum, 1);
 
-    ini_get_double_param(&inifile, "DIAMOND", "PICKUP_Z", &pickupZD, 0);
-    ini_get_double_param(&inifile, "DIAMOND", "SEND_Z", &sendZD, 0);
-
-
-
     ini_get_int_param(&inifile, "WATCH", "BRIGHTNESS", &brightnessW, 0);
     ini_get_int_param(&inifile, "WATCH", "CONTRAST", &contrastW, 0);
     ini_get_int_param(&inifile, "WATCH", "EXPOSURE", &exposureW, 20);
@@ -104,9 +99,14 @@ int ProjectManage::load(const char* projectName){
     ini_get_int_param(&inifile, "WATCH", "SEARCH_HEIGHT", &sh, 200);
     searcRectW= cvRect(sx, sy, sw, sh);
 
+    ini_get_double_param(&inifile, "DIAMOND", "PICKUP_Z", &pickupZD, 0);
     ini_get_double_param(&inifile,"WATCH", "GLUE_Z_POS",&glueZPos,0);
-
     ini_get_double_param(&inifile,"WATCH", "SET_DIAMOND_Z_POS",&setDiamondZPos,0);
+
+    ini_get_double_param(&inifile, "TIME", "SET_GLUE_TIME",&glueTime,0);
+    ini_get_double_param(&inifile, "TIME", "AFTER_GLUE_TIME", &afterGlueTime, 0);
+    ini_get_double_param(&inifile, "TIME", "SET_DIAMOND_TIME", &setDiamondTime, 0);
+    ini_get_double_param(&inifile, "TIME", "GET_DIAMOND_TIME", &getDiamondTime, 0);
 
     return 0;
 }

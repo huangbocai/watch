@@ -15,7 +15,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-class QTime;
+#include <QtGui>
 
 typedef struct {
     QPushButton* bt_adjustPos[4];
@@ -69,7 +69,7 @@ public:
     bool operator !=(const Position& pos) const
     {
         for(int i=0; i<5; i++){
-            if((pos.get_value(i) - val[i])>0.001)
+            if(fabs(pos.get_value(i) - val[i])>0.00001)
                 return true;
         }
         return false;
@@ -96,10 +96,10 @@ public:
     }
     unsigned int get_current_index(){return currentIndex;}
     //std::string get_file_name(){return fileName;}
-    const Position& first_position();
-    const Position& next_position();
-    const Position& get_position(unsigned int index);
-    const Position& get_last_position(){return get_position(currentIndex-2);}
+    const Position* first_position();
+    const Position* next_position();
+    const Position* get_position(unsigned int index);
+    //const Position& get_last_position(){return get_position(currentIndex-2);}
     void load();
     void clear_holes_pos() {holesPosVec.clear();}
     void set_mark_index(unsigned int index) {currentMarkIndex = index;}
@@ -144,7 +144,11 @@ class Information
 {
 public:
     Information():watchPosIndex(0),gluePosIndex(0),holePosIndex(0),
-        diamondNum(0),watchPosNum(0),holePosNum(0),endAutoRun(true),runTime("00:00"){}
+        diamondNum(0),watchPosNum(0),holePosNum(0),endAutoRun(true),runTime("00:00")
+    {
+        for(int i=0; i<4; i++)
+            ioState[i] = false;
+    }
 
     int watchPosIndex;
     int gluePosIndex;
@@ -153,6 +157,21 @@ public:
     int diamondNum;
     int watchPosNum;
     int holePosNum;
+
+    double setGlueZ;
+    double setDiamondZ;
+    double getDiamondZ;
+
+    double glueT;
+    double afterGlueT;
+    double setDiamondT;
+    double getDiamondT;
+
+    double slowVel;
+    double fastVel;
+
+    bool ioState[4];
+
 
     bool endAutoRun;
 
@@ -189,9 +208,14 @@ public:
     void auto_run(bool type);
     void pause();
     void stop();
-
+    void set_var_param(int varNum, double value);
     void set_io(int index , bool on);
 
+    void set_pickup_diamnod_z(double value);
+    void set_glue_z_pos(double value);
+    void set_setdiamond_z_pos(double value);
+
+    void set_time(int index, int varNum, double value);
 
 signals:
     void update_emc_status(const MarkEmcStatus& status);
@@ -209,8 +233,8 @@ private slots:
     void set_scan_beginning();
     void back_scan_beginning();
     void scan_test();
-    void set_pickup_diamnod_z();
-    void set_send_diamnod_z();
+    //void set_pickup_diamnod_z();
+    //void set_send_diamnod_z();
     void pickup_first();
     void pickup_next();
     void pickup_all();
@@ -218,8 +242,6 @@ private slots:
 
     //watch page
     void change_angle();
-    void set_glue_z_pos();
-    void set_setdiamond_z_pos();
     void record_cam_pos();
     void abandon_current_pos();
     void abandon_all_pos();
@@ -281,7 +303,7 @@ private:
     void mark_adjust_param();
     int detectHole_pressed(int type, double& cx, double& cy);
 
-    QString int_to_time(int sec);
+    QString int_to_time_string(int sec);
 
     MarkHal*halData;
     MarkEmcStatus emcStatus;

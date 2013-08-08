@@ -109,7 +109,7 @@ void WatchDiamondWidget::update_emc_slot(const MarkEmcStatus& status)
     int colors[5];
 
     for(int i=0; i<5; i++){
-        colors[i] = (int)status.homeState[i];
+        colors[i] = (int)status.axisHomeState[i];
         axisPos[i] = status.cmdAxis[i];
     }
 

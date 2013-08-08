@@ -76,7 +76,7 @@ void Recorder::abandon_all_pos()
     holesPosVec.clear();
 }
 
-void Recorder::finish_record_cam_pos()
+void Recorder::finish_record_watch_pos()
 {
     ofstream ofs;
     vector<Position>::iterator iter;
@@ -92,6 +92,18 @@ void Recorder::finish_record_cam_pos()
         }
         ofs.close();
     }
+}
+
+void Recorder::auto_record_watch_pos(int num, double deg)
+{
+    Position firstPos = posVec[0];
+    for(int i=1; i<num; i++){
+        Position pos = firstPos.rotate(deg*i);
+        posVec.push_back(pos);
+    }
+    //cout<<"Pos Num: "<<posVec.size()<<endl;
+
+    finish_record_watch_pos();
 }
 
 void Recorder::finish_record_hole_pos()
@@ -442,10 +454,6 @@ void MarkWidget::watch_page_init()
     le_rotateDeg->setValidator(doubleValidator);
     sprintf(buf, "%.3f",param.degInc);
     le_rotateDeg->setText(QString::fromUtf8(buf));
-    //sprintf(buf,"%.3f",prjManage.glueZPos);
-    //le_glueZValue->setText(buf);
-    //sprintf(buf,"%.3f",prjManage.setDiamondZPos);
-    //le_setDZVlaue->setText(buf);
 
     int w=patternViewFrame1->width();
     int h=patternViewFrame1->height();
@@ -457,15 +465,17 @@ void MarkWidget::watch_page_init()
         bt_abandonCurrentPos->setEnabled(false);
         bt_abandonAllPos->setEnabled(false);
         bt_finishRecord->setEnabled(false);
+        bt_autoRecord->setEnabled(false);
         bt_firstPos->setEnabled(false);
         bt_nextPos->setEnabled(false);
-        bt_camRun->setEnabled(false);
+        bt_camRun->setEnabled(false);        
     }
     else{
         bt_recordCamPos->setEnabled(false);
         bt_abandonCurrentPos->setEnabled(false);
         bt_abandonAllPos->setEnabled(true);
         bt_finishRecord->setEnabled(false);
+        bt_autoRecord->setEnabled(false);
         bt_firstPos->setEnabled(true);
         bt_nextPos->setEnabled(true);
         bt_camRun->setEnabled(true);
@@ -476,18 +486,18 @@ void MarkWidget::watch_page_init()
     connect(bt_detectHoles,SIGNAL(toggled(bool)),this,SLOT(diamond_test_toggled(bool)));
     connect(bt_rotateForward, SIGNAL(clicked()), this, SLOT(change_angle()));
     connect(bt_rotateBackward, SIGNAL(clicked()), this, SLOT(change_angle()));
-    connect(bt_recordCamPos,SIGNAL(clicked()),this,SLOT(record_cam_pos()));
+    connect(bt_recordCamPos,SIGNAL(clicked()),this,SLOT(record_watch_pos()));
     connect(bt_abandonCurrentPos,SIGNAL(clicked()),this,SLOT(abandon_current_pos()));
     connect(bt_abandonAllPos,SIGNAL(clicked()),this,SLOT(abandon_all_pos()));
-    connect(bt_finishRecord,SIGNAL(clicked()),this,SLOT(finish_record_cam_pos()));
+    connect(bt_finishRecord,SIGNAL(clicked()),this,SLOT(finish_record_watch_pos()));
+    connect(bt_autoRecord,SIGNAL(clicked()),this,SLOT(auto_record_watch_pos()));
     connect(bt_firstPos,SIGNAL(clicked()),this,SLOT(get_first_pos()));
     connect(bt_nextPos,SIGNAL(clicked()),this,SLOT(get_next_pos()));
     connect(bt_camRun,SIGNAL(clicked()),this,SLOT(cam_run()));
     connect(bt_setFirstHole,SIGNAL(clicked()),this,SLOT(set_first_hole()));
     connect(bt_setNextHole,SIGNAL(clicked()),this,SLOT(set_next_hole()));
     connect(bt_setAllHoles,SIGNAL(clicked()),this,SLOT(set_all_holes()));
-    //connect(bt_recordGluePosZ,SIGNAL(clicked()),this,SLOT(set_glue_z_pos()));
-    //connect(bt_recordSetDPosZ,SIGNAL(clicked()),this,SLOT(set_setdiamond_z_pos()));
+
 }
 
 
@@ -670,31 +680,7 @@ QString MarkWidget::int_to_time_string(int sec)
 void MarkWidget::slow_cycle(){
 
 #ifdef WITH_EMC
-    static QTime time(0,0,0,0);
-    static QTime tt(0,0,0,0);
-    char timeBuf[24];
     emcStatus.update();
-    switch(emcStatus.timeState)
-    {
-    case MarkEmcStatus::Start:{
-        infor.runTime = QString("00:00");
-        time = QTime::currentTime();        
-    }
-        break;
-    case MarkEmcStatus::runing:{
-        tt = QTime::currentTime();
-        int sec = time.secsTo(tt);
-        sprintf(timeBuf,"%ds",sec);
-        infor.runTime = int_to_time_string(sec);
-    }
-        break;
-    case MarkEmcStatus::End:
-        int sec = time.secsTo(tt);
-        sprintf(timeBuf,"%ds",sec);        
-        infor.runTime = int_to_time_string(sec);
-        break;
-    }
-
     emit(update_emc_status(emcStatus));
     if(emcStatus.stopToManual && emcStatus.hasStop
             && emcStatus.programStaut==EMC_TASK_INTERP_IDLE){
@@ -714,6 +700,7 @@ void MarkWidget::slow_cycle(){
         markView->set_hole_pos(watchCircleDetecter->get_positions(),watchCircleDetecter->radious());
     }
 
+    infor.runTime = QString(emcStatus.prtManager.get_run_time_string().c_str());
     infor.diamondNum = watchResult.dimamondPos.size();
     infor.watchPosNum = posRecorder->get_pos_num();
     infor.holePosNum = (posRecorder->holesPosVec).size();
@@ -1313,7 +1300,7 @@ void MarkWidget::set_time(int index, int varNum, double value)
 #endif
 }
 
-void MarkWidget::record_cam_pos()
+void MarkWidget::record_watch_pos()
 {
     RectangleFrame searchArea = markView->get_search_frame();
     posRecorder->record_current_pos(emcStatus.cmdAxis,searchArea);
@@ -1321,7 +1308,8 @@ void MarkWidget::record_cam_pos()
     //infor.watchPosNum = posRecorder->get_pos_num();
     bt_abandonCurrentPos->setEnabled(true);
     bt_abandonAllPos->setEnabled(true);
-    bt_finishRecord->setEnabled(true);    
+    bt_finishRecord->setEnabled(true);
+    bt_autoRecord->setEnabled(true);
 }
 
 void MarkWidget::abandon_current_pos()
@@ -1336,11 +1324,13 @@ void MarkWidget::abandon_current_pos()
         bt_abandonCurrentPos->setEnabled(false);
         bt_abandonAllPos->setEnabled(false);
         bt_finishRecord->setEnabled(false);
+        bt_autoRecord->setEnabled(false);
     }
     else{
         bt_abandonCurrentPos->setEnabled(true);
         bt_abandonAllPos->setEnabled(true);
         bt_finishRecord->setEnabled(true);
+        bt_autoRecord->setEnabled(true);
     }
 }
 
@@ -1352,21 +1342,45 @@ void MarkWidget::abandon_all_pos()
     bt_abandonCurrentPos->setEnabled(false);
     bt_abandonAllPos->setEnabled(false);
     bt_finishRecord->setEnabled(false);
+    bt_autoRecord->setEnabled(false);
     bt_firstPos->setEnabled(false);
     bt_nextPos->setEnabled(false);
     bt_camRun->setEnabled(false);
     bt_recordCamPos->setEnabled(true);
 }
 
-void MarkWidget::finish_record_cam_pos()
+void MarkWidget::finish_record_watch_pos()
 {
-    posRecorder->finish_record_cam_pos();
+    posRecorder->finish_record_watch_pos();
     bt_abandonCurrentPos->setEnabled(false);
     bt_finishRecord->setEnabled(false);
     bt_recordCamPos->setEnabled(false);
     bt_firstPos->setEnabled(true);
     bt_nextPos->setEnabled(true);
     bt_camRun->setEnabled(true);
+    bt_autoRecord->setEnabled(false);
+    prjManage.save_diamond_camera_param(param.camADL, param.camBL, param.camGain, param.camExposure);
+}
+
+void MarkWidget::auto_record_watch_pos()
+{
+    int num = sp_posNum->value();
+    double deg = le_rotateDeg->text().toDouble();
+    int direction = cb_direction->currentIndex(); //0:反向, 1: 正向
+    assert(direction<=1);
+    if(direction == 0)
+        direction = -1;
+    deg *= direction;
+    posRecorder->auto_record_watch_pos(num,deg);
+
+    bt_abandonCurrentPos->setEnabled(false);
+    bt_finishRecord->setEnabled(false);
+    bt_recordCamPos->setEnabled(false);
+    bt_firstPos->setEnabled(true);
+    bt_nextPos->setEnabled(true);
+    bt_camRun->setEnabled(true);
+    bt_autoRecord->setEnabled(false);
+
     prjManage.save_diamond_camera_param(param.camADL, param.camBL, param.camGain, param.camExposure);
 }
 
@@ -1994,11 +2008,7 @@ void MarkWidget::home(){
     emc_unhome(2);
     emc_unhome(3);
     emc_unhome(4);
-    emc_home(2);
     emcStatus.homing = true;
-    emcStatus.homeIndex = 0;
-    for(int i=0; i<5; i++)
-        emcStatus.homeState[i] = MarkEmcStatus::Homeing;
 #endif
 }
 

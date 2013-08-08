@@ -140,6 +140,12 @@ MarkHal::MarkHal()
 }
 
 
+MarkEmcStatus::MarkEmcStatus():stopToManual(false),homing(false),currentHS(UNHOMED),
+    mode(EMC_TASK_MODE_MANUAL){
+    for(int i=0; i<5; i++)
+        axisHomeState[i] = Unhomed;
+}
+
 
 void MarkEmcStatus::update(){
 
@@ -177,8 +183,38 @@ void MarkEmcStatus::update(){
         hasStop=false;
         stopComfirm=false;
     }
-    if(homing){
-        int h[5] = {0,0,0,0,0},sum=0;
+
+    for(int i=0;i<5; i++)
+        lastActualAxis[i]=actualAxis[i];
+
+    update_current_home_state();
+
+    update_current_time_state();
+}
+
+void MarkEmcStatus::update_current_home_state()
+{
+
+    if((currentHS==UNHOMED || currentHS==ALL_HOMED) &&homing){
+        emc_home(2);
+        axisHomeState[2] = Homeing;
+        currentHS = Z_AXIS_HOMING;
+    }
+    else if(currentHS == Z_AXIS_HOMING ){
+        int homed=0;
+        emc_joint_homed(2,&homed);
+        if(homed == 1){
+            axisHomeState[2] = Homed;
+            emc_home(0); axisHomeState[0] = Homeing;
+            emc_home(1); axisHomeState[1] = Homeing;
+            emc_home(3); axisHomeState[3] = Homeing;
+            emc_home(4); axisHomeState[4] = Homeing;
+            currentHS = OTHER_AXIS_HOMING;
+        }
+    }
+    else if(currentHS == OTHER_AXIS_HOMING){
+        int sum = 0;
+        int h[5] = {0,0,0,0,0};
         emc_joint_homed(0,h);
         emc_joint_homed(1,(h+1));
         emc_joint_homed(2,(h+2));
@@ -186,45 +222,162 @@ void MarkEmcStatus::update(){
         emc_joint_homed(4,(h+4));
         for(int i=0; i<5; i++){
             if(h[i] == 1){
-                homeState[i] = Homed;
+                axisHomeState[i] = Homed;
             }
             sum += h[i];
         }
         if(sum==5){
             homing = false;
+            currentHS = ALL_HOMED;
         }
-
-        //when homing, the following code execute only once
-        if(h[2]&&homeIndex==0){
-            emc_home(0);
-            emc_home(1);
-            emc_home(3);
-            emc_home(4);
-            homeIndex++;
-        }
-
     }
-
-    if(lastProgramStaut !=EMC_TASK_INTERP_READING
-            && programStaut == EMC_TASK_INTERP_READING){
-        timeState = Start;
-    }
-    if(lastProgramStaut ==EMC_TASK_INTERP_READING &&
-            programStaut == EMC_TASK_INTERP_PAUSED ){
-        timeState = Pause;
-    }
-    if(lastProgramStaut ==EMC_TASK_INTERP_READING &&
-            programStaut == EMC_TASK_INTERP_READING){
-        timeState = runing;
-    }
-    if(lastProgramStaut ==EMC_TASK_INTERP_READING &&
-            programStaut != EMC_TASK_INTERP_READING){
-        timeState = End;
-    }
-
-    lastProgramStaut = programStaut;
-
-    for(int i=0;i<5; i++)
-        lastActualAxis[i]=actualAxis[i];
 }
 
+#define READING EMC_TASK_INTERP_READING
+#define PAUSED  EMC_TASK_INTERP_PAUSED
+#define WAITING EMC_TASK_INTERP_WAITING
+
+void MarkEmcStatus::update_current_time_state()
+{
+    if(lastProgramStaut != READING
+            && programStaut == READING){
+        prtManager.set_time_state(PRTManager::Start);
+    }
+    if(lastProgramStaut == READING &&
+            programStaut == PAUSED ){
+        prtManager.set_time_state(PRTManager::Pause);
+    }
+    if(lastProgramStaut == PAUSED&&
+            programStaut == READING){
+        prtManager.set_time_state(PRTManager::Restart);
+    }
+    if(lastProgramStaut == READING &&
+            programStaut == WAITING){
+        prtManager.set_time_state(PRTManager::End);
+    }
+    lastProgramStaut = programStaut;
+
+    prtManager.update_time();
+
+}
+
+
+void PRTManager::start()
+{
+    time(&startTime);
+}
+
+void PRTManager::pause()
+{
+    //struct tm* fmt;
+    //char buf[128];
+    time(&pauseTime);
+    //fmt = localtime(&pauseTime);
+    //sprintf(buf,"pause: %d:%d:%d",fmt->tm_hour,fmt->tm_min,fmt->tm_sec);
+    //printf("%s\n",buf);
+}
+
+void PRTManager::restart()
+{
+    //struct tm* fmt;
+    //char buf[128];
+    time(&restartTime);
+    //fmt = localtime(&restartTime);
+    //sprintf(buf,"restart: %d:%d:%d",fmt->tm_hour,fmt->tm_min,fmt->tm_sec);
+    //printf("%s\n",buf);
+}
+
+void PRTManager::end()
+{
+    time(&endTime);
+    if(pauseTime == 0 && restartTime == 0){
+        runTime = difftime(endTime,startTime);
+        runTime -= allPauseTime;
+    }
+    else{
+        time_t tmp1;
+        tmp1 = difftime(restartTime,pauseTime);
+        runTime = difftime(endTime,startTime);
+        allPauseTime += tmp1;
+        restartTime = 0;
+        pauseTime = 0;
+        //printf("run: %d,%d\n",(int)tmp1,(int)tmp2);
+        runTime -= allPauseTime;
+    }
+
+}
+
+const std::string& PRTManager::get_run_time_string()
+{
+    runTimeStr = int_to_time_string((int)runTime);
+    return runTimeStr;
+}
+
+std::string PRTManager::int_to_time_string(int sec)
+{
+    int mm=0, ss=0;
+    char timeBuf[24];
+    if(sec>=60){
+        ss = sec%60;
+        mm = (sec-ss)/60;
+        if(mm>=10){
+            if(ss>=10){
+                sprintf(timeBuf,"%d:%d",mm,ss);
+            }
+            else{
+                sprintf(timeBuf,"%d,0%d",mm,ss);
+            }
+        }
+        else{
+            if(ss>=10){
+                sprintf(timeBuf,"0%d:%d",mm,ss);
+            }
+            else{
+                sprintf(timeBuf,"0%d:0%d",mm,ss);
+            }
+        }
+    }
+    else if(sec>=10){
+        sprintf(timeBuf,"00:%d",sec);
+    }
+    else{
+        sprintf(timeBuf,"00:0%d",sec);
+    }
+    return std::string(timeBuf);
+}
+
+
+void PRTManager::set_time_state(TimeState ts)
+{
+    timeState = ts;
+}
+
+
+void PRTManager::update_time()
+{
+    switch(timeState){
+    case Start:
+        start();
+        allPauseTime = 0;
+        timeState = running;
+        break;
+    case running:
+        run();
+        break;
+    case Pause:
+        pause();
+        timeState = Idle;
+        break;
+    case Restart:
+        restart();
+        timeState = running;
+        break;
+    case End:
+        end();
+        timeState = Idle;
+        break;
+    case Idle:
+        break;
+    }
+
+}

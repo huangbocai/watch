@@ -66,6 +66,10 @@ public:
     double z(){return val[2];}
     double a(){return val[3];}
     double b(){return val[4];}
+    Position rotate(double deg){
+        return Position(val[0],val[1],val[2],val[3],val[4]+deg,searchArea);
+    }
+
     bool operator !=(const Position& pos) const
     {
         for(int i=0; i<5; i++){
@@ -87,7 +91,8 @@ public:
     void record_current_pos(double pPos[5], RectangleFrame rect);
     void abandon_current_pos();
     void abandon_all_pos();
-    void finish_record_cam_pos();
+    void finish_record_watch_pos();
+    void auto_record_watch_pos(int num, double deg);
     void finish_record_hole_pos();
     unsigned int get_pos_num(){return posVec.size();}
     void set_current_index(unsigned int index) {currentIndex = index;}
@@ -242,10 +247,11 @@ private slots:
 
     //watch page
     void change_angle();
-    void record_cam_pos();
+    void record_watch_pos();
     void abandon_current_pos();
     void abandon_all_pos();
-    void finish_record_cam_pos();
+    void finish_record_watch_pos();
+    void auto_record_watch_pos();
     void get_first_pos();
     void get_next_pos();
     void cam_run();

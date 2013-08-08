@@ -4,6 +4,8 @@
 #include "hal.h"
 #include "rtapi.h"
 #include "emcsec.hh"
+#include <string>
+#include <ctime>
 
 #define MARK_WAITING	1
 #define MARK_DONE	0
@@ -38,32 +40,63 @@ public:
     MarkHalPins* halpins;
 };
 
-class MarkEmcStatus
+//Programe Run TIme Manager
+class PRTManager
 {
 public:
-    typedef enum {Idle,Start, runing, Pause, End} TimeState;
-    typedef enum {Unhomed=0, Homeing, Homed} AxisHomeState;
-    MarkEmcStatus():stopToManual(false),homing(false),homeIndex(0),
-        mode(EMC_TASK_MODE_MANUAL),timeState(Idle){
-        for(int i=0; i<5; i++)
-            homeState[i] = Homeing;
+    typedef enum {Idle,Start, running, Pause, Restart, End} TimeState;
+    PRTManager():startTime(0),pauseTime(0),restartTime(0),endTime(0),
+        allPauseTime(0), runTime(0),timeState(Idle){}
+    void start();
+    void run(){
+        //update end time in order to caculate run time
+        end();
     }
+
+    void pause();
+    void restart();
+    void end();
+    const std::string& get_run_time_string();
+    void set_time_state(TimeState ts);
+    void update_time();
+private:
+    //mm:ss
+    std::string int_to_time_string(int sec);
+    void update_time_state(TimeState ts);
+
+    time_t startTime;
+    time_t pauseTime;
+    time_t restartTime;
+    time_t endTime;
+    time_t allPauseTime;
+    time_t runTime;
+    std::string runTimeStr;
+    TimeState timeState;
+};
+
+class MarkEmcStatus
+{
+public:    
+    typedef enum {Unhomed=0, Homeing, Homed} AxisHomeState;
+    typedef enum {UNHOMED, Z_AXIS_HOMING, OTHER_AXIS_HOMING,WAIT_ALL_AXIS_HOMED, ALL_HOMED} HomeState;
+    MarkEmcStatus();
     void update();
     double cmdAxis[5];
     bool hasStop;
     bool stopToManual;
-    bool homing; //homing is true,when one of the axis is unhomed
-    int homeIndex; //to ensure it's the first time to call emc_home after the z axis homed.
-    AxisHomeState homeState[5]; //decide to use which kind of colors to display axis
+    bool homing; //when one of the axis is unhomed, homing is true.
+    HomeState currentHS; //current home state;
+    AxisHomeState axisHomeState[5]; //decide to use which kind of colors to display axis value
     enum EMC_TASK_INTERP_ENUM programStaut;
     enum EMC_TASK_INTERP_ENUM lastProgramStaut;
     enum EMC_TASK_MODE_ENUM mode;
     char errorMsg[256];
     char operatorText[256];
-    char operatorDisplay[256];
-    TimeState timeState;
+    char operatorDisplay[256];    
+    PRTManager prtManager;
 private:
-    //HomeState currentHomeState();
+    void update_current_home_state();
+    void update_current_time_state();
     double actualAxis[5];
     double lastActualAxis[5];
     bool stopComfirm;    

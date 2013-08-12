@@ -347,20 +347,33 @@
      <rect>
       <x>10</x>
       <y>490</y>
-      <width>221</width>
-      <height>191</height>
+      <width>181</width>
+      <height>161</height>
      </rect>
     </property>
     <property name="title">
      <string>输入输出：</string>
     </property>
+    <widget class="Line" name="line_3">
+     <property name="geometry">
+      <rect>
+       <x>170</x>
+       <y>0</y>
+       <width>20</width>
+       <height>201</height>
+      </rect>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+    </widget>
     <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>40</y>
-       <width>203</width>
-       <height>125</height>
+       <y>30</y>
+       <width>159</width>
+       <height>113</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
@@ -369,16 +382,10 @@
       </property>
       <item row="0" column="0">
        <widget class="QPushButton" name="tb_1">
-        <property name="minimumSize">
-         <size>
-          <width>93</width>
-          <height>31</height>
-         </size>
-        </property>
         <property name="maximumSize">
          <size>
-          <width>93</width>
-          <height>31</height>
+          <width>71</width>
+          <height>27</height>
          </size>
         </property>
         <property name="text">
@@ -391,16 +398,10 @@
       </item>
       <item row="0" column="1">
        <widget class="QPushButton" name="tb_2">
-        <property name="minimumSize">
-         <size>
-          <width>93</width>
-          <height>31</height>
-         </size>
-        </property>
         <property name="maximumSize">
          <size>
-          <width>93</width>
-          <height>31</height>
+          <width>71</width>
+          <height>27</height>
          </size>
         </property>
         <property name="text">
@@ -413,16 +414,10 @@
       </item>
       <item row="1" column="0">
        <widget class="QPushButton" name="tb_3">
-        <property name="minimumSize">
-         <size>
-          <width>93</width>
-          <height>31</height>
-         </size>
-        </property>
         <property name="maximumSize">
          <size>
-          <width>93</width>
-          <height>31</height>
+          <width>71</width>
+          <height>27</height>
          </size>
         </property>
         <property name="text">
@@ -435,16 +430,10 @@
       </item>
       <item row="1" column="1">
        <widget class="QPushButton" name="tb_4">
-        <property name="minimumSize">
-         <size>
-          <width>93</width>
-          <height>31</height>
-         </size>
-        </property>
         <property name="maximumSize">
          <size>
-          <width>93</width>
-          <height>31</height>
+          <width>71</width>
+          <height>27</height>
          </size>
         </property>
         <property name="text">
@@ -457,20 +446,14 @@
       </item>
       <item row="2" column="0">
        <widget class="QPushButton" name="tb_5">
-        <property name="minimumSize">
-         <size>
-          <width>93</width>
-          <height>31</height>
-         </size>
-        </property>
         <property name="maximumSize">
          <size>
-          <width>93</width>
-          <height>31</height>
+          <width>71</width>
+          <height>27</height>
          </size>
         </property>
         <property name="text">
-         <string>Button5</string>
+         <string>button</string>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -479,20 +462,14 @@
       </item>
       <item row="2" column="1">
        <widget class="QPushButton" name="tb_6">
-        <property name="minimumSize">
-         <size>
-          <width>93</width>
-          <height>31</height>
-         </size>
-        </property>
         <property name="maximumSize">
          <size>
-          <width>93</width>
-          <height>31</height>
+          <width>71</width>
+          <height>27</height>
          </size>
         </property>
         <property name="text">
-         <string>Button6</string>
+         <string>button</string>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -515,23 +492,10 @@
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
-   <widget class="Line" name="line_3">
-    <property name="geometry">
-     <rect>
-      <x>240</x>
-      <y>490</y>
-      <width>20</width>
-      <height>201</height>
-     </rect>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Vertical</enum>
-    </property>
-   </widget>
    <widget class="QGroupBox" name="groupBox_4">
     <property name="geometry">
      <rect>
-      <x>260</x>
+      <x>200</x>
       <y>490</y>
       <width>331</width>
       <height>201</height>
@@ -864,7 +828,7 @@
    <widget class="Line" name="line_4">
     <property name="geometry">
      <rect>
-      <x>590</x>
+      <x>530</x>
       <y>490</y>
       <width>20</width>
       <height>201</height>
@@ -877,14 +841,14 @@
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>610</x>
+      <x>550</x>
       <y>490</y>
-      <width>401</width>
+      <width>471</width>
       <height>221</height>
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -915,11 +879,14 @@
       <property name="text">
        <string>点胶</string>
       </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
      </widget>
      <widget class="QPushButton" name="bt_scanWatch">
       <property name="geometry">
        <rect>
-        <x>130</x>
+        <x>160</x>
         <y>20</y>
         <width>93</width>
         <height>41</height>
@@ -928,11 +895,14 @@
       <property name="text">
        <string>扫描表壳</string>
       </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
      </widget>
      <widget class="QPushButton" name="bt_setDiamond">
       <property name="geometry">
        <rect>
-        <x>130</x>
+        <x>160</x>
         <y>80</y>
         <width>93</width>
         <height>41</height>
@@ -941,11 +911,14 @@
       <property name="text">
        <string>放置钻石</string>
       </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
      </widget>
      <widget class="QCheckBox" name="cb_scanWatch">
       <property name="geometry">
        <rect>
-        <x>240</x>
+        <x>260</x>
         <y>30</y>
         <width>31</width>
         <height>22</height>
@@ -958,7 +931,7 @@
      <widget class="QPushButton" name="bt_autoRun">
       <property name="geometry">
        <rect>
-        <x>280</x>
+        <x>320</x>
         <y>0</y>
         <width>93</width>
         <height>51</height>
@@ -974,7 +947,7 @@
      <widget class="QPushButton" name="bt_pause">
       <property name="geometry">
        <rect>
-        <x>280</x>
+        <x>320</x>
         <y>60</y>
         <width>93</width>
         <height>51</height>
@@ -990,7 +963,7 @@
      <widget class="QPushButton" name="bt_stop">
       <property name="geometry">
        <rect>
-        <x>280</x>
+        <x>320</x>
         <y>120</y>
         <width>93</width>
         <height>51</height>
@@ -1017,18 +990,37 @@
       <property name="title">
        <string>高度</string>
       </property>
-      <widget class="QWidget" name="">
+      <widget class="Line" name="line_5">
        <property name="geometry">
         <rect>
-         <x>12</x>
-         <y>32</y>
-         <width>164</width>
+         <x>140</x>
+         <y>0</y>
+         <width>20</width>
+         <height>191</height>
+        </rect>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+      <widget class="QWidget" name="layoutWidget">
+       <property name="geometry">
+        <rect>
+         <x>13</x>
+         <y>33</y>
+         <width>130</width>
          <height>95</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_3">
         <item row="0" column="0">
          <widget class="QPushButton" name="bt_getDiamondZ">
+          <property name="maximumSize">
+           <size>
+            <width>71</width>
+            <height>27</height>
+           </size>
+          </property>
           <property name="text">
            <string>取钻高度</string>
           </property>
@@ -1038,7 +1030,7 @@
          <widget class="QDoubleSpinBox" name="sp_getDiamondZ">
           <property name="maximumSize">
            <size>
-            <width>71</width>
+            <width>51</width>
             <height>27</height>
            </size>
           </property>
@@ -1055,6 +1047,12 @@
         </item>
         <item row="1" column="0">
          <widget class="QPushButton" name="bt_setGlueZ">
+          <property name="maximumSize">
+           <size>
+            <width>71</width>
+            <height>27</height>
+           </size>
+          </property>
           <property name="text">
            <string>滴胶高度</string>
           </property>
@@ -1064,7 +1062,7 @@
          <widget class="QDoubleSpinBox" name="sp_setGlueZ">
           <property name="maximumSize">
            <size>
-            <width>71</width>
+            <width>51</width>
             <height>27</height>
            </size>
           </property>
@@ -1081,6 +1079,12 @@
         </item>
         <item row="2" column="0">
          <widget class="QPushButton" name="bt_setDiamondZ">
+          <property name="maximumSize">
+           <size>
+            <width>71</width>
+            <height>27</height>
+           </size>
+          </property>
           <property name="text">
            <string>镶钻高度</string>
           </property>
@@ -1090,7 +1094,7 @@
          <widget class="QDoubleSpinBox" name="sp_setDiamondZ">
           <property name="maximumSize">
            <size>
-            <width>71</width>
+            <width>51</width>
             <height>27</height>
            </size>
           </property>
@@ -1108,37 +1112,30 @@
        </layout>
       </widget>
      </widget>
-     <widget class="Line" name="line_5">
-      <property name="geometry">
-       <rect>
-        <x>190</x>
-        <y>0</y>
-        <width>20</width>
-        <height>191</height>
-       </rect>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-     </widget>
      <widget class="QGroupBox" name="groupBox_6">
       <property name="geometry">
        <rect>
-        <x>210</x>
+        <x>160</x>
         <y>0</y>
-        <width>191</width>
-        <height>191</height>
+        <width>161</width>
+        <height>181</height>
        </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>161</width>
+        <height>181</height>
+       </size>
       </property>
       <property name="title">
        <string>时间</string>
       </property>
-      <widget class="QWidget" name="gridLayoutWidget_4">
+      <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
-         <x>0</x>
+         <x>1</x>
          <y>30</y>
-         <width>183</width>
+         <width>151</width>
          <height>128</height>
         </rect>
        </property>
@@ -1150,24 +1147,16 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_8">
-          <property name="text">
-           <string>滴胶后时间：</string>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="le_glueT">
+          <property name="maximumSize">
+           <size>
+            <width>51</width>
+            <height>27</height>
+           </size>
           </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_9">
           <property name="text">
-           <string>吸 钻 延 时：</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="label_10">
-          <property name="text">
-           <string>释 钻 延 时：</string>
+           <string>0.004</string>
           </property>
          </widget>
         </item>
@@ -1178,10 +1167,44 @@
           </property>
          </widget>
         </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_8">
+          <property name="text">
+           <string>滴胶后时间：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="le_afterGlueT">
+          <property name="maximumSize">
+           <size>
+            <width>51</width>
+            <height>27</height>
+           </size>
+          </property>
+         </widget>
+        </item>
         <item row="1" column="2">
          <widget class="QLabel" name="label_16">
           <property name="text">
            <string>s</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_9">
+          <property name="text">
+           <string>吸 钻 延 时：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="le_getDiamondT">
+          <property name="maximumSize">
+           <size>
+            <width>51</width>
+            <height>27</height>
+           </size>
           </property>
          </widget>
         </item>
@@ -1192,6 +1215,23 @@
           </property>
          </widget>
         </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>释 钻 延 时：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLineEdit" name="le_setDiamondT">
+          <property name="maximumSize">
+           <size>
+            <width>51</width>
+            <height>27</height>
+           </size>
+          </property>
+         </widget>
+        </item>
         <item row="3" column="2">
          <widget class="QLabel" name="label_18">
           <property name="text">
@@ -1199,20 +1239,114 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="1">
-         <widget class="QLineEdit" name="le_setDiamondT"/>
-        </item>
-        <item row="2" column="1">
-         <widget class="QLineEdit" name="le_getDiamondT"/>
-        </item>
-        <item row="1" column="1">
-         <widget class="QLineEdit" name="le_afterGlueT"/>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_7">
+      <property name="geometry">
+       <rect>
+        <x>340</x>
+        <y>0</y>
+        <width>121</width>
+        <height>161</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>偏移微调</string>
+      </property>
+      <widget class="QWidget" name="layoutWidget">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>30</y>
+         <width>124</width>
+         <height>128</height>
+        </rect>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_7">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_21">
+          <property name="text">
+           <string>吸嘴X:</string>
+          </property>
+         </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QLineEdit" name="le_glueT"/>
+         <widget class="QDoubleSpinBox" name="sp_pickupOffsetX">
+          <property name="minimum">
+           <double>-99.989999999999995</double>
+          </property>
+          <property name="singleStep">
+           <double>0.010000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_22">
+          <property name="text">
+           <string>吸嘴Y：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QDoubleSpinBox" name="sp_pickupOffsetY">
+          <property name="minimum">
+           <double>-99.989999999999995</double>
+          </property>
+          <property name="singleStep">
+           <double>0.010000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_23">
+          <property name="text">
+           <string>胶嘴X：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QDoubleSpinBox" name="sp_glueOffsetX">
+          <property name="minimum">
+           <double>-99.989999999999995</double>
+          </property>
+          <property name="singleStep">
+           <double>0.010000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_24">
+          <property name="text">
+           <string>胶嘴Y：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QDoubleSpinBox" name="sp_glueOffsetY">
+          <property name="minimum">
+           <double>-99.989999999999995</double>
+          </property>
+          <property name="singleStep">
+           <double>0.010000000000000</double>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
+     </widget>
+     <widget class="Line" name="line_6">
+      <property name="geometry">
+       <rect>
+        <x>320</x>
+        <y>0</y>
+        <width>20</width>
+        <height>191</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
      </widget>
     </widget>
    </widget>

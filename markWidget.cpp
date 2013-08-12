@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/hdreg.h>
+#include <algorithm>
 
 
 #define MARK2_VERSION "WATCH 1.0.0"
@@ -101,7 +102,6 @@ void Recorder::auto_record_watch_pos(int num, double deg)
         Position pos = firstPos.rotate(deg*i);
         posVec.push_back(pos);
     }
-    //cout<<"Pos Num: "<<posVec.size()<<endl;
 
     finish_record_watch_pos();
 }
@@ -286,6 +286,10 @@ MarkWidget::MarkWidget(int argc,  char **argv, QWidget* parent)
     infor.setDiamondT = prjManage.setDiamondTime;
     infor.slowVel = param.slowVel;
     infor.fastVel = param.fastVel;
+    infor.pickupOffsetX = param.pickupOffsetX;
+    infor.pickupOffsetY = param.pickupOffsetY;
+    infor.glueOffsetX = param.glueOffsetX;
+    infor.glueOffsetY = param.glueOffsetY;
 
     status_bar_init();
     diamond_page_init();
@@ -426,11 +430,6 @@ void MarkWidget::diamond_page_init(){
     le_scanRows->setText(QString::number(prjManage.scanRowNum));
     le_scanCols->setValidator(intValidator);
     le_scanCols->setText(QString::number(prjManage.scanColNum));
-    //le_pickupZD->setValidator(doubleValidator);
-    //sprintf(buf,"%.3f", prjManage.pickupZD);
-    //le_pickupZD->setText(QString::fromUtf8(buf));
-    //sprintf(buf,"%.3f", prjManage.sendZD);
-    //le_sendZD->setText(QString::fromUtf8(buf));
 
     connect(tb_selectPattern0, SIGNAL(toggled(bool)), this, SLOT(select_pattern_toggled(bool)));
     connect(tb_searchArea0, SIGNAL(toggled(bool)), this, SLOT(search_area_toggled(bool)));
@@ -438,13 +437,12 @@ void MarkWidget::diamond_page_init(){
     connect(bt_setScanStart, SIGNAL(clicked()), this, SLOT(set_scan_beginning()));
     connect(bt_gotoScanStart, SIGNAL(clicked()), this, SLOT(back_scan_beginning()));
     connect(bt_scanTest,SIGNAL(clicked()), this, SLOT(scan_test()));
-    //connect(bt_setPickupZD, SIGNAL(clicked()), this, SLOT(set_pickup_diamnod_z()));
-    //connect(bt_setSendZD, SIGNAL(clicked()), this, SLOT(set_send_diamnod_z()));
     connect(bt_pickupFirst, SIGNAL(clicked()), this, SLOT(pickup_first()));
     connect(bt_pickupNext, SIGNAL(clicked()), this, SLOT(pickup_next()));
     connect(bt_pickupAll, SIGNAL(clicked()), this, SLOT(pickup_all()));
     connect(rb_circle,SIGNAL(clicked()),this,SLOT(choose_pattern_shap()));
     connect(rb_rectangle,SIGNAL(clicked()),this,SLOT(choose_pattern_shap()));
+    connect(bt_recordD,SIGNAL(clicked()),this,SLOT(record_diamond_pos()));
 }
 
 void MarkWidget::watch_page_init()
@@ -644,39 +642,6 @@ void MarkWidget::view_update(){
     }
 }
 
-QString MarkWidget::int_to_time_string(int sec)
-{
-    int mm=0, ss=0;
-    char timeBuf[24];
-    if(sec>=60){
-        ss = sec%60;
-        mm = (sec-ss)/60;
-        if(mm>=10){
-            if(ss>=10){
-                sprintf(timeBuf,"%d:%d",mm,ss);
-            }
-            else{
-                sprintf(timeBuf,"%d,0%d",mm,ss);
-            }
-        }
-        else{
-            if(ss>=10){
-                sprintf(timeBuf,"0%d:%d",mm,ss);
-            }
-            else{
-                sprintf(timeBuf,"0%d:0%d",mm,ss);
-            }
-        }
-    }
-    else if(sec>=10){
-        sprintf(timeBuf,"00:%d",sec);
-    }
-    else{
-        sprintf(timeBuf,"00:0%d",sec);
-    }
-    return QString(timeBuf);
-}
-
 void MarkWidget::slow_cycle(){
 
 #ifdef WITH_EMC
@@ -717,12 +682,16 @@ void MarkWidget::auto_detect_diamond(){
 
     list<Point>::const_iterator it;
     Point pos;
+    //ofstream ofs;
+    //ofs.open("/home/u/cnc/镶钻存档/test1/center.pos",ios::app);
     Vector2 vm(emcStatus.cmdAxis[0], emcStatus.cmdAxis[1]);
     for(it=imgPos.begin();it!=imgPos.end();it++){
+        //ofs<<int(it->x()-0.5)<<" "<<int(it->y()-0.5)<<endl;
         pos=transfMatrix->transform(it->x(), it->y());
         pos.move(vm);
         watchResult.dimamondPos.push_back(pos);
     }
+    //ofs.close();
     markView->set_diamond_sum((int)watchResult.dimamondPos.size());
 }
 
@@ -841,8 +810,8 @@ void MarkWidget::fast_react_cycle(){
 
      if(*halpins->posCmd==1){
         Point pos= *watchResult.dimamondPos.begin();
-        *halpins->posAxis[0]=pos.x()-param.pickRelx;
-        *halpins->posAxis[1]=pos.y()-param.pickRely;
+        *halpins->posAxis[0]=pos.x()-param.pickup_offset_x();
+        *halpins->posAxis[1]=pos.y()-param.pickup_offset_y();
         *halpins->posAxis[2]=prjManage.pickupZD;
         *halpins->posCmd=0;
     }
@@ -870,8 +839,8 @@ void MarkWidget::fast_react_cycle(){
          if(index<(posRecorder->holesPosVec).size()){
              const Position& pos = (posRecorder->holesPosVec)[index];
 
-             *halpins->posAxis[0]=pos.get_value(0)-param.glueRelx;
-             *halpins->posAxis[1]=pos.get_value(1)-param.glueRely;
+             *halpins->posAxis[0]=pos.get_value(0)-param.glue_offset_x();
+             *halpins->posAxis[1]=pos.get_value(1)-param.glue_offset_y();
              //*halpins->posAxis[2]=pos->get_value(2);
              *halpins->posAxis[2]=prjManage.glueZPos;
              *halpins->posAxis[3]=pos.get_value(3);
@@ -887,8 +856,8 @@ void MarkWidget::fast_react_cycle(){
          if(index<(posRecorder->holesPosVec).size()){
              const Position& pos = (posRecorder->holesPosVec)[index];
 
-             *halpins->posAxis[0]=pos.get_value(0)-param.pickRelx;
-             *halpins->posAxis[1]=pos.get_value(1)-param.pickRely;
+             *halpins->posAxis[0]=pos.get_value(0)-param.pickup_offset_x();
+             *halpins->posAxis[1]=pos.get_value(1)-param.pickup_offset_y();
              *halpins->posAxis[2]=prjManage.setDiamondZPos;
              *halpins->posAxis[3]=pos.get_value(3);
              *halpins->posAxis[4]=pos.get_value(4);
@@ -919,7 +888,6 @@ void MarkWidget::fast_react_cycle(){
 
     if(*halpins->setGlue == 1){
         infor.ioState[0] = true;
-        //*halpins->setGlue = 0;
     }
     else{
         infor.ioState[0] = false;
@@ -927,7 +895,6 @@ void MarkWidget::fast_react_cycle(){
 
     if(*halpins->pickupDiamond == 1){
         infor.ioState[1] = true;
-        //*halpins->pickupDiamond = 0;
     }
     else{
         infor.ioState[1] = false;
@@ -935,7 +902,6 @@ void MarkWidget::fast_react_cycle(){
 
     if(*halpins->dropDiamond == 1){
         infor.ioState[2] = true;
-        //*halpins->dropDiamond = 0;
     }
     else{
         infor.ioState[2] = false;
@@ -943,7 +909,6 @@ void MarkWidget::fast_react_cycle(){
 
     if(*halpins->lightControl == 1){
         infor.ioState[3] = true;
-        //*halpins->lightControl = 0;
     }
     else{
         infor.ioState[3] = false;
@@ -953,8 +918,11 @@ void MarkWidget::fast_react_cycle(){
 
     if(posRecorder->get_current_index()<=posRecorder->get_pos_num())
         *halpins->watchPosValid = 1;
-    else
+    else{
         *halpins->watchPosValid = 0;
+        if(!infor.endScanWatch)
+            infor.endScanWatch = true;
+    }
 
     if(watchResult.dimamondPos.size())
         *halpins->posValid=1;   
@@ -967,11 +935,16 @@ void MarkWidget::fast_react_cycle(){
         *halpins->watchHoleValid = 0;
         if(!infor.endAutoRun)
             infor.endAutoRun = true;
+        if(!infor.endSetDiamond)
+            infor.endSetDiamond = true;
     }
     if(posRecorder->get_glue_hole_index()<=(posRecorder->holesPosVec).size())
         *halpins->glueHoleValid = 1;
-    else
+    else{
         *halpins->glueHoleValid = 0;
+        if(!infor.endSetGLue)
+            infor.endSetGLue = true;
+    }
 }
 
 void MarkWidget::ready_for_diamond_scan(){
@@ -1166,7 +1139,7 @@ void MarkWidget::pickup_first(){
 #ifdef WITH_EMC
     emc_mode(NULL,EMC_TASK_MODE_MDI);
     emc_mdi("g0 g53 z0");
-    sprintf(buf, "g0 g53 x%f y%f", pos.x()-param.pickRelx, pos.y()-param.pickRely);
+    sprintf(buf, "g0 g53 x%f y%f", pos.x()-param.pickup_offset_x(), pos.y()-param.pickup_offset_y());
     emc_mdi(buf);
     sprintf(buf, "g1 g53 z%f f3000", prjManage.pickupZD);
     emc_mdi(buf);
@@ -1187,7 +1160,7 @@ void MarkWidget::pickup_next(){
     emc_mode(NULL,EMC_TASK_MODE_MDI);
     sprintf(buf, "g0 g53 z%f", prjManage.pickupZD+5);
     emc_mdi(buf);
-    sprintf(buf, "g0 g53 x%f y%f", pos.x()-param.pickRelx, pos.y()-param.pickRely);
+    sprintf(buf, "g0 g53 x%f y%f", pos.x()-param.pickup_offset_x(), pos.y()-param.pickup_offset_y());
     emc_mdi(buf);
     sprintf(buf, "g1 g53 z%f f3000", prjManage.pickupZD);
     emc_mdi(buf);
@@ -1212,6 +1185,77 @@ void MarkWidget::choose_pattern_shap( )
         markView->set_show_circle(true);
     else
         markView->set_show_circle(false);
+}
+
+bool compare_points(const Point& p1, const Point& p2)
+{
+    Vector2 vec1(p1.x(),p1.y());
+    Vector2 vec2(p2.x(),p2.y());
+    if(vec1.length()<=vec2.length())
+        return true;
+    else
+        return false;
+}
+
+bool distance_within(const Point& p1, const Point& p2)
+{
+    Vector2 vec(p1,p2);
+    return (vec.length()>1);
+}
+
+
+void MarkWidget::record_diamond_pos()
+{
+    ofstream ofs;
+    list<Point> posList = watchResult.dimamondPos;
+    list<Point> tmpPosList;
+    list<double> tmpList;
+    list<Point>::iterator iter,iter1;
+    list<double>::iterator doubleIter;
+
+    posList.sort(compare_points);
+
+    for(iter = posList.begin(); iter!=posList.end();iter++){
+        iter1 = iter;
+        if(++iter1 != posList.end()){
+            Vector2 vec(*iter,*iter1);
+            tmpList.push_back(vec.length());
+        }
+        else
+            break;
+    }
+
+    ofs.open("/home/u/cnc/镶钻存档/test1/diamond.pos");
+
+    if(!ofs.is_open()){
+        cout<<"open file /home/u/cnc/镶钻存档/test1/diamond.pos fail."<<endl;
+        return;
+    }
+    ofs.precision(6);
+
+    for(iter = posList.begin(); iter != posList.end(); iter++){
+        Vector2 vec((*iter).x(),(*iter).y());
+        ofs<<(*iter).x()<<" "<<(*iter).y()<<" "<<vec.length()<<endl;
+    }
+    ofs<<endl<<endl;
+    for(doubleIter = tmpList.begin(); doubleIter != tmpList.end(); doubleIter++){
+        ofs<<*doubleIter<<endl;
+    }
+
+    ofs<<endl<<endl;
+    tmpPosList = posList;
+
+    for(iter = posList.begin(); iter!=posList.end(); iter++){
+        if(std::binary_search(posList.begin(),posList.end(), *iter,distance_within))
+            tmpPosList.remove(*iter);
+    }
+
+    for(iter = tmpPosList.begin(); iter != tmpPosList.end(); iter++){
+        Point imgP = transfMatrix->inv_transform(*iter);
+        ofs<<imgP.x()<<" "<<imgP.y()<<endl;
+    }
+
+    ofs.close();
 }
 
 void MarkWidget::change_angle(){
@@ -1425,16 +1469,22 @@ void MarkWidget::get_next_pos()
 void MarkWidget::cam_run()
 {
 #ifdef WITH_EMC    
-    posRecorder->set_current_index(0);
-    posRecorder->clear_holes_pos();
-    infor.watchPosIndex = 0;
-    MarkHalPins* halpins=halData->halpins;
-    *halpins->watchPosValid = 1;
-    emc_mode(NULL,EMC_TASK_MODE_AUTO);
-    emc_open("/home/u/cnc/configs/ppmc/o_nc/watch.ngc");
-    emc_wait("done");
-    emc_run(0);
-    emcStatus.stopToManual=true;    
+    if(emcStatus.programStaut==EMC_TASK_INTERP_PAUSED){
+        emc_resume();
+    }
+    else if(emcStatus.programStaut==EMC_TASK_INTERP_IDLE){
+        posRecorder->set_current_index(0);
+        posRecorder->clear_holes_pos();
+        infor.watchPosIndex = 0;
+        infor.endScanWatch = false;
+        MarkHalPins* halpins=halData->halpins;
+        *halpins->watchPosValid = 1;
+        emc_mode(NULL,EMC_TASK_MODE_AUTO);
+        emc_open("/home/u/cnc/configs/ppmc/o_nc/watch.ngc");
+        emc_wait("done");
+        emc_run(0);
+        emcStatus.stopToManual=true;
+    }
 #endif
 }
 
@@ -1464,7 +1514,8 @@ void MarkWidget::set_first_hole()
         //emc_mdi(buf);
 
         emc_mdi("g0 g53 z0");
-        sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos.get_value(0)-param.pickRelx, pos.get_value(1)-param.pickRely, pos.get_value(3),pos.get_value(4));
+        sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos.get_value(0)-param.pickup_offset_x(),
+                pos.get_value(1)-param.pickup_offset_y(), pos.get_value(3),pos.get_value(4));
         emc_mdi(buf);
         sprintf(buf, "g0 g53 z%.3f", pos.get_value(2));
         emc_mdi(buf);
@@ -1503,7 +1554,8 @@ void MarkWidget::set_next_hole()
         //emc_mdi(buf);
 
         emc_mdi("g0 g53 z0");
-        sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos.get_value(0)-param.pickRelx, pos.get_value(1)-param.pickRely, pos.get_value(3),pos.get_value(4));
+        sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos.get_value(0)-param.pickup_offset_x(),
+                pos.get_value(1)-param.pickup_offset_y(), pos.get_value(3),pos.get_value(4));
         emc_mdi(buf);
         sprintf(buf, "g0 g53 z%.3f", pos.get_value(2));
         emc_mdi(buf);
@@ -1516,38 +1568,51 @@ void MarkWidget::set_next_hole()
 //点胶
 void MarkWidget::set_all_holes()
 {
-    if((posRecorder->holesPosVec).size()<=0)
-        return;
-    posRecorder->set_hole_index(0);
-    posRecorder->set_glue_hole_index(0);
-    infor.gluePosIndex = 0;
 #ifdef WITH_EMC
-    MarkHalPins* halpins=halData->halpins;
-    *halpins->watchHoleValid = 1;
-    *halpins->glueHoleValid = 1;
-    emc_mode(NULL,EMC_TASK_MODE_AUTO);
-    emc_open("/home/u/cnc/configs/ppmc/o_nc/setglue.ngc");
-    emc_wait("done");
-    emc_run(0);
-    emcStatus.stopToManual=true;
+    if(emcStatus.programStaut==EMC_TASK_INTERP_PAUSED){
+        emc_resume();
+    }
+    else if(emcStatus.programStaut==EMC_TASK_INTERP_IDLE){
+        if((posRecorder->holesPosVec).size()<=0)
+            return;
+        posRecorder->set_hole_index(0);
+        posRecorder->set_glue_hole_index(0);
+        infor.gluePosIndex = 0;
+        infor.endSetGLue = false;
+        MarkHalPins* halpins=halData->halpins;
+        *halpins->watchHoleValid = 1;
+        *halpins->glueHoleValid = 1;
+        emc_mode(NULL,EMC_TASK_MODE_AUTO);
+        emc_open("/home/u/cnc/configs/ppmc/o_nc/setglue.ngc");
+        emc_wait("done");
+        emc_run(0);
+        emcStatus.stopToManual=true;
+    }
 #endif
 }
 
 //镶钻
 void MarkWidget::set_diamond_in_all_holes()
 {
-    if((posRecorder->holesPosVec).size()==0)
-        return;
-    posRecorder->set_hole_index(0);
-    infor.holePosIndex = 0;
 #ifdef WITH_EMC
-    MarkHalPins* halpins=halData->halpins;
-    *halpins->watchHoleValid = 1;
-    emc_mode(NULL,EMC_TASK_MODE_AUTO);
-    emc_open("/home/u/cnc/configs/ppmc/o_nc/setdiamond.ngc");
-    emc_wait("done");
-    emc_run(0);
-    emcStatus.stopToManual=true;
+    if(emcStatus.programStaut==EMC_TASK_INTERP_PAUSED){
+        emc_resume();
+    }
+    else if(emcStatus.programStaut==EMC_TASK_INTERP_IDLE){
+        if((posRecorder->holesPosVec).size()==0)
+            return;
+        posRecorder->set_hole_index(0);
+        infor.holePosIndex = 0;
+        infor.endSetDiamond = false;
+        MarkHalPins* halpins=halData->halpins;
+        *halpins->watchHoleValid = 1;
+        emc_mode(NULL,EMC_TASK_MODE_AUTO);
+        emc_open("/home/u/cnc/configs/ppmc/o_nc/setdiamond.ngc");
+        emc_wait("done");
+        emc_run(0);
+        emcStatus.stopToManual=true;
+    }
+
 #endif
 
 }
@@ -1847,7 +1912,32 @@ void MarkWidget::input_glue_pos_pressed(){
     write_profile_double( "MARK", "GLUE_REL_SPINDLE_Y", param.glueRely, EMC_INIFILE);
 }
 
-
+void MarkWidget::set_offset(int index, double value)
+{
+    switch(index){
+        //Pickup X Offset
+    case 0:
+        param.pickupOffsetX = value;
+        write_profile_double("MARK", "PICKUP_OFFSET_X", param.pickupOffsetX, EMC_INIFILE);
+        break;
+        //Pickup Y Offset
+    case 1:
+        param.pickupOffsetY = value;
+        write_profile_double("MARK", "PICKUP_OFFSET_Y", param.pickupOffsetY, EMC_INIFILE);
+        break;
+        //Glue X Offset
+    case 2:
+        param.glueOffsetX = value;
+        write_profile_double("MARK", "GLUE_OFFSET_X", param.glueOffsetX, EMC_INIFILE);
+        break;
+        //Glue Y Offset
+    case 3:
+        param.glueOffsetY = value;
+        write_profile_double("MARK", "GLUE_OFFSET_Y", param.glueOffsetY, EMC_INIFILE);
+        break;
+    }
+    //printf("index: %d, value: %.2f\n", index, value);
+}
 
 void MarkWidget::mark_adjust_param()
 {
@@ -2026,12 +2116,12 @@ void MarkWidget::zero(){
 
 void MarkWidget::set_fast_velocity(double vel){
     param.fastVel = vel;
-    param.save_fast_velocity(EMC_INIFILE);
+    write_profile_double("DISPLAY", "MAX_LINEAR_VELOCITY", param.fastVel,EMC_INIFILE);
 }
 
 void MarkWidget::set_slow_velocity(double vel){
     param.slowVel = vel;
-    param.save_slow_velocity(EMC_INIFILE);
+    write_profile_double("DISPLAY", "MIN_LINEAR_VELOCITY", param.slowVel,EMC_INIFILE);
 }
 
 void MarkWidget::jog(int axis, double velocity){

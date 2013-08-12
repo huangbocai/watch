@@ -149,7 +149,8 @@ class Information
 {
 public:
     Information():watchPosIndex(0),gluePosIndex(0),holePosIndex(0),
-        diamondNum(0),watchPosNum(0),holePosNum(0),endAutoRun(true),runTime("00:00")
+        diamondNum(0),watchPosNum(0),holePosNum(0),endAutoRun(true),
+        endSetGLue(true),endSetDiamond(true),endScanWatch(true),runTime("00:00")
     {
         for(int i=0; i<4; i++)
             ioState[i] = false;
@@ -172,6 +173,11 @@ public:
     double setDiamondT;
     double getDiamondT;
 
+    double pickupOffsetX;
+    double pickupOffsetY;
+    double glueOffsetX;
+    double glueOffsetY;
+
     double slowVel;
     double fastVel;
 
@@ -179,6 +185,9 @@ public:
 
 
     bool endAutoRun;
+    bool endSetGLue;
+    bool endSetDiamond;
+    bool endScanWatch;
 
     QString runTime;
 
@@ -222,6 +231,10 @@ public:
 
     void set_time(int index, int varNum, double value);
 
+    void set_offset(int index, double value);
+
+
+
 signals:
     void update_emc_status(const MarkEmcStatus& status);
     void update_infor(const Information& infor);
@@ -244,6 +257,8 @@ private slots:
     void pickup_next();
     void pickup_all();
     void choose_pattern_shap();
+    void record_diamond_pos();
+
 
     //watch page
     void change_angle();
@@ -309,7 +324,7 @@ private:
     void mark_adjust_param();
     int detectHole_pressed(int type, double& cx, double& cy);
 
-    QString int_to_time_string(int sec);
+    //QString int_to_time_string(int sec);
 
     MarkHal*halData;
     MarkEmcStatus emcStatus;

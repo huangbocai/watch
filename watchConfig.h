@@ -15,11 +15,12 @@ public:
 //    void save_sim();
 //    int save_project(const char* directory);
 
-    //velocity
-    double fastVel;
-    double slowVel;
-    void save_fast_velocity(const char* iniFile);
-    void save_slow_velocity(const char* iniFile);
+
+
+    double pickup_offset_x(){return (pickRelx-pickupOffsetX);}
+    double pickup_offset_y(){return (pickRely-pickupOffsetY);}
+    double glue_offset_x(){return (glueRelx-glueOffsetX);}
+    double glue_offset_y(){return (glueRely-glueOffsetY);}
 
     //common param
     double referenceX;
@@ -30,6 +31,10 @@ public:
     double camRely;
     double glueRelx;
     double glueRely;
+    double pickupOffsetX;
+    double pickupOffsetY;
+    double glueOffsetX;
+    double glueOffsetY;
     double kxx;
     double kxy;
     double kyy;
@@ -41,6 +46,10 @@ public:
     int camBL;
     int camADL;
     int camExposure;
+
+    //velocity
+    double fastVel;
+    double slowVel;
 
     double degInc;
 

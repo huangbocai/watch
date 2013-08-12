@@ -59,9 +59,9 @@ private slots:
     void io_button_toggled(bool checked);
 
     void scan_diamond();
-    void scan_watch();
-    void set_glue();
-    void set_diamond();
+    void scan_watch(bool checked);
+    void set_glue(bool checked);
+    void set_diamond(bool checked);
 
     void auto_run(bool checked);
     void pause(bool checked);
@@ -69,6 +69,8 @@ private slots:
     void set_height();
     void set_time();
     void set_var_param(int varNum, double value=0);
+
+    void micro_adjust_offset(double value);
 
 
     //menu action

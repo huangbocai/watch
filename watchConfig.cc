@@ -20,6 +20,11 @@ int Mark2Param::load(const char* iniFile)
 	ini_get_double_param(&inifile, "MARK", "MM_PER_PIXEL_HW", &kyx, 0);
     ini_get_double_param(&inifile, "MARK", "GLUE_REL_SPINDLE_X", &glueRelx, 0);
     ini_get_double_param(&inifile, "MARK", "GLUE_REL_SPINDLE_Y", &glueRely, 0);
+    ini_get_double_param(&inifile, "MARK", "PICKUP_OFFSET_X", & pickupOffsetX, 0);
+    ini_get_double_param(&inifile, "MARK", "PICKUP_OFFSET_Y", &pickupOffsetY, 0);
+    ini_get_double_param(&inifile, "MARK", "GLUE_OFFSET_X", &glueOffsetX, 0);
+    ini_get_double_param(&inifile, "MARK", "GLUE_OFFSET_Y", &glueOffsetY, 0);
+
     ini_get_int_param(&inifile, "MARK", "CAM_GAIN", &camGain, 0);
     ini_get_int_param(&inifile, "MARK", "CAM_ADC_LEVEL", &camADL, 0);
     ini_get_int_param(&inifile, "MARK", "CAM_BLACK_LEVEL", &camBL, 0);
@@ -29,20 +34,14 @@ int Mark2Param::load(const char* iniFile)
     ini_get_string_param(&inifile, "MARK", "CURRENT_PROJECT", projectName, "test1");
     ini_get_double_param(&inifile, "DISPLAY", "MAX_LINEAR_VELOCITY", &fastVel,200);
     ini_get_double_param(&inifile, "DISPLAY", "MIN_LINEAR_VELOCITY", &slowVel,100);
+    ini_get_double_param(&inifile, "MARK", "PICKUP_OFFSET_X", &pickupOffsetX,0);
+    ini_get_double_param(&inifile, "MARK", "PICKUP_OFFSET_Y", &pickupOffsetY, 0);
+    ini_get_double_param(&inifile, "MARK", "GLUE_OFFSET_X", &glueOffsetX,0);
+    ini_get_double_param(&inifile, "MARK", "GLUE_OFFSET_Y", &glueOffsetY,0);
+
 	inifile.Close();
 	return 0;
 }
-
-void Mark2Param::save_fast_velocity(const char* iniFile)
-{
-    write_profile_double("DISPLAY", "MAX_LINEAR_VELOCITY", fastVel,iniFile);
-}
-
-void Mark2Param::save_slow_velocity(const char* iniFile)
-{
-    write_profile_double("DISPLAY", "MIN_LINEAR_VELOCITY", slowVel,iniFile);
-}
-
 
 ProjectManage::ProjectManage(){
     patternD=NULL;

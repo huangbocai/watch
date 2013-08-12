@@ -236,6 +236,7 @@ void MarkEmcStatus::update_current_home_state()
 #define READING EMC_TASK_INTERP_READING
 #define PAUSED  EMC_TASK_INTERP_PAUSED
 #define WAITING EMC_TASK_INTERP_WAITING
+#define IDLE EMC_TASK_INTERP_IDLE
 
 void MarkEmcStatus::update_current_time_state()
 {
@@ -252,7 +253,7 @@ void MarkEmcStatus::update_current_time_state()
         prtManager.set_time_state(PRTManager::Restart);
     }
     if(lastProgramStaut == READING &&
-            programStaut == WAITING){
+            (programStaut == WAITING || programStaut == IDLE)) {
         prtManager.set_time_state(PRTManager::End);
     }
     lastProgramStaut = programStaut;

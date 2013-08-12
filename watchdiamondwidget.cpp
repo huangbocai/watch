@@ -51,9 +51,9 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
     connect(bt_changeVelocity,SIGNAL(toggled(bool)),this,SLOT(change_vel_toggled(bool)));
     //connect(le_setVelocity,SIGNAL(editingFinished()),this,SLOT(finish_set_velocity()));
     connect(bt_scanDiamond,SIGNAL(clicked()),this,SLOT(scan_diamond()));
-    connect(bt_scanWatch,SIGNAL(clicked()),this,SLOT(scan_watch()));
-    connect(bt_setGlue,SIGNAL(clicked()),this,SLOT(set_glue()));
-    connect(bt_setDiamond,SIGNAL(clicked()),this,SLOT(set_diamond()));
+    connect(bt_scanWatch,SIGNAL(toggled(bool)),this,SLOT(scan_watch(bool)));
+    connect(bt_setGlue,SIGNAL(toggled(bool)),this,SLOT(set_glue(bool)));
+    connect(bt_setDiamond,SIGNAL(toggled(bool)),this,SLOT(set_diamond(bool)));
     connect(action_halConfig,SIGNAL(triggered()),this,SLOT(hal_config()));
     connect(action_halMeter,SIGNAL(triggered()),this,SLOT(hal_meter()));
     connect(action_halScope,SIGNAL(triggered()),this,SLOT(hal_scope()));
@@ -76,6 +76,11 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
 
     connect(hs_slowVel,SIGNAL(valueChanged(int)),this,SLOT(set_velocity(int)));
     connect(hs_fastVel,SIGNAL(valueChanged(int)),this,SLOT(set_velocity(int)));
+
+    connect(sp_pickupOffsetX,SIGNAL(valueChanged(double)),this,SLOT(micro_adjust_offset(double)));
+    connect(sp_pickupOffsetY,SIGNAL(valueChanged(double)),this,SLOT(micro_adjust_offset(double)));
+    connect(sp_glueOffsetX,SIGNAL(valueChanged(double)),this,SLOT(micro_adjust_offset(double)));
+    connect(sp_glueOffsetY,SIGNAL(valueChanged(double)),this,SLOT(micro_adjust_offset(double)));
 
 
 
@@ -129,7 +134,7 @@ void WatchDiamondWidget::update_emc_slot(const MarkEmcStatus& status)
 }
 
 void WatchDiamondWidget::update_infor_slot(const Information& infor){
-    static int loadHeightAndTime = 0;
+    static int loadParam = 0;
     char buf[12];
     sprintf(buf,"%d",infor.diamondNum);
     lb_diamondNum->setText(QString(buf));
@@ -146,6 +151,18 @@ void WatchDiamondWidget::update_infor_slot(const Information& infor){
         if(bt_autoRun->isChecked())
             bt_autoRun->setChecked(false);
     }
+    if(infor.endSetGLue){
+        if(bt_setGlue->isChecked())
+            bt_setGlue->setChecked(false);
+    }
+    if(infor.endSetDiamond){
+        if(bt_setDiamond->isChecked())
+            bt_setDiamond->setChecked(false);
+    }
+    if(infor.endScanWatch){
+        if(bt_scanWatch->isChecked())
+            bt_scanWatch->setChecked(false);
+    }
 
     for(int i=0; i<4; i++){
         if(infor.ioState[i])
@@ -157,7 +174,7 @@ void WatchDiamondWidget::update_infor_slot(const Information& infor){
 
 
     //只执行一次
-    if(loadHeightAndTime == 0){
+    if(loadParam == 0){
         sp_setGlueZ->setValue(infor.setGlueZ);
         sp_setDiamondZ->setValue(infor.setDiamondZ);
         sp_getDiamondZ->setValue(infor.getDiamondZ);
@@ -175,7 +192,11 @@ void WatchDiamondWidget::update_infor_slot(const Information& infor){
         lb_faseVel->setText(buf);
         hs_slowVel->setValue((int)(infor.slowVel*10));
         hs_fastVel->setValue((int)infor.fastVel);
-        loadHeightAndTime++;
+        sp_pickupOffsetX->setValue(infor.pickupOffsetX);
+        sp_pickupOffsetY->setValue(infor.pickupOffsetY);
+        sp_glueOffsetX->setValue(infor.glueOffsetX);
+        sp_glueOffsetY->setValue(infor.glueOffsetY);
+        loadParam++;
 
     }
 
@@ -434,19 +455,28 @@ void WatchDiamondWidget::scan_diamond()
     markWidget->scan_diamon();
 }
 
-void WatchDiamondWidget::scan_watch()
+void WatchDiamondWidget::scan_watch(bool checked)
 {
-    markWidget->scan_watch();
+    if(checked){
+        markWidget->scan_watch();
+        bt_pause->setChecked(false);
+    }
 }
 
-void WatchDiamondWidget::set_glue()
+void WatchDiamondWidget::set_glue(bool checked)
 {
-    markWidget->set_glue();
+    if(checked){
+        markWidget->set_glue();
+        bt_pause->setChecked(false);
+    }
 }
 
-void WatchDiamondWidget::set_diamond()
+void WatchDiamondWidget::set_diamond(bool checked)
 {
-    markWidget->set_diamond();
+    if(checked){
+        markWidget->set_diamond();
+        bt_pause->setChecked(false);
+    }
 }
 
 void WatchDiamondWidget::auto_run(bool checked)
@@ -472,6 +502,10 @@ void WatchDiamondWidget::pause(bool checked)
         if(checked){
             markWidget->pause();
             bt_autoRun->setChecked(false);
+            bt_setGlue->setChecked(false);
+            bt_setDiamond->setChecked(false);
+            bt_scanWatch->setChecked(false);
+
         }
     }
 }
@@ -559,4 +593,25 @@ void WatchDiamondWidget::hal_scope()
 void WatchDiamondWidget::clear_error_message()
 {
     te_sysMessage->clear();
+}
+
+
+void WatchDiamondWidget::micro_adjust_offset(double value)
+{
+    int index=0;
+    QDoubleSpinBox* sp = qobject_cast<QDoubleSpinBox*>(sender());
+    if(sp == sp_pickupOffsetX){
+        index = 0;
+    }
+    else if(sp == sp_pickupOffsetY){
+        index = 1;
+    }
+    else if(sp == sp_glueOffsetX){
+        index =2;
+    }
+    else if(sp == sp_glueOffsetY){
+        index =3;
+    }
+    markWidget->set_offset(index,value);
+
 }

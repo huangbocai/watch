@@ -25,7 +25,7 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
     slowVel = markWidget->get_slow_velocity();
     fastVel = markWidget->get_fast_velocity();
     currentVel = fastVel;
-    QString vel = double_to_qstring(currentVel);
+    //QString vel = double_to_qstring(currentVel);
     //le_setVelocity->setText(vel);
     autoRun = false;
 

@@ -85,9 +85,9 @@ void Recorder::finish_record_watch_pos()
 
     if(isFileOpen){
         for(iter = posVec.begin(); iter != posVec.end();iter++){
-            RectangleFrame rect = (*iter).get_search_area();
-            ofs<<(*iter).x()<<" "<<(*iter).y()<<" "<<(*iter).z()<<" "
-              <<(*iter).a()<<" "<<(*iter).b()<<" "
+            RectangleFrame rect = iter->get_search_area();
+            ofs<<iter->x()<<" "<<iter->y()<<" "<<iter->z()<<" "
+              <<iter->a()<<" "<<iter->b()<<" "
              <<rect.get_top_left().x()<<" "<<rect.get_top_left().y()<<" "
             <<rect.get_width()<<" "<<rect.get_height()<<endl;
         }
@@ -114,8 +114,8 @@ void Recorder::finish_record_hole_pos()
     sort();    
     if(isFileOpen){
         for(iter = holesPosVec.begin(); iter != holesPosVec.end(); iter++){
-            ofs<<(*iter).x()<<" "<<(*iter).y()<<" "<<(*iter).z()<<" "
-              <<(*iter).a()<<" "<<(*iter).b()<<endl;
+            ofs<<iter->x()<<" "<<iter->y()<<" "<<iter->z()<<" "
+              <<iter->a()<<" "<<iter->b()<<endl;
         }
     }
     ofs.close();

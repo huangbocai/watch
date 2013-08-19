@@ -95,6 +95,7 @@ public:
     int adlD;
     CvRect searcRectD;
     double scanStartPos[3];
+    double scanEndPos[3];
     int scanRowNum;
     int scanColNum;
     double scanRowDis;

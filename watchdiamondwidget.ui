@@ -17,7 +17,7 @@
    <widget class="QWidget" name="wg_mark" native="true">
     <property name="geometry">
      <rect>
-      <x>250</x>
+      <x>240</x>
       <y>0</y>
       <width>770</width>
       <height>475</height>
@@ -46,6 +46,9 @@
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout">
+      <property name="verticalSpacing">
+       <number>3</number>
+      </property>
       <item row="0" column="0">
        <widget class="QLabel" name="label">
         <property name="maximumSize">
@@ -220,27 +223,27 @@
       </item>
      </layout>
     </widget>
-   </widget>
-   <widget class="Line" name="line">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>200</y>
-      <width>231</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Horizontal</enum>
-    </property>
+    <widget class="Line" name="line">
+     <property name="geometry">
+      <rect>
+       <x>-10</x>
+       <y>170</y>
+       <width>231</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
    </widget>
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>220</y>
+      <y>190</y>
       <width>221</width>
-      <height>261</height>
+      <height>291</height>
      </rect>
     </property>
     <property name="title">
@@ -269,21 +272,21 @@
       <item row="1" column="0">
        <widget class="QLabel" name="label_12">
         <property name="text">
-         <string>表 壳 拍 摄序号：</string>
+         <string>表壳拍摄序号：</string>
         </property>
        </widget>
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label_13">
         <property name="text">
-         <string>点  胶  序  号   ：</string>
+         <string>点  胶  序 号 ：</string>
         </property>
        </widget>
       </item>
       <item row="3" column="0">
        <widget class="QLabel" name="label_14">
         <property name="text">
-         <string>镶  钻  序  号   ：</string>
+         <string>镶  钻  序 号 ：</string>
         </property>
        </widget>
       </item>
@@ -318,7 +321,7 @@
       <item row="4" column="0">
        <widget class="QLabel" name="label_6">
         <property name="text">
-         <string>运  行  时   间  ：</string>
+         <string>运  行  时 间：</string>
         </property>
        </widget>
       </item>
@@ -337,7 +340,7 @@
        <x>10</x>
        <y>160</y>
        <width>201</width>
-       <height>101</height>
+       <height>131</height>
       </rect>
      </property>
     </widget>
@@ -360,7 +363,7 @@
        <x>170</x>
        <y>0</y>
        <width>20</width>
-       <height>201</height>
+       <height>251</height>
       </rect>
      </property>
      <property name="orientation">
@@ -981,38 +984,31 @@
      <widget class="QGroupBox" name="groupBox_5">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>10</x>
         <y>0</y>
-        <width>181</width>
-        <height>191</height>
+        <width>151</width>
+        <height>171</height>
        </rect>
       </property>
       <property name="title">
        <string>高度</string>
       </property>
-      <widget class="Line" name="line_5">
-       <property name="geometry">
-        <rect>
-         <x>140</x>
-         <y>0</y>
-         <width>20</width>
-         <height>191</height>
-        </rect>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-      </widget>
       <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
-         <x>13</x>
-         <y>33</y>
-         <width>130</width>
-         <height>95</height>
+         <x>0</x>
+         <y>30</y>
+         <width>147</width>
+         <height>105</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_3">
+        <property name="horizontalSpacing">
+         <number>3</number>
+        </property>
+        <property name="verticalSpacing">
+         <number>11</number>
+        </property>
         <item row="0" column="0">
          <widget class="QPushButton" name="bt_getDiamondZ">
           <property name="maximumSize">
@@ -1030,9 +1026,12 @@
          <widget class="QDoubleSpinBox" name="sp_getDiamondZ">
           <property name="maximumSize">
            <size>
-            <width>51</width>
+            <width>66</width>
             <height>27</height>
            </size>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
           <property name="minimum">
            <double>-1000.000000000000000</double>
@@ -1042,6 +1041,9 @@
           </property>
           <property name="singleStep">
            <double>0.010000000000000</double>
+          </property>
+          <property name="value">
+           <double>-99.989999999999995</double>
           </property>
          </widget>
         </item>
@@ -1062,9 +1064,15 @@
          <widget class="QDoubleSpinBox" name="sp_setGlueZ">
           <property name="maximumSize">
            <size>
-            <width>51</width>
+            <width>66</width>
             <height>27</height>
            </size>
+          </property>
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
           <property name="minimum">
            <double>-1000.000000000000000</double>
@@ -1094,9 +1102,12 @@
          <widget class="QDoubleSpinBox" name="sp_setDiamondZ">
           <property name="maximumSize">
            <size>
-            <width>51</width>
+            <width>66</width>
             <height>27</height>
            </size>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
           <property name="minimum">
            <double>-1000.000000000000000</double>
@@ -1115,7 +1126,7 @@
      <widget class="QGroupBox" name="groupBox_6">
       <property name="geometry">
        <rect>
-        <x>160</x>
+        <x>180</x>
         <y>0</y>
         <width>161</width>
         <height>181</height>
@@ -1133,17 +1144,20 @@
       <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
-         <x>1</x>
+         <x>0</x>
          <y>30</y>
          <width>151</width>
          <height>128</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_6">
+        <property name="horizontalSpacing">
+         <number>3</number>
+        </property>
         <item row="0" column="0">
          <widget class="QLabel" name="label_7">
           <property name="text">
-           <string>滴 胶 时 间：</string>
+           <string>滴胶时间</string>
           </property>
          </widget>
         </item>
@@ -1151,7 +1165,7 @@
          <widget class="QLineEdit" name="le_glueT">
           <property name="maximumSize">
            <size>
-            <width>51</width>
+            <width>45</width>
             <height>27</height>
            </size>
           </property>
@@ -1170,17 +1184,7 @@
         <item row="1" column="0">
          <widget class="QLabel" name="label_8">
           <property name="text">
-           <string>滴胶后时间：</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QLineEdit" name="le_afterGlueT">
-          <property name="maximumSize">
-           <size>
-            <width>51</width>
-            <height>27</height>
-           </size>
+           <string>滴胶后时间</string>
           </property>
          </widget>
         </item>
@@ -1194,7 +1198,7 @@
         <item row="2" column="0">
          <widget class="QLabel" name="label_9">
           <property name="text">
-           <string>吸 钻 延 时：</string>
+           <string>吸钻延时</string>
           </property>
          </widget>
         </item>
@@ -1202,7 +1206,7 @@
          <widget class="QLineEdit" name="le_getDiamondT">
           <property name="maximumSize">
            <size>
-            <width>51</width>
+            <width>45</width>
             <height>27</height>
            </size>
           </property>
@@ -1218,7 +1222,7 @@
         <item row="3" column="0">
          <widget class="QLabel" name="label_10">
           <property name="text">
-           <string>释 钻 延 时：</string>
+           <string>释钻延时</string>
           </property>
          </widget>
         </item>
@@ -1226,7 +1230,7 @@
          <widget class="QLineEdit" name="le_setDiamondT">
           <property name="maximumSize">
            <size>
-            <width>51</width>
+            <width>45</width>
             <height>27</height>
            </size>
           </property>
@@ -1236,6 +1240,16 @@
          <widget class="QLabel" name="label_18">
           <property name="text">
            <string>s</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="le_afterGlueT">
+          <property name="maximumSize">
+           <size>
+            <width>45</width>
+            <height>27</height>
+           </size>
           </property>
          </widget>
         </item>
@@ -1257,9 +1271,9 @@
       <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
-         <x>0</x>
+         <x>10</x>
          <y>30</y>
-         <width>124</width>
+         <width>106</width>
          <height>128</height>
         </rect>
        </property>
@@ -1267,29 +1281,44 @@
         <item row="0" column="0">
          <widget class="QLabel" name="label_21">
           <property name="text">
-           <string>吸嘴X:</string>
+           <string>吸嘴X</string>
           </property>
          </widget>
         </item>
         <item row="0" column="1">
          <widget class="QDoubleSpinBox" name="sp_pickupOffsetX">
+          <property name="maximumSize">
+           <size>
+            <width>64</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="minimum">
            <double>-99.989999999999995</double>
           </property>
           <property name="singleStep">
            <double>0.010000000000000</double>
           </property>
+          <property name="value">
+           <double>-0.050000000000000</double>
+          </property>
          </widget>
         </item>
         <item row="1" column="0">
          <widget class="QLabel" name="label_22">
           <property name="text">
-           <string>吸嘴Y：</string>
+           <string>吸嘴Y</string>
           </property>
          </widget>
         </item>
         <item row="1" column="1">
          <widget class="QDoubleSpinBox" name="sp_pickupOffsetY">
+          <property name="maximumSize">
+           <size>
+            <width>64</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="minimum">
            <double>-99.989999999999995</double>
           </property>
@@ -1301,12 +1330,18 @@
         <item row="2" column="0">
          <widget class="QLabel" name="label_23">
           <property name="text">
-           <string>胶嘴X：</string>
+           <string>胶嘴X</string>
           </property>
          </widget>
         </item>
         <item row="2" column="1">
          <widget class="QDoubleSpinBox" name="sp_glueOffsetX">
+          <property name="maximumSize">
+           <size>
+            <width>64</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="minimum">
            <double>-99.989999999999995</double>
           </property>
@@ -1318,12 +1353,18 @@
         <item row="3" column="0">
          <widget class="QLabel" name="label_24">
           <property name="text">
-           <string>胶嘴Y：</string>
+           <string>胶嘴Y</string>
           </property>
          </widget>
         </item>
         <item row="3" column="1">
          <widget class="QDoubleSpinBox" name="sp_glueOffsetY">
+          <property name="maximumSize">
+           <size>
+            <width>64</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="minimum">
            <double>-99.989999999999995</double>
           </property>
@@ -1338,7 +1379,20 @@
      <widget class="Line" name="line_6">
       <property name="geometry">
        <rect>
-        <x>320</x>
+        <x>330</x>
+        <y>0</y>
+        <width>20</width>
+        <height>191</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+     <widget class="Line" name="line_5">
+      <property name="geometry">
+       <rect>
+        <x>160</x>
         <y>0</y>
         <width>20</width>
         <height>191</height>

@@ -82,6 +82,10 @@ int ProjectManage::load(const char* projectName){
     ini_get_double_param(&inifile, "DIAMOND", "SCAN_X0", &scanStartPos[0], 0);
     ini_get_double_param(&inifile, "DIAMOND", "SCAN_Y0", &scanStartPos[1], 0);
     ini_get_double_param(&inifile, "DIAMOND", "SCAN_Z0", &scanStartPos[2], 0);
+    ini_get_double_param(&inifile, "DIAMOND", "SCAN_X1", &scanEndPos[0], scanStartPos[0]);
+    ini_get_double_param(&inifile, "DIAMOND", "SCAN_Y1", &scanEndPos[1], scanStartPos[1]);
+    ini_get_double_param(&inifile, "DIAMOND", "SCAN_Z1", &scanEndPos[2], scanStartPos[2]);
+
     ini_get_double_param(&inifile, "DIAMOND", "SCAN_ROW_DIS", &scanRowDis, 0);
     ini_get_double_param(&inifile, "DIAMOND", "SCAN_COL_DIS", &scanColDis, 0);
     ini_get_int_param(&inifile, "DIAMOND", "SCAN_ROW_NUM", &scanRowNum, 1);
@@ -159,6 +163,9 @@ void ProjectManage::save_scan_param(){
     write_profile_double("DIAMOND", "SCAN_X0", scanStartPos[0], iniFile);
     write_profile_double("DIAMOND", "SCAN_Y0", scanStartPos[1], iniFile);
     write_profile_double("DIAMOND", "SCAN_Z0", scanStartPos[2], iniFile);
+    write_profile_double("DIAMOND", "SCAN_X1", scanEndPos[0], iniFile);
+    write_profile_double("DIAMOND", "SCAN_Y1", scanEndPos[1], iniFile);
+    write_profile_double("DIAMOND", "SCAN_Z1", scanEndPos[2], iniFile);
     write_profile_double("DIAMOND", "SCAN_ROW_DIS", scanRowDis, iniFile);
     write_profile_double("DIAMOND", "SCAN_COL_DIS", scanColDis, iniFile);
     write_profile_int("DIAMOND", "SCAN_ROW_NUM", scanRowNum, iniFile);

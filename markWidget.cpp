@@ -415,34 +415,31 @@ void MarkWidget::diamond_page_init(){
     lb_scanY0->setText(QString::fromUtf8(buf));
     sprintf(buf, "%8.3f", prjManage.scanStartPos[2]);
     lb_scanZ0->setText(QString::fromUtf8(buf));
+    sprintf(buf, "%8.3f", prjManage.scanEndPos[0]);
+    lb_scanX1->setText(QString::fromUtf8(buf));
+    sprintf(buf, "%8.3f", prjManage.scanEndPos[1]);
+    lb_scanY1->setText(QString::fromUtf8(buf));
+    sprintf(buf, "%8.3f", prjManage.scanEndPos[2]);
+    lb_scanZ1->setText(QString::fromUtf8(buf));
 
     doubleValidator = new QDoubleValidator(this);
     intValidator = new QIntValidator(this);
     intValidator->setBottom(1);
-
-    le_rowDis->setValidator(doubleValidator);
-    sprintf(buf, "%.3f", prjManage.scanRowDis);
-    le_rowDis->setText(buf);
-    le_colDis->setValidator(doubleValidator);
-    sprintf(buf, "%.3f", prjManage.scanColDis);
-    le_colDis->setText(buf);
-    le_scanRows->setValidator(intValidator);
-    le_scanRows->setText(QString::number(prjManage.scanRowNum));
-    le_scanCols->setValidator(intValidator);
-    le_scanCols->setText(QString::number(prjManage.scanColNum));
 
     connect(tb_selectPattern0, SIGNAL(toggled(bool)), this, SLOT(select_pattern_toggled(bool)));
     connect(tb_searchArea0, SIGNAL(toggled(bool)), this, SLOT(search_area_toggled(bool)));
     connect(bt_detect0,SIGNAL(toggled(bool)), this, SLOT(diamond_test_toggled(bool)));
     connect(bt_setScanStart, SIGNAL(clicked()), this, SLOT(set_scan_beginning()));
     connect(bt_gotoScanStart, SIGNAL(clicked()), this, SLOT(back_scan_beginning()));
+    connect(bt_setScanEnd, SIGNAL(clicked()), this, SLOT(set_scan_end()));
+    connect(bt_gotoScanEnd, SIGNAL(clicked()), this, SLOT(back_scan_end()));
     connect(bt_scanTest,SIGNAL(clicked()), this, SLOT(scan_test()));
     connect(bt_pickupFirst, SIGNAL(clicked()), this, SLOT(pickup_first()));
     connect(bt_pickupNext, SIGNAL(clicked()), this, SLOT(pickup_next()));
     connect(bt_pickupAll, SIGNAL(clicked()), this, SLOT(pickup_all()));
     connect(rb_circle,SIGNAL(clicked()),this,SLOT(choose_pattern_shap()));
     connect(rb_rectangle,SIGNAL(clicked()),this,SLOT(choose_pattern_shap()));
-    connect(bt_recordD,SIGNAL(clicked()),this,SLOT(record_diamond_pos()));
+    //connect(bt_recordD,SIGNAL(clicked()),this,SLOT(record_diamond_pos()));
 }
 
 void MarkWidget::watch_page_init()
@@ -1040,30 +1037,41 @@ void MarkWidget::diamond_test_toggled(bool checked){
 
 
 void MarkWidget::set_scan_beginning(){
-    char buf[32];
-    double pos[3];
+    char buf[256];
     int i;
     for(i=0;i<3;i++){
-        pos[i]=emcStatus.cmdAxis[i];
+        prjManage.scanStartPos[i]=emcStatus.cmdAxis[i];
     }
+    double dx=prjManage.scanEndPos[0]-prjManage.scanStartPos[0];
+    double dy=prjManage.scanEndPos[1]-prjManage.scanStartPos[1];
+    double signx = dx>0?1:-1;
+    double signy = dy>0?1:-1;
+    prjManage.scanColDis=prjManage.searcRectD.width*param.kxx*signx;
+    prjManage.scanRowDis=prjManage.searcRectD.height*param.kyy*signy;
+    prjManage.scanColNum=dx/prjManage.scanColDis+2;
+    prjManage.scanRowNum=dy/prjManage.scanRowDis+2;
 #ifdef WITH_EMC
     emc_mode(NULL, EMC_TASK_MODE_MDI);
-    for(i=0;i<3;i++){
-        if(fabs(prjManage.scanStartPos[i]-pos[i])>0.0005){
-            prjManage.scanStartPos[i]=pos[i];
-            sprintf(buf, "#%d=%f", ProjectManage::SCAN_X0+i, pos[i]);
-            emc_mdi(buf);
-        }
-    }
+    sprintf(buf, "#%d=%.3f #%d=%.3f #%d=%.3f #%d=%d #%d=%d #%d=%.3f #%d=%.3f",
+            ProjectManage::SCAN_X0,prjManage.scanStartPos[0],
+            ProjectManage::SCAN_Y0,prjManage.scanStartPos[1],
+            ProjectManage::SCAN_Z,prjManage.scanStartPos[2],
+            ProjectManage::SCAN_ROW_NUM, prjManage.scanRowNum,
+            ProjectManage::SCAN_COL_NUM, prjManage.scanColNum,
+            ProjectManage::SCAN_ROW_DIS, prjManage.scanRowDis,
+            ProjectManage::SCAN_COL_DIS, prjManage.scanColDis);
+    emc_mdi(buf);
     emc_mode(NULL, EMC_TASK_MODE_MANUAL);
 #endif
-    sprintf(buf, "%8.3f", pos[0]);
+    sprintf(buf, "%8.3f", prjManage.scanStartPos[0]);
     lb_scanX0->setText(QString::fromUtf8(buf));
-    sprintf(buf, "%8.3f", pos[1]);
+    sprintf(buf, "%8.3f", prjManage.scanStartPos[1]);
     lb_scanY0->setText(QString::fromUtf8(buf));
-    sprintf(buf, "%8.3f", pos[2]);
+    sprintf(buf, "%8.3f", prjManage.scanStartPos[2]);
     lb_scanZ0->setText(QString::fromUtf8(buf));
+    prjManage.save_scan_param();
 }
+
 
 void MarkWidget::back_scan_beginning(){
     char buf[64];
@@ -1079,55 +1087,62 @@ void MarkWidget::back_scan_beginning(){
 }
 
 
-void MarkWidget::scan_test(){
-    int rn, cn;
-    double rd, cd;
-    char buf[32];
-
-    rn=le_scanRows->text().toInt();
-    cn=le_scanCols->text().toInt();
-    rd=le_rowDis->text().toDouble();
-    cd=le_colDis->text().toDouble();
+void MarkWidget::set_scan_end(){
+    char buf[256];
+    int i;
+    for(i=0;i<3;i++)
+        prjManage.scanEndPos[i]=emcStatus.cmdAxis[i];
+    double dx=prjManage.scanEndPos[0]-prjManage.scanStartPos[0];
+    double dy=prjManage.scanEndPos[1]-prjManage.scanStartPos[1];
+    double signx = dx>0?1:-1;
+    double signy = dy>0?1:-1;
+    prjManage.scanColDis=prjManage.searcRectD.width*param.kxx*signx;
+    prjManage.scanRowDis=prjManage.searcRectD.height*param.kyy*signy;
+    prjManage.scanColNum=dx/prjManage.scanColDis+2;
+    prjManage.scanRowNum=dy/prjManage.scanRowDis+2;
 #ifdef WITH_EMC
     emc_mode(NULL, EMC_TASK_MODE_MDI);
+    sprintf(buf, "#%d=%d #%d=%d #%d=%.3f #%d=%.3f",
+            ProjectManage::SCAN_ROW_NUM, prjManage.scanRowNum,
+            ProjectManage::SCAN_COL_NUM, prjManage.scanColNum,
+            ProjectManage::SCAN_ROW_DIS, prjManage.scanRowDis,
+            ProjectManage::SCAN_COL_DIS, prjManage.scanColDis);
+    emc_mdi(buf);
+    emc_mode(NULL, EMC_TASK_MODE_MANUAL);
+#endif
+    sprintf(buf, "%8.3f", prjManage.scanEndPos[0]);
+    lb_scanX1->setText(QString::fromUtf8(buf));
+    sprintf(buf, "%8.3f", prjManage.scanEndPos[1]);
+    lb_scanY1->setText(QString::fromUtf8(buf));
+    sprintf(buf, "%8.3f", prjManage.scanEndPos[2]);
+    lb_scanZ1->setText(QString::fromUtf8(buf));
+    prjManage.save_scan_param();
+}
 
-    if(rn!=prjManage.scanRowNum){
-        sprintf(buf, "#%d=%d", ProjectManage::SCAN_ROW_NUM, rn);
-        emc_mdi(buf);
-    }
-    if(cn!=prjManage.scanColNum){
-        sprintf(buf, "#%d=%d", ProjectManage::SCAN_COL_NUM, cn);
-        emc_mdi(buf);
-    }
-    if(fabs(rd-prjManage.scanRowDis)>0.0005){
-        sprintf(buf, "#%d=%f", ProjectManage::SCAN_ROW_DIS, rd);
-        emc_mdi(buf);
-    }
-    if(fabs(cd-prjManage.scanColDis)>0.0005){
-        sprintf(buf, "#%d=%f", ProjectManage::SCAN_COL_DIS, cd);
-        emc_mdi(buf);
-    }
+void MarkWidget::back_scan_end(){
+    char buf[64];
+#ifdef WITH_EMC
+    emc_mode(NULL, EMC_TASK_MODE_MDI);
+    emc_mdi("g0 g53 z0");
+    sprintf(buf, "g0 g53 x%f y%f", prjManage.scanEndPos[0], prjManage.scanEndPos[1]);
+    emc_mdi(buf);
+    sprintf(buf, "g1 g53 z%f f3000", prjManage.scanEndPos[2]);
+    emc_mdi(buf);
+    emcStatus.stopToManual=true;
+#endif
+}
+
+
+void MarkWidget::scan_test(){
+#ifdef WITH_EMC  
     emc_mode(NULL, EMC_TASK_MODE_AUTO);
     emc_open("/home/u/cnc/configs/ppmc/o_nc/scan.ngc");
     emc_wait("done");
     emc_run(0);
     emcStatus.stopToManual=true;
 #endif
-    prjManage.scanRowNum=rn;
-    prjManage.scanColNum=cn;
-    prjManage.scanRowDis=rd;
-    prjManage.scanColDis=cd;
-    prjManage.save_scan_param();
 }
 
-
-//void MarkWidget::set_send_diamnod_z(){
-//    char buf[32];
-//    prjManage.sendZD=emcStatus.cmdAxis[2];
-//    sprintf(buf, "%.3f", prjManage.sendZD);
-//      le_sendZD->setText(QString::fromUtf8(buf));
-//    write_profile_double("DIAMOND", "SEND_Z", prjManage.sendZD, prjManage.ini_file());
-//}
 
 
 void MarkWidget::pickup_first(){
@@ -1517,7 +1532,7 @@ void MarkWidget::set_first_hole()
         sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos.get_value(0)-param.pickup_offset_x(),
                 pos.get_value(1)-param.pickup_offset_y(), pos.get_value(3),pos.get_value(4));
         emc_mdi(buf);
-        sprintf(buf, "g0 g53 z%.3f", pos.get_value(2));
+        sprintf(buf, "g0 g53 z%.3f", prjManage.setDiamondZPos);
         emc_mdi(buf);
         emcStatus.stopToManual=true;
         //watchResult.dimamondPos.pop_front();
@@ -1557,7 +1572,7 @@ void MarkWidget::set_next_hole()
         sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos.get_value(0)-param.pickup_offset_x(),
                 pos.get_value(1)-param.pickup_offset_y(), pos.get_value(3),pos.get_value(4));
         emc_mdi(buf);
-        sprintf(buf, "g0 g53 z%.3f", pos.get_value(2));
+        sprintf(buf, "g0 g53 z%.3f",  prjManage.setDiamondZPos);
         emc_mdi(buf);
         emcStatus.stopToManual=true;
         //watchResult.dimamondPos.pop_front();
@@ -2108,7 +2123,7 @@ void MarkWidget::zero(){
     emc_mode(NULL,EMC_TASK_MODE_MDI);
     sprintf(buf,"g0 g53 z0");
     emc_mdi(buf);
-    sprintf(buf,"g0 g53 x0 y0 a0 b0");
+    sprintf(buf,"g0 g53 x0 y0");
     emc_mdi(buf);
     emcStatus.stopToManual=true;
 #endif

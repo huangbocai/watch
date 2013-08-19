@@ -4,7 +4,7 @@
 #<sz> = #3303
 #<rowNum> = #3304
 #<colNum> = #3305
-#<row_inr> = -#3306
+#<row_inr> = #3306
 #<col_inr> = #3307
 
 M102 P0 Q1 (ready for scan diamonds)

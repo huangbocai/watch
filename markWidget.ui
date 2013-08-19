@@ -35,7 +35,7 @@
     </size>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
@@ -205,25 +205,83 @@
       </property>
      </widget>
     </widget>
+    <widget class="QGroupBox" name="groupBox_5">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>360</y>
+       <width>241</width>
+       <height>61</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string> 取钻</string>
+     </property>
+     <widget class="QWidget" name="layoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>219</width>
+        <height>29</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_17">
+       <item>
+        <widget class="QPushButton" name="bt_pickupFirst">
+         <property name="maximumSize">
+          <size>
+           <width>60</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>第一颗</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="bt_pickupNext">
+         <property name="maximumSize">
+          <size>
+           <width>60</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>下一颗</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="bt_pickupAll">
+         <property name="text">
+          <string>拾取所有</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
     <widget class="QGroupBox" name="groupBox_4">
      <property name="geometry">
       <rect>
-       <x>3</x>
-       <y>140</y>
-       <width>251</width>
-       <height>151</height>
+       <x>10</x>
+       <y>150</y>
+       <width>231</width>
+       <height>201</height>
       </rect>
      </property>
      <property name="title">
       <string> 扫描</string>
      </property>
-     <widget class="QWidget" name="layoutWidget">
+     <widget class="QWidget" name="">
       <property name="geometry">
        <rect>
-        <x>5</x>
-        <y>22</y>
-        <width>252</width>
-        <height>127</height>
+        <x>10</x>
+        <y>30</y>
+        <width>212</width>
+        <height>56</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -241,7 +299,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>起点X</string>
+            <string>X</string>
            </property>
           </widget>
          </item>
@@ -330,7 +388,7 @@
            </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>28</width>
+             <width>10</width>
              <height>20</height>
             </size>
            </property>
@@ -351,7 +409,7 @@
             </size>
            </property>
            <property name="text">
-            <string>设当前起点</string>
+            <string>设为起点</string>
            </property>
           </widget>
          </item>
@@ -374,144 +432,131 @@
            </property>
           </widget>
          </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="layoutWidget_3">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>100</y>
+        <width>212</width>
+        <height>56</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_10">
+         <property name="spacing">
+          <number>2</number>
+         </property>
          <item>
-          <spacer name="horizontalSpacer_6">
+          <widget class="QLabel" name="label_12">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>X</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="lb_scanX1">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>-999.999</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_13">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string> Y</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="lb_scanY1">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>-999.999</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_21">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string> Z</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="lb_scanZ1">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>-999.999</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <item>
+          <spacer name="horizontalSpacer_5">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>18</width>
+             <width>10</width>
              <height>20</height>
             </size>
            </property>
           </spacer>
          </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_18">
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout_5">
-           <property name="spacing">
-            <number>3</number>
-           </property>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_8">
-             <item>
-              <widget class="QLabel" name="label_12">
-               <property name="text">
-                <string>行距</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="le_rowDis">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>60</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>-999.999</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_10">
-               <property name="text">
-                <string> 行数</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="le_scanRows">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>25</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>99</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_10">
-             <item>
-              <widget class="QLabel" name="label_13">
-               <property name="text">
-                <string>列距</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="le_colDis">
-               <property name="maximumSize">
-                <size>
-                 <width>60</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>-999.999</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="label_11">
-               <property name="text">
-                <string> 列数</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="le_scanCols">
-               <property name="maximumSize">
-                <size>
-                 <width>25</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>99</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <widget class="QPushButton" name="bt_scanTest">
+          <widget class="QPushButton" name="bt_setScanEnd">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
              <horstretch>0</horstretch>
@@ -520,104 +565,73 @@
            </property>
            <property name="maximumSize">
             <size>
-             <width>50</width>
+             <width>100</width>
              <height>50</height>
             </size>
            </property>
            <property name="text">
-            <string>扫描
-测试</string>
+            <string>设为终点</string>
            </property>
           </widget>
          </item>
          <item>
-          <spacer name="horizontalSpacer_5">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+          <widget class="QPushButton" name="bt_gotoScanEnd">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
-           <property name="sizeHint" stdset="0">
+           <property name="maximumSize">
             <size>
-             <width>5</width>
-             <height>20</height>
+             <width>100</width>
+             <height>50</height>
             </size>
            </property>
-          </spacer>
+           <property name="text">
+            <string>回终点</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
       </layout>
      </widget>
-    </widget>
-    <widget class="QGroupBox" name="groupBox_5">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>300</y>
-       <width>241</width>
-       <height>61</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string> 取钻</string>
-     </property>
-     <widget class="QWidget" name="layoutWidget">
+     <widget class="QPushButton" name="bt_scanTest">
       <property name="geometry">
        <rect>
-        <x>10</x>
-        <y>20</y>
-        <width>219</width>
-        <height>29</height>
+        <x>140</x>
+        <y>170</y>
+        <width>85</width>
+        <height>27</height>
        </rect>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_17">
-       <item>
-        <widget class="QPushButton" name="bt_pickupFirst">
-         <property name="maximumSize">
-          <size>
-           <width>60</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>第一颗</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="bt_pickupNext">
-         <property name="maximumSize">
-          <size>
-           <width>60</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>下一颗</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="bt_pickupAll">
-         <property name="text">
-          <string>拾取所有</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>120</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>扫描测试</string>
+      </property>
      </widget>
-    </widget>
-    <widget class="QPushButton" name="bt_recordD">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>370</y>
-       <width>93</width>
-       <height>27</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Record</string>
-     </property>
+     <zorder>gridLayoutWidget</zorder>
+     <zorder>widgetMarkView</zorder>
+     <zorder>gridLayoutWidget_3</zorder>
+     <zorder></zorder>
+     <zorder>bt_setScanStart</zorder>
+     <zorder>bt_gotoScanStart</zorder>
+     <zorder></zorder>
+     <zorder></zorder>
+     <zorder>layoutWidget_3</zorder>
+     <zorder>bt_scanTest</zorder>
     </widget>
    </widget>
    <widget class="QWidget" name="tab_3">
@@ -2364,6 +2378,11 @@ p, li { white-space: pre-wrap; }
          <height>400</height>
         </size>
        </property>
+       <zorder>bt_gotoScanStart</zorder>
+       <zorder></zorder>
+       <zorder>bt_setScanStart</zorder>
+       <zorder>label_16</zorder>
+       <zorder>horizontalSpacer_4</zorder>
       </widget>
      </widget>
     </item>

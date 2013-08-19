@@ -250,6 +250,8 @@ private slots:
     void diamond_test_toggled(bool checked);
     void set_scan_beginning();
     void back_scan_beginning();
+    void set_scan_end();
+    void back_scan_end();
     void scan_test();
     //void set_pickup_diamnod_z();
     //void set_send_diamnod_z();

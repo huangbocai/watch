@@ -8,12 +8,13 @@ DEPENDPATH += .
 CONFIG += qt thread dll
 INCLUDEPATH += . \
     /usr/local/include/opencv /usr/local/hvux_camera/include \
-    /usr/include/emc2
+    /usr/include/emc2 /usr/local/include/opencv2
 
 DEFINES += ULAPI
 
-LIBS += -L/usr/local/lib -lcv -lhighgui -lml -lcxcore -lm -ldhhvux -ldhimghelp \
-    -L/usr/lib -lemc -lnml -lemcini -lemchal
+LIBS += -L/usr/local/lib -lm -ldhhvux -ldhimghelp \
+    -L/usr/lib -lemc -lnml -lemcini -lemchal \
+    -L/usr/local/lib -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_objdetect -lopencv_features2d -lopencv_video -lopencv_ml
 
 # Input
 HEADERS += markWidget.h \

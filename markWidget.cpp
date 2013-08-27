@@ -25,7 +25,7 @@ Recorder::Recorder(string prjDir)
     currentHoleIndex = 0;
     currentGlueHoleIndex = 0;
     posVec.clear();
-    lastPos = NULL;
+    //lastPos = NULL;
     //cout<<watchPosFileName<<endl;
     //cout<<holePosFileName<<endl;
 }
@@ -883,35 +883,40 @@ void MarkWidget::fast_react_cycle(){
         *halpins->reachCmd = 0;
     }
 
-    if(*halpins->setGlue == 1){
+    if(*halpins->setGlue == 1)
         infor.ioState[0] = true;
-    }
-    else{
+    else
         infor.ioState[0] = false;
-    }
 
-    if(*halpins->pickupDiamond == 1){
+    if(*halpins->pickupDiamond == 1)
         infor.ioState[1] = true;
-    }
-    else{
+    else
         infor.ioState[1] = false;
-    }
 
-    if(*halpins->dropDiamond == 1){
+    if(*halpins->dropDiamond == 1)
         infor.ioState[2] = true;
-    }
-    else{
+    else
         infor.ioState[2] = false;
-    }
 
-    if(*halpins->lightControl == 1){
+    if(*halpins->lightControl == 1)
         infor.ioState[3] = true;
-    }
-    else{
+    else
         infor.ioState[3] = false;
-    }
 
+    if(*halpins->start)
+        infor.start = true;
+    else
+        infor.start = false;
 
+    if(*halpins->paused)
+        infor.paused = true;
+    else
+        infor.paused = false;
+
+    if(*halpins->stop)
+        infor.stop = true;
+    else
+        infor.stop = false;
 
     if(posRecorder->get_current_index()<=posRecorder->get_pos_num())
         *halpins->watchPosValid = 1;
@@ -1134,7 +1139,8 @@ void MarkWidget::back_scan_end(){
 
 
 void MarkWidget::scan_test(){
-#ifdef WITH_EMC  
+#ifdef WITH_EMC
+    //printf("scan_test\n");
     emc_mode(NULL, EMC_TASK_MODE_AUTO);
     emc_open("/home/u/cnc/configs/ppmc/o_nc/scan.ngc");
     emc_wait("done");
@@ -1395,6 +1401,7 @@ void MarkWidget::abandon_current_pos()
 
 void MarkWidget::abandon_all_pos()
 {
+    get_first_pos();
     posRecorder->abandon_all_pos();
     infor.watchPosIndex = posRecorder->get_pos_num();
     //infor.watchPosNum = posRecorder->get_pos_num();
@@ -2123,7 +2130,7 @@ void MarkWidget::zero(){
     emc_mode(NULL,EMC_TASK_MODE_MDI);
     sprintf(buf,"g0 g53 z0");
     emc_mdi(buf);
-    sprintf(buf,"g0 g53 x0 y0");
+    sprintf(buf,"g0 g53 x0 y0 a0 b0");
     emc_mdi(buf);
     emcStatus.stopToManual=true;
 #endif

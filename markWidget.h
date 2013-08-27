@@ -50,7 +50,8 @@ class Position
 public:
     Position()
     {
-        val[0] = 0; val[1] = 0; val[2] = 0; val[3] = 0; val[4] = 0;
+        for(int i=0; i<5; i++)
+            val[i]=0;
     }
     Position(double xVal, double yVal, double zVal, double aVal, double bVal, RectangleFrame rect=RectangleFrame())
     {
@@ -140,7 +141,7 @@ private:
     string holePosFileName;
     vector<Position> posVec;
     static const int lineLength = 128;
-    const Position* lastPos;
+    Position firstPos;
     double glueZPos;
 };
 
@@ -188,6 +189,10 @@ public:
     bool endSetGLue;
     bool endSetDiamond;
     bool endScanWatch;
+
+    bool start;
+    bool paused;
+    bool stop;
 
     QString runTime;
 

@@ -171,7 +171,21 @@ void WatchDiamondWidget::update_infor_slot(const Information& infor){
             ioButtons[i]->setChecked(false);
     }
 
-
+    if(infor.start){
+        if(!bt_autoRun->isChecked())
+            bt_autoRun->setChecked(true);
+    }
+    if(infor.paused){
+        if(!bt_pause->isChecked())
+            bt_pause->setChecked(true);
+        if(bt_autoRun->isChecked())
+            bt_autoRun->setChecked(false);
+    }
+    if(infor.stop){
+        bt_stop->setChecked(true);
+        bt_autoRun->setChecked(false);
+        bt_pause->setChecked(false);
+    }
 
     //只执行一次
     if(loadParam == 0){
@@ -197,7 +211,6 @@ void WatchDiamondWidget::update_infor_slot(const Information& infor){
         sp_glueOffsetX->setValue(infor.glueOffsetX);
         sp_glueOffsetY->setValue(infor.glueOffsetY);
         loadParam++;
-
     }
 
 }

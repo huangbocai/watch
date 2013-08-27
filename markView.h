@@ -6,7 +6,7 @@
 #include <list>
 #include "imageMeasure.hh"
 #include "cv.h"
-
+using namespace hbc;
 
 class CircleFrame
 {

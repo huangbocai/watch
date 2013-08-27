@@ -53,7 +53,7 @@ using namespace std;
 
 /*declarate classes of geom figures*/
 
-
+namespace hbc{
 class Vector2;
 
 class GeomBase
@@ -774,7 +774,7 @@ int vertical_modle_line_position(IplImage* img, int step, float theta, int begin
 int  horizontal_modle_line_position(IplImage* img, int step, float theta, int begin, int end, double& diffVal, double* diffs=NULL);
 
 void  lsm_order2(const vector<CvPoint2D32f> & xyArry, double& a, double& b, double& c);
-
+}
 #endif
 
 

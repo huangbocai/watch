@@ -30,6 +30,9 @@ typedef struct
     hal_bit_t* pickupDiamond;
     hal_bit_t* dropDiamond;
     hal_bit_t* lightControl;
+    hal_bit_t* start;
+    hal_bit_t* paused;
+    hal_bit_t* stop;
 }MarkHalPins;
 
 class MarkHal

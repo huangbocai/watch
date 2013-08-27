@@ -119,6 +119,21 @@ MarkHal::MarkHal()
         return ;
     *halpins->lightControl=0;
 
+    retval = hal_pin_bit_new("mark.start", HAL_IN, &halpins->start, comp_id);
+    if (retval != 0)
+        return ;
+    *halpins->start=0;
+
+    retval = hal_pin_bit_new("mark.paused", HAL_IN, &halpins->paused, comp_id);
+    if (retval != 0)
+        return ;
+    *halpins->paused=0;
+
+    retval = hal_pin_bit_new("mark.stop", HAL_IN, &halpins->stop, comp_id);
+    if (retval != 0)
+        return ;
+    *halpins->stop=0;
+
     retval = hal_pin_s32_new("mark.state", HAL_OUT, &halpins->state, comp_id);
     if (retval != 0)
         return ;

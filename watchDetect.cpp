@@ -1,7 +1,8 @@
 
 #include "watchDetect.h"
 #include "stdio.h"
-
+#include "highgui.h"
+//using namespace cv;
 
 //CirclesDetecter::CirclesDetecter(){
 //    kernel = cvCreateStructuringElementEx(7, 3, 3, 1, CV_SHAPE_ELLIPSE);
@@ -170,8 +171,8 @@
 //}
 
 WatchCircleDetecter::WatchCircleDetecter()
-    :m_patternIsNew(false),m_patternImage(NULL),level(0),
-      m_roi(cvRect(0, 0, 0, 0)),m_threshold(0.5),m_topLevel(0){
+    :m_roi(cvRect(0, 0, 0, 0)),m_patternIsNew(false),m_patternImage(NULL),
+      level(0),m_threshold(0.5),m_topLevel(0){
     for(int i=0;i<maxLevel;i++){
         m_pattern[i]=NULL;
         m_roiImage[i]=NULL;
@@ -266,8 +267,11 @@ void WatchCircleDetecter::setCirclePattern(const IplImage *pattern, float R, flo
     }
 }
 
-const list<Point>& WatchCircleDetecter::detect(IplImage *image, CvRect *roi){
 
+
+const list<hbc::Point>& WatchCircleDetecter::detect(IplImage *image, CvRect *roi){
+
+    //printf("watch detect\n");
     //inital
     m_centers.clear();
 
@@ -448,6 +452,7 @@ const list<Point>& WatchCircleDetecter::detect(IplImage *image, CvRect *roi){
         it->set(x,y);
     }
 
+
     return m_centers;
 }
 
@@ -490,3 +495,165 @@ IplImage* DiamondCircleDetecter::createIdealPattern(float R, float outWidth){
 #endif
     return pattern;
 }
+
+
+bool comp(const cv::Vec3i& v1, const cv::Vec3i& v2)
+{
+    return v1[0]<v2[0]?true:false;
+}
+
+vector<cv::Mat> doPyrDown(cv::Mat srcImg)
+{
+    cv::Mat tmpMat;
+    vector<cv::Mat> pyrDownImg;
+    pyrDownImg.push_back(srcImg);
+    for(int i=1; i<=1; i++){
+        pyrDown(pyrDownImg[i-1],tmpMat);
+        pyrDownImg.push_back(tmpMat);
+    }
+    return pyrDownImg;
+}
+
+const list<Point>& DiamondCircleDetecter::detect(IplImage* image, CvRect* roi)
+{
+
+    //printf("diamond detect\n");
+    //inital
+    m_centers.clear();
+
+    if(!m_pattern[0])
+        return m_centers;
+
+    //copy ROI
+    if(roi){
+        if(roi->width<=0 || roi->height<=0 || roi->x<0 || roi->y<0
+                || roi->x+roi->width>image->width || roi->y+roi->height>image->height)
+            return m_centers;
+        m_roi=*roi;
+    }
+    else
+        m_roi=cvRect(0, 0, image->width, image->height);
+
+
+    cv::Mat src(image);
+    cv::Mat templateMat(m_pattern[0]);
+    if(!src.data || !templateMat.data)
+        return m_centers;
+    //copy roi
+    cv::Mat src_roi(src,cv::Rect(m_roi));
+
+    //
+    vector<cv::Mat> srcDownVec = doPyrDown(src_roi);
+    vector<cv::Mat> templateVec = doPyrDown(templateMat);
+    cv::Mat src1 = srcDownVec.back();
+    cv::Mat templateMat1 = templateVec.back();
+    //double t = cv::getTickCount();
+
+    //binary
+    cv::Mat bw;
+    //cvtColor(src1,bw,CV_BGR2GRAY);
+    threshold(src1,bw,40,255,CV_THRESH_BINARY);
+
+    //do distance transform and get the brightest points
+    cv::Mat dist;
+    distanceTransform(bw,dist,CV_DIST_L2,3);
+    normalize(dist,dist,0, 1., cv::NORM_MINMAX);
+    threshold(dist,dist,0.6,1,CV_THRESH_BINARY);
+
+    //find contours
+    cv::Mat dist_8u;
+    dist.convertTo(dist_8u,CV_8U);
+    vector<vector<cv::Point> > contours;
+    findContours(dist_8u,contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+
+    int ncomp = contours.size();
+
+    //make marker, which is needed in watershed
+    cv::Mat markers = cv::Mat::zeros(dist.size(), CV_32SC1);
+    for(int i = 0; i < ncomp; i++)
+        drawContours(markers, contours, i, cv::Scalar::all(i+1), -1);
+    circle(markers,cv::Point(5,5), 3, CV_RGB(255,255,255), -1);
+
+    cv::Mat src_8uc3;
+    cvtColor(src1,src_8uc3,CV_GRAY2BGR);
+
+    cv::watershed(src_8uc3,markers);
+
+    vector<cv::Vec3i> mark_points;
+    for(int i = 0; i < markers.rows; i++)
+    {
+        for(int j = 0; j < markers.cols; j++)
+        {
+            int index = markers.at<int>(i,j);
+            if(index >0 && index <= ncomp){
+                mark_points.push_back(cv::Vec3i(index,j,i));
+            }
+        }
+    }
+
+    sort(mark_points.begin(),mark_points.end(),comp);
+
+    vector<int> objAreaX;
+    vector<int> objAreaY;
+    vector<vector<int> > vec_x;
+    vector<vector<int> > vec_y;
+
+    int index=1;
+    for(unsigned int i = 0; i < mark_points.size(); i++)
+    {
+        cv::Vec3i p = mark_points[i];
+        if(p[0]<=ncomp){
+            if(p[0] != index || i == mark_points.size()-1)
+            {
+                //cout<<"index: "<<p[0]<<endl;
+                index++;
+                vec_x.push_back(objAreaX);
+                vec_y.push_back(objAreaY);
+                objAreaX.clear();
+                objAreaY.clear();
+            }
+            if(p[1]<templateMat1.cols/2 || p[2]<templateMat1.rows/2 || p[1]>src1.cols-2 || p[2]>src1.rows-2 )
+                continue;
+            objAreaX.push_back(p[1]);
+            objAreaY.push_back(p[2]);
+        }
+
+    }
+
+    int tw = templateMat1.cols-20/2;
+    int th = templateMat1.rows-20/2;
+
+    vector<hbc::Point> centers;
+    for(unsigned int i=0; i<vec_x.size(); i++)
+    {
+        double minX, maxX, minY, maxY;
+        cv::minMaxIdx(vec_x[i],&minX,&maxX);
+        cv::minMaxIdx(vec_y[i],&minY,&maxY);
+        int roiWidth =maxX-minX;
+        int roiHeight =maxY-minY;
+
+        if(roiWidth<tw-10 || roiWidth>tw+10 || roiHeight<th-10 || roiHeight>th+10)
+            continue;
+
+        cv::Rect bounding(minX-5,minY-5,roiWidth+10,roiHeight+10);
+        cv::Point tl = bounding.tl();
+        cv::Point br = bounding.br();
+        hbc::Point center = hbc::Point((tl.x+br.x)/2,(tl.y+br.y)/2);
+        centers.push_back(center);
+    }
+
+    for(unsigned int i=0; i<centers.size(); i++)
+    {
+        int x = centers[i].x()*2+m_roi.x;
+        int y = centers[i].y()*2+m_roi.y;
+        if(x<1 || y<1 || x>src.cols-2 || y>src.rows-2 )
+            continue;
+        m_centers.push_back(hbc::Point(x,y));
+    }
+
+    //double tt =((double)cv::getTickCount()-t)/cv::getTickFrequency();
+    //printf("Time: %.3f\n",tt);
+    return m_centers;
+
+}
+

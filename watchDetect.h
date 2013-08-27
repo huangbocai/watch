@@ -5,7 +5,7 @@
 #include <list>
 #include <vector>
 #include "imageMeasure.hh"
-
+using namespace hbc;
 //class CirclesDetecter{
 //public:
 //    CirclesDetecter();
@@ -43,7 +43,7 @@ class WatchCircleDetecter{
 public:
     WatchCircleDetecter();
     void set_pattern(IplImage* img, const CvRect* area=NULL);
-    const list<Point>& detect(IplImage* image, CvRect* roi=NULL);
+    virtual const list<Point>& detect(IplImage* image, CvRect* roi=NULL);
     void set_similar(double val){m_threshold=val;}
     void set_level(int val){m_topLevel=val;}
     IplImage* createIdealPattern(float R, float outWidth);
@@ -55,22 +55,24 @@ public:
 
 
     ~WatchCircleDetecter();
-
-private:
+protected:
     static const int maxLevel=10;
     static const int blockRange=5;
+    IplImage* m_pattern[maxLevel];
+    IplImage* m_roiImage[maxLevel];
+    list<Point> m_centers;
+    CvRect m_roi;
+private:
     void setCirclePattern(const IplImage* pattern, float R, float outWidth=5);
     bool m_patternIsNew;
     IplImage* m_patternImage;
     int level;
-    IplImage* m_pattern[maxLevel];
-    IplImage* m_roiImage[maxLevel];
     IplImage* m_convolution[maxLevel];
     IplImage* m_blockImage[maxLevel];
-    CvRect m_roi;
+
     float m_R;
     double m_threshold;
-    list<Point> m_centers;
+
     int m_topLevel;
 };
 
@@ -78,6 +80,7 @@ class DiamondCircleDetecter : public WatchCircleDetecter
 {
 public:
      IplImage* createIdealPattern(float R, float outWidth=0);
+     const list<Point>& detect(IplImage* image, CvRect* roi=NULL);
 };
 
 #endif // WATCHDETECT_H

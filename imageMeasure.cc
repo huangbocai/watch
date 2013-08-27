@@ -16,7 +16,7 @@
 #include <stdio.h>
 
 #include "imageMeasure.hh"
-
+namespace hbc{
 static void edge_rel_pos(unsigned char *imgPoint, float *x, float *y, int step, int thresh);
 bool  line_point_filter(PointsArray& points, float rmDis);
 bool circle_point_filter(PointsArray& points, double rmDistance);
@@ -3880,6 +3880,6 @@ bool ImageAdjust:: figure_up(double& kxx, double&kxy, double& kyx, double& kyy)
 	clear();
 	return true;
 }
-
+}
 
 

@@ -275,12 +275,12 @@
      <property name="title">
       <string> 扫描</string>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>10</x>
         <y>30</y>
-        <width>212</width>
+        <width>226</width>
         <height>56</height>
        </rect>
       </property>
@@ -441,7 +441,7 @@
        <rect>
         <x>10</x>
         <y>100</y>
-        <width>212</width>
+        <width>226</width>
         <height>56</height>
        </rect>
       </property>
@@ -622,16 +622,6 @@
        <string>扫描测试</string>
       </property>
      </widget>
-     <zorder>gridLayoutWidget</zorder>
-     <zorder>widgetMarkView</zorder>
-     <zorder>gridLayoutWidget_3</zorder>
-     <zorder></zorder>
-     <zorder>bt_setScanStart</zorder>
-     <zorder>bt_gotoScanStart</zorder>
-     <zorder></zorder>
-     <zorder></zorder>
-     <zorder>layoutWidget_3</zorder>
-     <zorder>bt_scanTest</zorder>
     </widget>
    </widget>
    <widget class="QWidget" name="tab_3">
@@ -2378,11 +2368,6 @@ p, li { white-space: pre-wrap; }
          <height>400</height>
         </size>
        </property>
-       <zorder>bt_gotoScanStart</zorder>
-       <zorder></zorder>
-       <zorder>bt_setScanStart</zorder>
-       <zorder>label_16</zorder>
-       <zorder>horizontalSpacer_4</zorder>
       </widget>
      </widget>
     </item>

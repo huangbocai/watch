@@ -288,6 +288,7 @@ const list<hbc::Point>& WatchCircleDetecter::detect(IplImage *image, CvRect *roi
     else
         m_roi=cvRect(0, 0, image->width, image->height);
 
+    //double t = cv::getTickCount();
     //create ROI images
     if(m_roiImage[0]==NULL){
         m_roiImage[0]=cvCreateImage(cvSize(m_roi.width, m_roi.height), IPL_DEPTH_8U, 1);
@@ -452,6 +453,8 @@ const list<hbc::Point>& WatchCircleDetecter::detect(IplImage *image, CvRect *roi
         it->set(x,y);
     }
 
+    //double tt =((double)cv::getTickCount()-t)/cv::getTickFrequency();
+    //printf("Time: %.3f\n",tt);
 
     return m_centers;
 }
@@ -516,8 +519,6 @@ vector<cv::Mat> doPyrDown(cv::Mat srcImg)
 
 const list<Point>& DiamondCircleDetecter::detect(IplImage* image, CvRect* roi)
 {
-
-    //printf("diamond detect\n");
     //inital
     m_centers.clear();
 
@@ -542,17 +543,17 @@ const list<Point>& DiamondCircleDetecter::detect(IplImage* image, CvRect* roi)
     //copy roi
     cv::Mat src_roi(src,cv::Rect(m_roi));
 
-    //
+    //double t = cv::getTickCount();
     vector<cv::Mat> srcDownVec = doPyrDown(src_roi);
     vector<cv::Mat> templateVec = doPyrDown(templateMat);
     cv::Mat src1 = srcDownVec.back();
     cv::Mat templateMat1 = templateVec.back();
-    //double t = cv::getTickCount();
+
 
     //binary
     cv::Mat bw;
     //cvtColor(src1,bw,CV_BGR2GRAY);
-    threshold(src1,bw,40,255,CV_THRESH_BINARY);
+    threshold(src1,bw,50,255,CV_THRESH_BINARY);
 
     //do distance transform and get the brightest points
     cv::Mat dist;
@@ -642,11 +643,25 @@ const list<Point>& DiamondCircleDetecter::detect(IplImage* image, CvRect* roi)
         centers.push_back(center);
     }
 
+    //delete points too close to each other
+    vector<hbc::Point>::iterator it;
+    for( it= centers.begin(); it != centers.end(), it+1!=centers.end();)
+    {
+        Point p1 = *it;
+        Point p2 = *(it+1);
+        if(abs(p1.y()-p2.y())<10 && abs(p1.x()-p2.x())<templateMat.cols+10){
+            it = centers.erase(it);
+            printf("test\n");
+        }
+        else
+            it++;
+    }
+
     for(unsigned int i=0; i<centers.size(); i++)
     {
         int x = centers[i].x()*2+m_roi.x;
         int y = centers[i].y()*2+m_roi.y;
-        if(x<1 || y<1 || x>src.cols-2 || y>src.rows-2 )
+        if(x<1 || y<1 || x>src_roi.cols-2 || y>src_roi.rows-2 )
             continue;
         m_centers.push_back(hbc::Point(x,y));
     }

@@ -679,16 +679,12 @@ void MarkWidget::auto_detect_diamond(){
 
     list<Point>::const_iterator it;
     Point pos;
-    //ofstream ofs;
-    //ofs.open("/home/u/cnc/镶钻存档/test1/center.pos",ios::app);
     Vector2 vm(emcStatus.cmdAxis[0], emcStatus.cmdAxis[1]);
     for(it=imgPos.begin();it!=imgPos.end();it++){
-        //ofs<<int(it->x()-0.5)<<" "<<int(it->y()-0.5)<<endl;
         pos=transfMatrix->transform(it->x(), it->y());
         pos.move(vm);
         watchResult.dimamondPos.push_back(pos);
     }
-    //ofs.close();
     markView->set_diamond_sum((int)watchResult.dimamondPos.size());
 }
 

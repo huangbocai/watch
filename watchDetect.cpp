@@ -505,6 +505,12 @@ bool comp(const cv::Vec3i& v1, const cv::Vec3i& v2)
     return v1[0]<v2[0]?true:false;
 }
 
+bool compare_point(const Point& p1, const Point& p2)
+{
+    return p1.y()<p2.y()?true:false;
+
+}
+
 vector<cv::Mat> doPyrDown(cv::Mat srcImg)
 {
     cv::Mat tmpMat;
@@ -541,7 +547,8 @@ const list<Point>& DiamondCircleDetecter::detect(IplImage* image, CvRect* roi)
     if(!src.data || !templateMat.data)
         return m_centers;
     //copy roi
-    cv::Mat src_roi(src,cv::Rect(m_roi));
+    //cv::Mat src_roi(src,cv::Rect(m_roi));
+    cv::Mat src_roi(src);
 
     //double t = cv::getTickCount();
     vector<cv::Mat> srcDownVec = doPyrDown(src_roi);
@@ -636,6 +643,7 @@ const list<Point>& DiamondCircleDetecter::detect(IplImage* image, CvRect* roi)
         if(roiWidth<tw-10 || roiWidth>tw+10 || roiHeight<th-10 || roiHeight>th+10)
             continue;
 
+
         cv::Rect bounding(minX-5,minY-5,roiWidth+10,roiHeight+10);
         cv::Point tl = bounding.tl();
         cv::Point br = bounding.br();
@@ -644,6 +652,9 @@ const list<Point>& DiamondCircleDetecter::detect(IplImage* image, CvRect* roi)
     }
 
     //delete points too close to each other
+
+    sort(centers.begin(),centers.end(),compare_point);
+
     vector<hbc::Point>::iterator it;
     for( it= centers.begin(); it != centers.end(), it+1!=centers.end();)
     {
@@ -651,17 +662,22 @@ const list<Point>& DiamondCircleDetecter::detect(IplImage* image, CvRect* roi)
         Point p2 = *(it+1);
         if(abs(p1.y()-p2.y())<10 && abs(p1.x()-p2.x())<templateMat.cols+10){
             it = centers.erase(it);
-            printf("test\n");
+            //printf("test\n");
         }
         else
             it++;
     }
 
+    cv::Rect rect(m_roi);
+
     for(unsigned int i=0; i<centers.size(); i++)
     {
-        int x = centers[i].x()*2+m_roi.x;
-        int y = centers[i].y()*2+m_roi.y;
-        if(x<1 || y<1 || x>src_roi.cols-2 || y>src_roi.rows-2 )
+        int x = centers[i].x()*2;
+        int y = centers[i].y()*2;
+        if(!rect.contains(cv::Point(x,y)))
+            continue;
+        if(x<rect.tl().x + templateMat.cols/2 || y< rect.tl().y + templateMat.rows/2 ||
+                x>rect.br().x-templateMat.cols/2 || y>rect.br().y - templateMat.rows/2 )
             continue;
         m_centers.push_back(hbc::Point(x,y));
     }

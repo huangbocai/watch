@@ -27,6 +27,7 @@ typedef struct
     hal_s32_t * state;
     hal_u32_t* fps;
     hal_bit_t* setGlue;
+    hal_bit_t* glueUpDown;
     hal_bit_t* pickupDiamond;
     hal_bit_t* dropDiamond;
     hal_bit_t* lightControl;

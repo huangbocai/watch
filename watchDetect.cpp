@@ -653,20 +653,43 @@ const list<Point>& DiamondCircleDetecter::detect(IplImage* image, CvRect* roi)
 
     //delete points too close to each other
 
-    sort(centers.begin(),centers.end(),compare_point);
 
-    vector<hbc::Point>::iterator it;
-    for( it= centers.begin(); it != centers.end(), it+1!=centers.end();)
-    {
-        Point p1 = *it;
-        Point p2 = *(it+1);
-        if(abs(p1.y()-p2.y())<10 && abs(p1.x()-p2.x())<templateMat.cols+10){
-            it = centers.erase(it);
-            //printf("test\n");
-        }
-        else
-            it++;
-    }
+//    if(centers.size()>0)
+//    {
+////    sort(centers.begin(),centers.end(),compare_point);
+
+////    vector<hbc::Point>::iterator it;
+////    for( it= centers.begin(); it-1!=centers.end();)
+////    {
+////        Point p1 = *it;
+////        Point p2 = *(it+1);
+////        if(abs(p1.y()-p2.y())<10 && abs(p1.x()-p2.x())<templateMat.cols+10){
+////            centers.erase(it);
+////            //printf("test\n");
+////        }
+////        it++;
+////    }
+
+
+//    sort(centers.begin(),centers.end(),compare_point);
+
+//    vector<hbc::Point>::iterator it;
+//    it = centers.begin();
+//    Point p1 = *it;
+//    it++;
+//    for( ; it!=centers.end();)
+//    {
+//        //Point p1 = *it;
+//        Point p2 = *it;
+//        if(abs(p1.y()-p2.y())<10 && abs(p1.x()-p2.x())<templateMat.cols+10){
+//            centers.erase(it);
+//            //printf("test\n");
+//        }
+//        p1 = p2;
+//        it++;
+//    }
+
+//    }
 
     cv::Rect rect(m_roi);
 
@@ -676,7 +699,7 @@ const list<Point>& DiamondCircleDetecter::detect(IplImage* image, CvRect* roi)
         int y = centers[i].y()*2;
         if(!rect.contains(cv::Point(x,y)))
             continue;
-        if(x<rect.tl().x + templateMat.cols/2 || y< rect.tl().y + templateMat.rows/2 ||
+        if(x<rect.tl().x + templateMat.cols || y< rect.tl().y + templateMat.rows ||
                 x>rect.br().x-templateMat.cols/2 || y>rect.br().y - templateMat.rows/2 )
             continue;
         m_centers.push_back(hbc::Point(x,y));

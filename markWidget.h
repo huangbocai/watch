@@ -151,7 +151,8 @@ class Information
 public:
     Information():watchPosIndex(0),gluePosIndex(0),holePosIndex(0),
         diamondNum(0),watchPosNum(0),holePosNum(0),endAutoRun(true),
-        endSetGLue(true),endSetDiamond(true),endScanWatch(true),runTime("00:00")
+        endSetGLue(true),endSetDiamond(true),endScanWatch(true),
+        start(false),paused(false),stop(false),runTime("00:00")
     {
         for(int i=0; i<4; i++)
             ioState[i] = false;
@@ -182,7 +183,7 @@ public:
     double slowVel;
     double fastVel;
 
-    bool ioState[4];
+    bool ioState[5];
 
 
     bool endAutoRun;

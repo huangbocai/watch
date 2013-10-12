@@ -104,6 +104,11 @@ MarkHal::MarkHal()
         return ;
     *halpins->setGlue=0;
 
+    retval = hal_pin_bit_new("mark.glueUpDown", HAL_IN, &halpins->glueUpDown, comp_id);
+    if (retval != 0)
+        return ;
+    *halpins->glueUpDown=0;
+
     retval = hal_pin_bit_new("mark.pickupDiamond", HAL_IN, &halpins->pickupDiamond, comp_id);
     if (retval != 0)
         return ;

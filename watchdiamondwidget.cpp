@@ -164,7 +164,7 @@ void WatchDiamondWidget::update_infor_slot(const Information& infor){
             bt_scanWatch->setChecked(false);
     }
 
-    for(int i=0; i<4; i++){
+    for(int i=0; i<5; i++){
         if(infor.ioState[i])
             ioButtons[i]->setChecked(true);
         else
@@ -182,9 +182,8 @@ void WatchDiamondWidget::update_infor_slot(const Information& infor){
             bt_autoRun->setChecked(false);
     }
     if(infor.stop){
-        bt_stop->setChecked(true);
-        bt_autoRun->setChecked(false);
-        bt_pause->setChecked(false);
+        bt_stop->click();
+        //std::cout<<"test for one time"<<std::endl;
     }
 
     //只执行一次

@@ -25,9 +25,6 @@ Recorder::Recorder(string prjDir)
     currentHoleIndex = 0;
     currentGlueHoleIndex = 0;
     posVec.clear();
-    //lastPos = NULL;
-    //cout<<watchPosFileName<<endl;
-    //cout<<holePosFileName<<endl;
 }
 
 void Recorder::record_current_pos(double x, double y, double z, double a, double b ,RectangleFrame rect)
@@ -899,6 +896,11 @@ void MarkWidget::fast_react_cycle(){
     else
         infor.ioState[3] = false;
 
+    if(*halpins->glueUpDown == 1)
+        infor.ioState[4] = true;
+    else
+        infor.ioState[4] = false;
+
     if(*halpins->start)
         infor.start = true;
     else
@@ -909,8 +911,11 @@ void MarkWidget::fast_react_cycle(){
     else
         infor.paused = false;
 
-    if(*halpins->stop)
+    if(*halpins->stop){
         infor.stop = true;
+        *halpins->start = 0;
+        *halpins->stop = 0;
+    }
     else
         infor.stop = false;
 
@@ -931,10 +936,15 @@ void MarkWidget::fast_react_cycle(){
         *halpins->watchHoleValid = 1;
     else{
         *halpins->watchHoleValid = 0;
-        if(!infor.endAutoRun)
+        if(!infor.endAutoRun){
             infor.endAutoRun = true;
+            //
+            *halpins->start = 0;
+        }
         if(!infor.endSetDiamond)
             infor.endSetDiamond = true;
+        //*halpins->start = 0;
+
     }
     if(posRecorder->get_glue_hole_index()<=(posRecorder->holesPosVec).size())
         *halpins->glueHoleValid = 1;

@@ -204,6 +204,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="bt_zero">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="minimumSize">
          <size>
           <width>93</width>
@@ -456,7 +459,7 @@
          </size>
         </property>
         <property name="text">
-         <string>button</string>
+         <string>吸石上下</string>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -1273,7 +1276,7 @@
         <rect>
          <x>10</x>
          <y>30</y>
-         <width>106</width>
+         <width>108</width>
          <height>128</height>
         </rect>
        </property>

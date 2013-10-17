@@ -36,12 +36,17 @@ typedef struct
     hal_bit_t* stop;
 }MarkHalPins;
 
+
 class MarkHal
 {
 public:
+    static const int io_num = 5;
     MarkHal();
     int comp_id;
     MarkHalPins* halpins;
+    bool pin_is_valid(int index);
+private:
+    hal_bit_t* pins[io_num];
 };
 
 //Programe Run TIme Manager
@@ -107,3 +112,4 @@ private:
 };
 
 #endif // MARKEMC_H
+

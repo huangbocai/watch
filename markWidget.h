@@ -265,7 +265,7 @@ private slots:
     void pickup_next();
     void pickup_all();
     void choose_pattern_shap();
-    void record_diamond_pos();
+    //void record_diamond_pos();
 
 
     //watch page

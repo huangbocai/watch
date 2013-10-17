@@ -875,7 +875,7 @@ void MarkWidget::fast_react_cycle(){
         infor.holePosIndex++;
         *halpins->reachCmd = 0;
     }
-
+/*
     if(*halpins->setGlue == 1)
         infor.ioState[0] = true;
     else
@@ -900,16 +900,20 @@ void MarkWidget::fast_react_cycle(){
         infor.ioState[4] = true;
     else
         infor.ioState[4] = false;
+*/
+
+    for(int i = 0; i<halData->io_num; i++)
+    {
+        if(halData->pin_is_valid(i))
+            infor.ioState[i] = true;
+        else
+            infor.ioState[i] = false;
+    }
 
     if(*halpins->start)
         infor.start = true;
     else
         infor.start = false;
-
-    if(*halpins->paused)
-        infor.paused = true;
-    else
-        infor.paused = false;
 
     if(*halpins->stop){
         infor.stop = true;
@@ -1231,59 +1235,59 @@ bool distance_within(const Point& p1, const Point& p2)
 }
 
 
-void MarkWidget::record_diamond_pos()
-{
-    ofstream ofs;
-    list<Point> posList = watchResult.dimamondPos;
-    list<Point> tmpPosList;
-    list<double> tmpList;
-    list<Point>::iterator iter,iter1;
-    list<double>::iterator doubleIter;
+//void MarkWidget::record_diamond_pos()
+//{
+//    ofstream ofs;
+//    list<Point> posList = watchResult.dimamondPos;
+//    list<Point> tmpPosList;
+//    list<double> tmpList;
+//    list<Point>::iterator iter,iter1;
+//    list<double>::iterator doubleIter;
 
-    posList.sort(compare_points);
+//    posList.sort(compare_points);
 
-    for(iter = posList.begin(); iter!=posList.end();iter++){
-        iter1 = iter;
-        if(++iter1 != posList.end()){
-            Vector2 vec(*iter,*iter1);
-            tmpList.push_back(vec.length());
-        }
-        else
-            break;
-    }
+//    for(iter = posList.begin(); iter!=posList.end();iter++){
+//        iter1 = iter;
+//        if(++iter1 != posList.end()){
+//            Vector2 vec(*iter,*iter1);
+//            tmpList.push_back(vec.length());
+//        }
+//        else
+//            break;
+//    }
 
-    ofs.open("/home/u/cnc/镶钻存档/test1/diamond.pos");
+//    ofs.open("/home/u/cnc/镶钻存档/test1/diamond.pos");
 
-    if(!ofs.is_open()){
-        cout<<"open file /home/u/cnc/镶钻存档/test1/diamond.pos fail."<<endl;
-        return;
-    }
-    ofs.precision(6);
+//    if(!ofs.is_open()){
+//        cout<<"open file /home/u/cnc/镶钻存档/test1/diamond.pos fail."<<endl;
+//        return;
+//    }
+//    ofs.precision(6);
 
-    for(iter = posList.begin(); iter != posList.end(); iter++){
-        Vector2 vec((*iter).x(),(*iter).y());
-        ofs<<(*iter).x()<<" "<<(*iter).y()<<" "<<vec.length()<<endl;
-    }
-    ofs<<endl<<endl;
-    for(doubleIter = tmpList.begin(); doubleIter != tmpList.end(); doubleIter++){
-        ofs<<*doubleIter<<endl;
-    }
+//    for(iter = posList.begin(); iter != posList.end(); iter++){
+//        Vector2 vec((*iter).x(),(*iter).y());
+//        ofs<<(*iter).x()<<" "<<(*iter).y()<<" "<<vec.length()<<endl;
+//    }
+//    ofs<<endl<<endl;
+//    for(doubleIter = tmpList.begin(); doubleIter != tmpList.end(); doubleIter++){
+//        ofs<<*doubleIter<<endl;
+//    }
 
-    ofs<<endl<<endl;
-    tmpPosList = posList;
+//    ofs<<endl<<endl;
+//    tmpPosList = posList;
 
-    for(iter = posList.begin(); iter!=posList.end(); iter++){
-        if(std::binary_search(posList.begin(),posList.end(), *iter,distance_within))
-            tmpPosList.remove(*iter);
-    }
+//    for(iter = posList.begin(); iter!=posList.end(); iter++){
+//        if(std::binary_search(posList.begin(),posList.end(), *iter,distance_within))
+//            tmpPosList.remove(*iter);
+//    }
 
-    for(iter = tmpPosList.begin(); iter != tmpPosList.end(); iter++){
-        Point imgP = transfMatrix->inv_transform(*iter);
-        ofs<<imgP.x()<<" "<<imgP.y()<<endl;
-    }
+//    for(iter = tmpPosList.begin(); iter != tmpPosList.end(); iter++){
+//        Point imgP = transfMatrix->inv_transform(*iter);
+//        ofs<<imgP.x()<<" "<<imgP.y()<<endl;
+//    }
 
-    ofs.close();
-}
+//    ofs.close();
+//}
 
 void MarkWidget::change_angle(){
     double sign=1;

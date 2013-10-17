@@ -1,4 +1,3 @@
-
 //int mark2run=1;
 
 #include "markEMC.h"
@@ -157,6 +156,16 @@ MarkHal::MarkHal()
         printf("ERROR: %s fail\n", halcmd);
         exit(-1);
     }
+    pins[0] = halpins->setGlue;
+    pins[1] = halpins->pickupDiamond;
+    pins[2] = halpins->dropDiamond;
+    pins[3] = halpins->lightControl;
+    pins[4] = halpins->glueUpDown;
+}
+
+bool MarkHal::pin_is_valid(int index)
+{
+    return *(pins[index]) == 1;
 }
 
 
@@ -389,7 +398,7 @@ void PRTManager::update_time()
         pause();
         timeState = Idle;
         break;
-    case Restart:
+   case Restart:
         restart();
         timeState = running;
         break;
@@ -402,3 +411,4 @@ void PRTManager::update_time()
     }
 
 }
+

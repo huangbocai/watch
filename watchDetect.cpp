@@ -653,43 +653,25 @@ const list<Point>& DiamondCircleDetecter::detect(IplImage* image, CvRect* roi)
 
     //delete points too close to each other
 
+    if(centers.size()>1)
+    {
+        sort(centers.begin(),centers.end(),compare_point);
 
-//    if(centers.size()>0)
-//    {
-////    sort(centers.begin(),centers.end(),compare_point);
-
-////    vector<hbc::Point>::iterator it;
-////    for( it= centers.begin(); it-1!=centers.end();)
-////    {
-////        Point p1 = *it;
-////        Point p2 = *(it+1);
-////        if(abs(p1.y()-p2.y())<10 && abs(p1.x()-p2.x())<templateMat.cols+10){
-////            centers.erase(it);
-////            //printf("test\n");
-////        }
-////        it++;
-////    }
-
-
-//    sort(centers.begin(),centers.end(),compare_point);
-
-//    vector<hbc::Point>::iterator it;
-//    it = centers.begin();
-//    Point p1 = *it;
-//    it++;
-//    for( ; it!=centers.end();)
-//    {
-//        //Point p1 = *it;
-//        Point p2 = *it;
-//        if(abs(p1.y()-p2.y())<10 && abs(p1.x()-p2.x())<templateMat.cols+10){
-//            centers.erase(it);
-//            //printf("test\n");
-//        }
-//        p1 = p2;
-//        it++;
-//    }
-
-//    }
+        vector<hbc::Point>::iterator it;
+        it = centers.begin();
+        Point p1 = *it;
+        it++;
+        for( ; it!=centers.end();)
+        {
+            Point p2 = *it;
+            if(abs(p1.y()-p2.y())<10 && abs(p1.x()-p2.x())<templateMat.cols+10)
+            {
+                centers.erase(it);
+            }
+            p1 = p2;
+            it++;
+        }
+    }
 
     cv::Rect rect(m_roi);
 

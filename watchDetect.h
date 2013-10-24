@@ -79,8 +79,14 @@ private:
 class DiamondCircleDetecter : public WatchCircleDetecter
 {
 public:
-     IplImage* createIdealPattern(float R, float outWidth=0);
-     const list<Point>& detect(IplImage* image, CvRect* roi=NULL);
+    DiamondCircleDetecter();
+    IplImage* createIdealPattern(float R, float outWidth=0);
+    const list<Point>& detect(IplImage* image, CvRect* roi=NULL);
+    double calcuateAverageBrightness(cv::Mat src, float radious, list<Point> centers);
+    const list<Point> deleteLessBrightCenter(cv::Mat src, float radious, list<Point> centers, double averageBrightness);
+    int calForegroundPix(const cv::Mat& img, int threshold);
+    int mPatternFgPixNum; //pattern foreground pix num
+    double mAverageBrightness;
 };
 
 #endif // WATCHDETECT_H

@@ -1421,6 +1421,8 @@
     <property name="title">
      <string>文件</string>
     </property>
+    <addaction name="action_open"/>
+    <addaction name="action_saveAs"/>
    </widget>
    <widget class="QMenu" name="menuHAL">
     <property name="title">
@@ -1446,6 +1448,16 @@
   <action name="action_halScope">
    <property name="text">
     <string>Hal Scope</string>
+   </property>
+  </action>
+  <action name="action_open">
+   <property name="text">
+    <string>打开存档</string>
+   </property>
+  </action>
+  <action name="action_saveAs">
+   <property name="text">
+    <string>另存为</string>
    </property>
   </action>
  </widget>

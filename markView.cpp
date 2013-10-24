@@ -287,6 +287,9 @@ void MarkView::draw_diamond_pos(QImage &qImage){
         painter.drawLine(x-5, y, x+5, y);
         painter.drawLine(x, y-5, x, y+5);
         painter.drawArc(x-wR, y-hR, 2*wR+1, 2*hR+1, 0, 360*16);
+//        QRect rect = QRect(x-wR,y-hR,2*wR,2*hR);
+//        painter.drawRect(rect);
+
     }
 }
 
@@ -365,7 +368,6 @@ void MarkView::draw_frame(QImage &qImage, const CircleFrame &frame, const QPen &
         }
     }
 }
-
 
 void MarkView::draw_status_text(QImage &qImage){
     char buf[128];

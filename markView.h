@@ -151,9 +151,6 @@ private:
     RectangleFrame searchFrame;
     CircleFrame patternCircleFrame;
 
-    //RectangleFrame similarFrame[4];
-    //RectangleFrame searchFrame[4];
-
     list<Point> diamondPos;
     float diamondR;
     int diamondSum;

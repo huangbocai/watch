@@ -32,6 +32,7 @@ HEADERS += markWidget.h \
     emcsec.hh \
     iniwrite.hh \
     watchdiamondwidget.h \
+    imageprocessing.h
 
 
 FORMS += markWidget.ui \
@@ -55,6 +56,7 @@ SOURCES += markWidget.cpp \
     watchConfig.cc \
     diamodWidget.cpp \
     watchdiamondwidget.cpp \
+    imageprocessing.cpp
 
 
 RESOURCES +=

@@ -23,10 +23,10 @@ typedef struct {
     QLabel* lb_adjPosY[4];
 }MarkQtObjects;
 
-class WatchResult
+class RecognizeResult
 {
 public:
-    WatchResult():scanIndex(0),scanHoleIndex(0){pickupIterator=dimamondPos.begin();}
+    RecognizeResult():scanIndex(0),scanHoleIndex(0){pickupIterator=dimamondPos.begin();}
     list<Point> dimamondPos;
     list<Point>::const_iterator pickupIterator;
     int scanIndex;
@@ -184,8 +184,6 @@ public:
     double fastVel;
 
     bool ioState[5];
-
-
     bool endAutoRun;
     bool endSetGLue;
     bool endSetDiamond;
@@ -220,7 +218,6 @@ public:
     void set_slow_velocity(double vel);
     void jog(int axis, double velocity);
     void end_jog(int axis);
-
     void scan_diamon();
     void scan_watch();
     void set_glue();
@@ -230,23 +227,17 @@ public:
     void stop();
     void set_var_param(int varNum, double value);
     void set_io(int index , bool on);
-
     void set_pickup_diamnod_z(double value);
     void set_glue_z_pos(double value);
     void set_setdiamond_z_pos(double value);
-
     void set_time(int index, int varNum, double value);
-
     void set_offset(int index, double value);
-
-
 
 signals:
     void update_emc_status(const MarkEmcStatus& status);
     void update_infor(const Information& infor);
 
-private slots:  
-
+private slots:
     //status bar
      void show_load_dialog();
 
@@ -259,14 +250,12 @@ private slots:
     void set_scan_end();
     void back_scan_end();
     void scan_test();
-    //void set_pickup_diamnod_z();
-    //void set_send_diamnod_z();
     void pickup_first();
     void pickup_next();
     void pickup_all();
     void choose_pattern_shap();
     //void record_diamond_pos();
-
+    void on_bt_clearDiamond_clicked();
 
     //watch page
     void change_angle();
@@ -291,6 +280,7 @@ private slots:
     void load_image();
     void save_image();
     void set_camera_param(int val);
+    void auto_brightness(int val);
 
     //adjust page
     void adjPos_pressed();
@@ -305,38 +295,38 @@ private slots:
     void view_update();
     void slow_cycle();
     void fast_react_cycle();
-    void cv_cmd_cycle();
+    void cv_cmd_cycle();    
 
 private:
     void get_qt_objects();
     void start_Capture(int contrastVal, int brightnessVal, int exposureVal, int ADLevel, int bufferNum=2);
     void detecter_model_init();
-
     void status_bar_init();
     void diamond_page_init();
     void watch_page_init();
     void image_page_init();
     void adjust_page_init();
-
     void ready_for_diamond_scan();
     void auto_detect_diamond();
-    void clear_diamond_pos();    
-
+    void clear_diamond_pos();
     void ready_for_watch_scan();
     void auto_detect_watch();
     void clear_hole_pos();
-
     void mark_view_update();
-
-
     void mark_adjust_param();
-    int detectHole_pressed(int type, double& cx, double& cy);
 
-    //QString int_to_time_string(int sec);
+    //拾起一颗石子
+    void pickup_one_diamond(const Point& diamondPos, double pickupZ);
+    //在一个槽里滴胶
+    void set_one_glue(const Position& holePos, double setGlueZ);
+    //在一个槽里放置石子
+    void set_one_diamond(const Position& holePos, double setDiamondZ);
+    //扫描表壳上的一个位置
+    void scan_one_pos_of_watch(const Position* watchPos);
 
     MarkHal*halData;
     MarkEmcStatus emcStatus;
-    WatchResult watchResult;
+    RecognizeResult diamondPosition;
 
     Mark2Adjust adjust;
     ImageCapture* capture;
@@ -362,7 +352,5 @@ private:
     FocusAidView* focusAidView;
     QDoubleValidator* doubleValidator;
     QIntValidator* intValidator;
-
 };
-
 #endif

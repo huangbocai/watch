@@ -20,10 +20,10 @@ int Mark2Param::load(const char* iniFile)
 	ini_get_double_param(&inifile, "MARK", "MM_PER_PIXEL_HW", &kyx, 0);
     ini_get_double_param(&inifile, "MARK", "GLUE_REL_SPINDLE_X", &glueRelx, 0);
     ini_get_double_param(&inifile, "MARK", "GLUE_REL_SPINDLE_Y", &glueRely, 0);
-    ini_get_double_param(&inifile, "MARK", "PICKUP_OFFSET_X", & pickupOffsetX, 0);
-    ini_get_double_param(&inifile, "MARK", "PICKUP_OFFSET_Y", &pickupOffsetY, 0);
-    ini_get_double_param(&inifile, "MARK", "GLUE_OFFSET_X", &glueOffsetX, 0);
-    ini_get_double_param(&inifile, "MARK", "GLUE_OFFSET_Y", &glueOffsetY, 0);
+//    ini_get_double_param(&inifile, "MARK", "PICKUP_OFFSET_X", & pickupOffsetX, 0);
+//    ini_get_double_param(&inifile, "MARK", "PICKUP_OFFSET_Y", &pickupOffsetY, 0);
+//    ini_get_double_param(&inifile, "MARK", "GLUE_OFFSET_X", &glueOffsetX, 0);
+//    ini_get_double_param(&inifile, "MARK", "GLUE_OFFSET_Y", &glueOffsetY, 0);
 
     ini_get_int_param(&inifile, "MARK", "CAM_GAIN", &camGain, 0);
     ini_get_int_param(&inifile, "MARK", "CAM_ADC_LEVEL", &camADL, 0);
@@ -34,30 +34,30 @@ int Mark2Param::load(const char* iniFile)
     ini_get_string_param(&inifile, "MARK", "CURRENT_PROJECT", projectName, "test1");
     ini_get_double_param(&inifile, "DISPLAY", "MAX_LINEAR_VELOCITY", &fastVel,200);
     ini_get_double_param(&inifile, "DISPLAY", "MIN_LINEAR_VELOCITY", &slowVel,100);
-    ini_get_double_param(&inifile, "MARK", "PICKUP_OFFSET_X", &pickupOffsetX,0);
-    ini_get_double_param(&inifile, "MARK", "PICKUP_OFFSET_Y", &pickupOffsetY, 0);
-    ini_get_double_param(&inifile, "MARK", "GLUE_OFFSET_X", &glueOffsetX,0);
-    ini_get_double_param(&inifile, "MARK", "GLUE_OFFSET_Y", &glueOffsetY,0);
 
 	inifile.Close();
 	return 0;
 }
 
-ProjectManage::ProjectManage(){
+Project::Project(){
     patternD=NULL;
     patternW=NULL;
 }
 
-
-
-
-int ProjectManage::load(const char* projectName){
-
+void Project::init(const char *projectName)
+{
     printf("projectName=%s\n", projectName);
+    sprintf(mProjectName,"%s",projectName);
     sprintf(projectDirectory, "/home/u/cnc/镶钻存档/%s", projectName);
     sprintf(iniFile, "%s/watch.ini", projectDirectory);
     sprintf(patternFileD, "%s/diamond.ppm", projectDirectory);
     sprintf(patternFileW, "%s/watch.ppm", projectDirectory);
+}
+
+
+int Project::load(const char* projectName){
+
+    init(projectName);
 
     patternD=cvLoadImage(patternFileD, 0);
     patternW=cvLoadImage(patternFileW, 0);
@@ -111,18 +111,23 @@ int ProjectManage::load(const char* projectName){
     ini_get_double_param(&inifile, "TIME", "SET_DIAMOND_TIME", &setDiamondTime, 0);
     ini_get_double_param(&inifile, "TIME", "GET_DIAMOND_TIME", &getDiamondTime, 0);
 
+    ini_get_double_param(&inifile, "OFFSET", "PICKUP_OFFSET_X", &pickupOffsetX, 0);
+    ini_get_double_param(&inifile, "OFFSET", "PICKUP_OFFSET_Y", &pickupOffsetY, 0);
+    ini_get_double_param(&inifile, "OFFSET", "GLUE_OFFSET_X", &glueOffsetX, 0);
+    ini_get_double_param(&inifile, "OFFSET", "GLUE_OFFSET_Y", &glueOffsetY, 0);
+
     return 0;
 }
 
-void ProjectManage::save_diamond_pattern(const IplImage *img){
+void Project::save_diamond_pattern(const IplImage *img){
     cvSaveImage(patternFileD, img);
 }
 
-void ProjectManage::save_watch_pattern(const IplImage *img){
+void Project::save_watch_pattern(const IplImage *img){
     cvSaveImage(patternFileW, img);
 }
 
-void ProjectManage::save_diamond_camera_param(int adl, int brightness, int contrast, int exposure){
+void Project::save_diamond_camera_param(int adl, int brightness, int contrast, int exposure){
     adlD=adl;
     brightnessD=brightness;
     contrastD=contrast;
@@ -133,7 +138,7 @@ void ProjectManage::save_diamond_camera_param(int adl, int brightness, int contr
     write_profile_int("DIAMOND", "ADL",adlD, iniFile);
 }
 
-void ProjectManage::save_watch_camera_param(int adl, int brightness, int contrast, int exposure)
+void Project::save_watch_camera_param(int adl, int brightness, int contrast, int exposure)
 {
     adlW=adl;
     brightnessW=brightness;
@@ -145,21 +150,21 @@ void ProjectManage::save_watch_camera_param(int adl, int brightness, int contras
     write_profile_int("WATCH", "ADL",adlW, iniFile);
 }
 
-void ProjectManage::save_diamond_search_area(){
+void Project::save_diamond_search_area(){
     write_profile_int("DIAMOND", "SEARCH_LEFT", searcRectD.x, iniFile);
     write_profile_int("DIAMOND", "SEARCH_TOP", searcRectD.y, iniFile);
     write_profile_int("DIAMOND", "SEARCH_WIDTH", searcRectD.width, iniFile);
     write_profile_int("DIAMOND", "SEARCH_HEIGHT", searcRectD.height, iniFile);
 }
 
-void ProjectManage::save_watch_search_area(){
+void Project::save_watch_search_area(){
     write_profile_int("WATCH", "SEARCH_LEFT", searcRectW.x, iniFile);
     write_profile_int("WATCH", "SEARCH_TOP", searcRectW.y, iniFile);
     write_profile_int("WATCH", "SEARCH_WIDTH", searcRectW.width, iniFile);
     write_profile_int("WATCH", "SEARCH_HEIGHT", searcRectW.height, iniFile);
 }
 
-void ProjectManage::save_scan_param(){
+void Project::save_scan_param(){
     write_profile_double("DIAMOND", "SCAN_X0", scanStartPos[0], iniFile);
     write_profile_double("DIAMOND", "SCAN_Y0", scanStartPos[1], iniFile);
     write_profile_double("DIAMOND", "SCAN_Z0", scanStartPos[2], iniFile);
@@ -172,4 +177,104 @@ void ProjectManage::save_scan_param(){
     write_profile_int("DIAMOND", "SCAN_COL_NUM", scanColNum, iniFile);
 }
 
+void Project::save_as(const char *projectName)
+{
+    char cmd[1024];
+    sprintf(cmd, "cp /home/u/cnc/镶钻存档/test1/* /home/u/cnc/镶钻存档/%s/",projectName);
+    int val=system(cmd);
+    if(val){
+        printf("copy data fail\n");
+        return;
+    }
+}
 
+ProjectManage::ProjectManage()
+{
+    currentPrj = new Project();
+}
+
+void ProjectManage::load_project(const char* projectName){
+    if(!currentPrj){
+        printf("Cant't load project %s\n", projectName);
+        return;
+    }
+    currentPrj->load(projectName);
+}
+
+void ProjectManage::save_as_project(const char* projectName){
+    currentPrj->save_as(projectName);
+}
+
+const char* ProjectManage::get_current_project_name(){
+    return currentPrj->get_project_name();
+}
+
+void ProjectManage::save_diamond_pattern(const IplImage *img){
+    currentPrj->save_diamond_pattern(img);
+}
+
+void ProjectManage::save_watch_pattern(const IplImage *img){
+    currentPrj->save_watch_pattern(img);
+}
+
+void ProjectManage::save_diamond_camera_param(int adl, int brightness, int contrast, int exposure){
+    currentPrj->save_diamond_camera_param(adl,brightness,contrast,exposure);
+}
+
+void ProjectManage::save_watch_camera_param(int adl, int brightness, int contrast, int exposure)
+{
+    currentPrj->save_watch_camera_param(adl,brightness,contrast,exposure);
+}
+
+void ProjectManage::save_diamond_search_area(){
+    currentPrj->save_diamond_search_area();
+}
+
+void ProjectManage::save_watch_search_area(){
+    currentPrj->save_watch_search_area();
+}
+
+void ProjectManage::save_scan_param(){
+    currentPrj->save_scan_param();
+}
+
+void ProjectManage::save_as(const char *projectName)
+{
+    currentPrj->save_as(projectName);
+}
+
+IplImage* ProjectManage::get_diamond_pattern()
+{
+    return currentPrj->get_diamond_pattern();
+}
+
+IplImage* ProjectManage::get_watch_pattern()
+{
+    return currentPrj->get_watch_pattern();
+}
+
+const char* ProjectManage::ini_file()const
+{
+    return currentPrj->ini_file();
+}
+
+const char* ProjectManage::project_dir()const
+{
+    return currentPrj->project_dir();
+}
+
+void ProjectManage::set_scanStartPos(int index, double val){
+    currentPrj->scanStartPos[index] = val;
+}
+
+double ProjectManage::get_scanStartPos(int index){
+    return currentPrj->scanStartPos[index];
+}
+
+void ProjectManage::set_scanEndPos(int index, double val){
+    currentPrj->scanEndPos[index] = val;
+}
+
+double ProjectManage::get_scanEndPos(int index){
+    return currentPrj->scanEndPos[index];
+}

@@ -134,7 +134,7 @@ int ImageCapture::set_AD_level(int val){
 
 int ImageCapture::set_auto_BL(int val){
 	autoBL=val;
-	return cam->set_AD_level(val);
+    return cam->set_auto_BL(val);
 }
 
 int ImageCapture::set_hue(int val){

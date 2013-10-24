@@ -33,7 +33,7 @@ void LoadRecordDialog::delete_record(){
 
 void LoadRecordDialog::set_combo_box(){
     cb_records->clear();
-    DIR* dir=opendir("/home/u/cnc/CCD定位存档/");
+    DIR* dir=opendir("/home/u/cnc/镶钻存档/");
     if(dir){
         struct dirent* content;
         while((content=readdir(dir))!=NULL){

@@ -98,31 +98,6 @@ MarkHal::MarkHal()
         return ;
     *halpins->glueHoleValid=1;
 
-    retval = hal_pin_bit_new("mark.setGlue", HAL_IN, &halpins->setGlue, comp_id);
-    if (retval != 0)
-        return ;
-    *halpins->setGlue=0;
-
-    retval = hal_pin_bit_new("mark.glueUpDown", HAL_IN, &halpins->glueUpDown, comp_id);
-    if (retval != 0)
-        return ;
-    *halpins->glueUpDown=0;
-
-    retval = hal_pin_bit_new("mark.pickupDiamond", HAL_IN, &halpins->pickupDiamond, comp_id);
-    if (retval != 0)
-        return ;
-    *halpins->pickupDiamond=0;
-
-    retval = hal_pin_bit_new("mark.dropDiamond", HAL_IN, &halpins->dropDiamond, comp_id);
-    if (retval != 0)
-        return ;
-    *halpins->dropDiamond=0;
-
-    retval = hal_pin_bit_new("mark.lightControl", HAL_IN, &halpins->lightControl, comp_id);
-    if (retval != 0)
-        return ;
-    *halpins->lightControl=0;
-
     retval = hal_pin_bit_new("mark.start", HAL_IN, &halpins->start, comp_id);
     if (retval != 0)
         return ;
@@ -138,6 +113,8 @@ MarkHal::MarkHal()
         return ;
     *halpins->stop=0;
 
+
+
     retval = hal_pin_s32_new("mark.state", HAL_OUT, &halpins->state, comp_id);
     if (retval != 0)
         return ;
@@ -146,6 +123,17 @@ MarkHal::MarkHal()
     retval = hal_pin_u32_new("mark.fps", HAL_OUT, &halpins->fps, comp_id);
     if (retval != 0)
         return ;
+
+    const char* ioName[io_num] = {"mark.setGlue","mark.pickupDiamond","mark.dropDiamond",
+                                  "mark.lightControl","mark.glueUpDown"};
+
+    for(int i=0; i<5; i++)
+    {
+        retval = hal_pin_bit_new(ioName[i], HAL_IN, &halpins->ioPin[i], comp_id);
+        if (retval != 0)
+            return ;
+        *halpins->ioPin[i]=0;
+    }
 
     hal_ready(comp_id);
 
@@ -156,16 +144,25 @@ MarkHal::MarkHal()
         printf("ERROR: %s fail\n", halcmd);
         exit(-1);
     }
-    pins[0] = halpins->setGlue;
-    pins[1] = halpins->pickupDiamond;
-    pins[2] = halpins->dropDiamond;
-    pins[3] = halpins->lightControl;
-    pins[4] = halpins->glueUpDown;
 }
 
 bool MarkHal::pin_is_valid(int index)
 {
-    return *(pins[index]) == 1;
+    return *halpins->ioPin[index] == 1;
+}
+
+void MarkHal::set_axis_pos(int axis, float pos)
+{
+    *halpins->posAxis[axis] = pos;
+}
+
+HalBitPin::HalBitPin(const char *name, int dir, int comp_id, int defaultVal)
+{
+    mDir = setDirection(dir);
+    mPin = (hal_bit_t *) hal_malloc(sizeof(hal_bit_t));
+    mSuccess = hal_pin_bit_new(name, mDir, &mPin, comp_id);
+    if(mSuccess == 0)
+        *mPin = defaultVal;
 }
 
 
@@ -355,7 +352,7 @@ std::string PRTManager::int_to_time_string(int sec)
                 sprintf(timeBuf,"%d:%d",mm,ss);
             }
             else{
-                sprintf(timeBuf,"%d,0%d",mm,ss);
+                sprintf(timeBuf,"%d:0%d",mm,ss);
             }
         }
         else{

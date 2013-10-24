@@ -54,6 +54,8 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
     connect(bt_scanWatch,SIGNAL(toggled(bool)),this,SLOT(scan_watch(bool)));
     connect(bt_setGlue,SIGNAL(toggled(bool)),this,SLOT(set_glue(bool)));
     connect(bt_setDiamond,SIGNAL(toggled(bool)),this,SLOT(set_diamond(bool)));
+    connect(action_open,SIGNAL(triggered()),this,SLOT(open_project()));
+    connect(action_saveAs,SIGNAL(triggered()),this,SLOT(save_as_project()));
     connect(action_halConfig,SIGNAL(triggered()),this,SLOT(hal_config()));
     connect(action_halMeter,SIGNAL(triggered()),this,SLOT(hal_meter()));
     connect(action_halScope,SIGNAL(triggered()),this,SLOT(hal_scope()));
@@ -579,6 +581,17 @@ void WatchDiamondWidget::set_time()
 void WatchDiamondWidget::set_var_param(int varNum, double value)
 {
     markWidget->set_var_param(varNum,value);
+}
+
+void WatchDiamondWidget::open_project()
+{
+
+}
+
+void WatchDiamondWidget::save_as_project()
+{
+
+
 }
 
 void WatchDiamondWidget::hal_config()

@@ -74,6 +74,8 @@ private slots:
 
 
     //menu action
+    void open_project();
+    void save_as_project();
     void hal_config();
     void hal_meter();
     void hal_scope();

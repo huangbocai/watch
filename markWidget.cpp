@@ -1,4 +1,4 @@
-
+#include <QDebug>
 #include <QtGui>
 #include "markWidget.h"
 #include "emcsec.hh"
@@ -7,7 +7,8 @@
 #include <sys/ioctl.h>
 #include <linux/hdreg.h>
 #include <algorithm>
-
+//#include <vector>
+//#include <iostream>
 
 #define MARK2_VERSION "WATCH 1.0.0"
 
@@ -30,8 +31,7 @@ Recorder::Recorder(string prjDir)
 void Recorder::record_current_pos(double x, double y, double z, double a, double b ,RectangleFrame rect)
 {
     Position pos (x,y,z,a,b,rect);
-    if(posVec.size()>0)
-    {
+    if(posVec.size()>0){
         Position currentPos = posVec.back();
         if(currentPos != pos){
             posVec.push_back(pos);
@@ -208,30 +208,31 @@ void Recorder::sort()
     Position pos;
     Position pos1;
     Position tmpPos;
-    double tmpB,tmpL;
+    double tmpB,posB,tmpL;
 
     //printf("\nsize: %d\n\n",holesPosVec.size());
-    if(holesPosVec.size()==0)
+    if(holesPosVec.size()<=1)
         return;
 
     for(i=0; i<holesPosVec.size()-1; i++){
         pos = holesPosVec[i];
         Vector2 v1(Point(0,0),Point(pos.x(),pos.y()));
-        tmpB = pos.b();
+        tmpB = fabs(pos.b());
         tmpL = v1.length();
         g = i;
         for(j = i+1; j<holesPosVec.size();j++){
             pos1 = holesPosVec[j];
+            posB = fabs(pos1.b());
             Vector2 v2(Point(0,0),Point(pos1.x(),pos1.y()));
-            if(tmpB-pos1.b()>0.0001){
+            if(tmpB-posB>0.0001){
                 g = j;
-                tmpB = pos1.b();
+                tmpB = posB;
                 tmpL = v2.length();
             }
-            else if(fabs(tmpB - pos1.b())<0.0001){
+            else if(fabs(tmpB - posB)<0.0001){
                 if(tmpL>v2.length()){
                     g = j;
-                    tmpB = pos1.b();
+                    tmpB = posB;
                     tmpL = v2.length();
                 }
             }
@@ -262,7 +263,7 @@ MarkWidget::MarkWidget(int argc,  char **argv, QWidget* parent)
 #else
     param.load("/home/u/cnc/configs/ppmc/ppmc.ini");
 #endif
-    prjManage.load(param.projectName);
+    prjManage.load_project(param.projectName);
 
     setupUi(this);
     get_qt_objects();
@@ -274,19 +275,19 @@ MarkWidget::MarkWidget(int argc,  char **argv, QWidget* parent)
     posRecorder = new Recorder(string(prjManage.project_dir()));
     posRecorder->load();
 
-    infor.setGlueZ = prjManage.glueZPos;
-    infor.setDiamondZ = prjManage.setDiamondZPos;
-    infor.getDiamondZ = prjManage.pickupZD;
-    infor.glueT = prjManage.glueTime;
-    infor.afterGlueT = prjManage.afterGlueTime;
-    infor.getDiamondT = prjManage.getDiamondTime;
-    infor.setDiamondT = prjManage.setDiamondTime;
+    infor.setGlueZ = prjManage.get_glueZPos();
+    infor.setDiamondZ = prjManage.get_setDiamondZPos();
+    infor.getDiamondZ = prjManage.get_pickupZD();
+    infor.glueT = prjManage.get_glueTime();
+    infor.afterGlueT = prjManage.get_afterGlueTime();
+    infor.getDiamondT = prjManage.get_getDiamondTime();
+    infor.setDiamondT = prjManage.get_setDiamondTime();
     infor.slowVel = param.slowVel;
     infor.fastVel = param.fastVel;
-    infor.pickupOffsetX = param.pickupOffsetX;
-    infor.pickupOffsetY = param.pickupOffsetY;
-    infor.glueOffsetX = param.glueOffsetX;
-    infor.glueOffsetY = param.glueOffsetY;
+    infor.pickupOffsetX = prjManage.get_pickupOffsetX();
+    infor.pickupOffsetY = prjManage.get_pickupOffsetY();
+    infor.glueOffsetX = prjManage.get_glueOffsetX();
+    infor.glueOffsetY = prjManage.get_glueOffsetY();
 
     status_bar_init();
     diamond_page_init();
@@ -406,17 +407,17 @@ void MarkWidget::diamond_page_init(){
     //rb_rectangle->setChecked(true);
     loadRecordDialog = new LoadRecordDialog(this);
     char buf[16];
-    sprintf(buf, "%8.3f", prjManage.scanStartPos[0]);
+    sprintf(buf, "%8.3f", prjManage.get_scanStartPos(0));
     lb_scanX0->setText(QString::fromUtf8(buf));
-    sprintf(buf, "%8.3f", prjManage.scanStartPos[1]);
+    sprintf(buf, "%8.3f", prjManage.get_scanStartPos(1));
     lb_scanY0->setText(QString::fromUtf8(buf));
-    sprintf(buf, "%8.3f", prjManage.scanStartPos[2]);
+    sprintf(buf, "%8.3f", prjManage.get_scanStartPos(2));
     lb_scanZ0->setText(QString::fromUtf8(buf));
-    sprintf(buf, "%8.3f", prjManage.scanEndPos[0]);
+    sprintf(buf, "%8.3f", prjManage.get_scanEndPos(0));
     lb_scanX1->setText(QString::fromUtf8(buf));
-    sprintf(buf, "%8.3f", prjManage.scanEndPos[1]);
+    sprintf(buf, "%8.3f", prjManage.get_scanEndPos(1));
     lb_scanY1->setText(QString::fromUtf8(buf));
-    sprintf(buf, "%8.3f", prjManage.scanEndPos[2]);
+    sprintf(buf, "%8.3f", prjManage.get_scanEndPos(2));
     lb_scanZ1->setText(QString::fromUtf8(buf));
 
     doubleValidator = new QDoubleValidator(this);
@@ -473,6 +474,7 @@ void MarkWidget::watch_page_init()
         bt_camRun->setEnabled(true);
     }
 
+
     connect(tb_selectHolePattern,SIGNAL(toggled(bool)),this,SLOT(select_pattern_toggled(bool)));
     connect(tb_searchHoleArea,SIGNAL(toggled(bool)),this,SLOT(search_area_toggled(bool)));
     connect(bt_detectHoles,SIGNAL(toggled(bool)),this,SLOT(diamond_test_toggled(bool)));
@@ -517,6 +519,7 @@ void MarkWidget::image_page_init(){
     connect(markView, SIGNAL(left_press(int,int)), this, SLOT(focus_point_select(int,int)));
     connect(bt_loadImage, SIGNAL(clicked()), this,SLOT(load_image()));
     connect(bt_savePhoto, SIGNAL(clicked()), this, SLOT(save_image()));
+    connect(cb_autoBL,SIGNAL(stateChanged(int)),this,SLOT(auto_brightness(int)));
 }
 
 
@@ -566,21 +569,21 @@ void MarkWidget::mark_view_update(){
         autoScanHoleIndex = -1;
     }
     else{
-        if(autoIndex!=watchResult.scanIndex){
-            autoIndex=watchResult.scanIndex;
+        if(autoIndex!=diamondPosition.scanIndex){
+            autoIndex=diamondPosition.scanIndex;
             markView->receive_image(srcImage);
             markView->set_diamond_pos(diamondCirclesDetecter->get_positions(), diamondCirclesDetecter->radious());
             list<Point> empty;
             markView->set_hole_pos(empty, 0);
-            markView->set_search_frame(prjManage.searcRectD);
+            markView->set_search_frame(prjManage.get_searcRectD());
         }
-        if(autoScanHoleIndex != watchResult.scanHoleIndex){
-            autoScanHoleIndex = watchResult.scanHoleIndex;
+        if(autoScanHoleIndex != diamondPosition.scanHoleIndex){
+            autoScanHoleIndex = diamondPosition.scanHoleIndex;
             markView->receive_image(srcImage);
             markView->set_hole_pos(watchCircleDetecter->get_positions(),watchCircleDetecter->radious());
             list<Point> empty;
             markView->set_diamond_pos(empty, 0);
-            markView->set_search_frame(prjManage.searcRectW);
+            markView->set_search_frame(prjManage.get_searcRectW());
         }
        markView->set_focus_box(false);
     }
@@ -650,17 +653,17 @@ void MarkWidget::slow_cycle(){
 
     if(bt_detect0->isChecked()){
 
-        diamondCirclesDetecter->detect(srcImage, &prjManage.searcRectD);
+        diamondCirclesDetecter->detect(srcImage, &prjManage.get_searcRectD());
         markView->set_diamond_pos(diamondCirclesDetecter->get_positions(), diamondCirclesDetecter->radious());
     }
 
     if(bt_detectHoles->isChecked()){
-        watchCircleDetecter->detect(srcImage, &prjManage.searcRectW);
+        watchCircleDetecter->detect(srcImage, &prjManage.get_searcRectW());
         markView->set_hole_pos(watchCircleDetecter->get_positions(),watchCircleDetecter->radious());
     }
 
     infor.runTime = QString(emcStatus.prtManager.get_run_time_string().c_str());
-    infor.diamondNum = watchResult.dimamondPos.size();
+    infor.diamondNum = diamondPosition.dimamondPos.size();
     infor.watchPosNum = posRecorder->get_pos_num();
     infor.holePosNum = (posRecorder->holesPosVec).size();
     emit(update_infor(infor));
@@ -670,9 +673,9 @@ void MarkWidget::slow_cycle(){
 
 void MarkWidget::auto_detect_diamond(){
 
-    diamondCirclesDetecter->detect(srcImage, &prjManage.searcRectD);
+    diamondCirclesDetecter->detect(srcImage, &prjManage.get_searcRectD());
     const list<Point>& imgPos =diamondCirclesDetecter->get_positions();
-    watchResult.scanIndex++;
+    diamondPosition.scanIndex++;
 
     list<Point>::const_iterator it;
     Point pos;
@@ -680,18 +683,18 @@ void MarkWidget::auto_detect_diamond(){
     for(it=imgPos.begin();it!=imgPos.end();it++){
         pos=transfMatrix->transform(it->x(), it->y());
         pos.move(vm);
-        watchResult.dimamondPos.push_back(pos);
+        diamondPosition.dimamondPos.push_back(pos);
     }
-    markView->set_diamond_sum((int)watchResult.dimamondPos.size());
+    markView->set_diamond_sum((int)diamondPosition.dimamondPos.size());
 }
 
 void MarkWidget::auto_detect_watch(){
-     watchResult.scanHoleIndex++;
+     diamondPosition.scanHoleIndex++;
      unsigned int markIndex = posRecorder->get_mark_index();
      const Position* position = posRecorder->get_position(markIndex-1);
      CvRect roi = position->get_search_cv_area();
-     prjManage.searcRectW = roi;     
-     watchCircleDetecter->detect(srcImage, &prjManage.searcRectW);     
+     prjManage.set_searcRectW(roi);
+     watchCircleDetecter->detect(srcImage, &prjManage.get_searcRectW());
      const list<Point>& holesPos = watchCircleDetecter->get_positions();
 
      list<Point>::const_iterator it;
@@ -707,16 +710,16 @@ void MarkWidget::auto_detect_watch(){
 
 
 void MarkWidget::clear_diamond_pos(){
-    watchResult.dimamondPos.clear();
-    watchResult.scanIndex=0;
-    markView->set_diamond_pos(watchResult.dimamondPos, diamondCirclesDetecter->radious());
+    diamondPosition.dimamondPos.clear();
+    diamondPosition.scanIndex=0;
+    markView->set_diamond_pos(diamondPosition.dimamondPos, diamondCirclesDetecter->radious());
     markView->set_diamond_sum(0);
 }
 
 void MarkWidget::clear_hole_pos()
 {
     posRecorder->holesPosVec.clear();
-    watchResult.scanHoleIndex = 0;
+    diamondPosition.scanHoleIndex = 0;
     list<Point> empty;
     markView->set_hole_pos(empty,0);
 }
@@ -766,7 +769,7 @@ void MarkWidget::cv_cmd_cycle()
                 capture->get_image(srcImage);
             *halpins->cvCmd=0;
             auto_detect_diamond();
-            infor.diamondNum = watchResult.dimamondPos.size();
+            infor.diamondNum = diamondPosition.dimamondPos.size();
         }
         else if(cmd==2){
             if(capture)
@@ -795,113 +798,91 @@ void MarkWidget::cv_cmd_cycle()
     }
 }
 
+void MarkWidget::pickup_one_diamond(const Point &diamondPos, double pickupZ)
+{
+    halData->set_axis_pos(0, diamondPos.x()-param.pickup_offset_x());
+    halData->set_axis_pos(1, diamondPos.y()-param.pickup_offset_y());
+    halData->set_axis_pos(2, pickupZ);
+}
+
+void MarkWidget::set_one_glue(const Position &holePos, double setGlueZ)
+{
+    halData->set_axis_pos(0, holePos.get_value(0)-param.glue_offset_x());
+    halData->set_axis_pos(1, holePos.get_value(1)-param.glue_offset_y());
+    halData->set_axis_pos(2, setGlueZ);
+    halData->set_axis_pos(3, holePos.get_value(3));
+    halData->set_axis_pos(4, holePos.get_value(4));
+}
+
+void MarkWidget::set_one_diamond(const Position &holePos, double setDiamondZ)
+{
+    halData->set_axis_pos(0, holePos.get_value(0)-param.pickup_offset_x());
+    halData->set_axis_pos(1, holePos.get_value(1)-param.pickup_offset_y());
+    halData->set_axis_pos(2, setDiamondZ);
+    halData->set_axis_pos(3, holePos.get_value(3));
+    halData->set_axis_pos(4, holePos.get_value(4));
+}
+
+void MarkWidget::scan_one_pos_of_watch(const Position *watchPos)
+{
+    if(watchPos){
+        int axis_num = 5;
+        for(int i=0; i<axis_num; i++){
+            halData->set_axis_pos(i, watchPos->get_value(i));
+        }
+    }
+}
+
 void MarkWidget::fast_react_cycle(){
      MarkHalPins* halpins=halData->halpins;
-
-     if(*halpins->posCmd==1){
-        Point pos= *watchResult.dimamondPos.begin();
-        *halpins->posAxis[0]=pos.x()-param.pickup_offset_x();
-        *halpins->posAxis[1]=pos.y()-param.pickup_offset_y();
-        *halpins->posAxis[2]=prjManage.pickupZD;
-        *halpins->posCmd=0;
+     int posCmd = *halpins->posCmd;
+     *halpins->posCmd = 0;
+     if(posCmd == 1){ //pickup diamond
+        Point pos= *diamondPosition.dimamondPos.begin();
+        pickup_one_diamond(pos, prjManage.get_pickupZD());
     }
-    else if(*halpins->posCmd==2){
-         //static int n=0;
-         //printf("get %d\n",n++);
-         const Position* pos = posRecorder->get_position(posRecorder->get_current_index());
-
-         if(pos){
-
-             *halpins->posAxis[0]=pos->get_value(0);
-             *halpins->posAxis[1]=pos->get_value(1);
-             *halpins->posAxis[2]=pos->get_value(2);
-             *halpins->posAxis[3]=pos->get_value(3);
-             *halpins->posAxis[4]=pos->get_value(4);
-         }
-
+    else if(posCmd == 2){ //scan watch
+        const Position* watchPos = posRecorder->get_position(posRecorder->get_current_index());
+        scan_one_pos_of_watch(watchPos);
         posRecorder->incr_current_index(1);
-        *halpins->posCmd=0;
     }
-     else if(*halpins->posCmd==3){
-         //static int n=0;
-         //printf("get %d\n",n++);
+     else if(posCmd == 3){ //set glue
          unsigned int index = posRecorder->get_glue_hole_index();
          if(index<(posRecorder->holesPosVec).size()){
              const Position& pos = (posRecorder->holesPosVec)[index];
-
-             *halpins->posAxis[0]=pos.get_value(0)-param.glue_offset_x();
-             *halpins->posAxis[1]=pos.get_value(1)-param.glue_offset_y();
-             //*halpins->posAxis[2]=pos->get_value(2);
-             *halpins->posAxis[2]=prjManage.glueZPos;
-             *halpins->posAxis[3]=pos.get_value(3);
-             *halpins->posAxis[4]=pos.get_value(4);
-
+             set_one_glue(pos, prjManage.get_glueZPos());
          }
-
          posRecorder->incr_glue_hole_index(1);
-         *halpins->posCmd = 0;
      }
-     else if(*halpins->posCmd == 4){
+     else if(posCmd == 4){ //set diamond
          unsigned int index = posRecorder->get_hole_index();
          if(index<(posRecorder->holesPosVec).size()){
              const Position& pos = (posRecorder->holesPosVec)[index];
-
-             *halpins->posAxis[0]=pos.get_value(0)-param.pickup_offset_x();
-             *halpins->posAxis[1]=pos.get_value(1)-param.pickup_offset_y();
-             *halpins->posAxis[2]=prjManage.setDiamondZPos;
-             *halpins->posAxis[3]=pos.get_value(3);
-             *halpins->posAxis[4]=pos.get_value(4);
-
+             set_one_diamond(pos, prjManage.get_setDiamondZPos());
          }
-
          posRecorder->incr_hole_index(1);
-         *halpins->posCmd = 0;
      }
 
-    if(*halpins->reachCmd==1){
-        watchResult.dimamondPos.pop_front();
-        *halpins->reachCmd=0;
-        markView->set_diamond_sum((int)watchResult.dimamondPos.size());
-    }
-    else if(*halpins->reachCmd == 2){
-        infor.watchPosIndex++;
-        *halpins->reachCmd = 0;
-    }
-    else if(*halpins->reachCmd == 3){
-        infor.gluePosIndex++;
-        *halpins->reachCmd = 0;
-    }
-    else if(*halpins->reachCmd == 4){
-        infor.holePosIndex++;
-        *halpins->reachCmd = 0;
-    }
-/*
-    if(*halpins->setGlue == 1)
-        infor.ioState[0] = true;
-    else
-        infor.ioState[0] = false;
+     //当有一个步骤完成时，更新相应的信息
+     int reachCmd = *halpins->reachCmd;
+     *halpins->reachCmd = 0;
+     switch(reachCmd){
+     case 1:
+         diamondPosition.dimamondPos.pop_front();
+         markView->set_diamond_sum((int)diamondPosition.dimamondPos.size());
+         break;
+     case 2:
+         infor.watchPosIndex++;
+         break;
+     case 3:
+         infor.gluePosIndex++;
+         break;
+     case 4:
+         infor.holePosIndex++;
+         break;
+     }
 
-    if(*halpins->pickupDiamond == 1)
-        infor.ioState[1] = true;
-    else
-        infor.ioState[1] = false;
-
-    if(*halpins->dropDiamond == 1)
-        infor.ioState[2] = true;
-    else
-        infor.ioState[2] = false;
-
-    if(*halpins->lightControl == 1)
-        infor.ioState[3] = true;
-    else
-        infor.ioState[3] = false;
-
-    if(*halpins->glueUpDown == 1)
-        infor.ioState[4] = true;
-    else
-        infor.ioState[4] = false;
-*/
-
+    //更新IO按钮的状态
     for(int i = 0; i<halData->io_num; i++)
     {
         if(halData->pin_is_valid(i))
@@ -931,7 +912,7 @@ void MarkWidget::fast_react_cycle(){
             infor.endScanWatch = true;
     }
 
-    if(watchResult.dimamondPos.size())
+    if(diamondPosition.dimamondPos.size())
         *halpins->posValid=1;   
     else
         *halpins->posValid=0;  
@@ -961,19 +942,19 @@ void MarkWidget::fast_react_cycle(){
 
 void MarkWidget::ready_for_diamond_scan(){
     clear_diamond_pos();
-    sp_ADLevle->setValue(prjManage.adlD);
-    sl_contrast->setValue(prjManage.contrastD);
-    sl_brightness->setValue(prjManage.brightnessD);
-    sl_exposure->setValue(prjManage.exposureD);
+    sp_ADLevle->setValue(prjManage.get_adlD());
+    sl_contrast->setValue(prjManage.get_contrastD());
+    sl_brightness->setValue(prjManage.get_brightnessD());
+    sl_exposure->setValue(prjManage.get_exposureD());
 }
 
 void MarkWidget::ready_for_watch_scan()
 {
     clear_hole_pos();
-    sp_ADLevle->setValue(prjManage.adlW);
-    sl_contrast->setValue(prjManage.contrastW);
-    sl_brightness->setValue(prjManage.brightnessW);
-    sl_exposure->setValue(prjManage.exposureW);
+    sp_ADLevle->setValue(prjManage.get_adlW());
+    sl_contrast->setValue(prjManage.get_contrastW());
+    sl_brightness->setValue(prjManage.get_brightnessW());
+    sl_exposure->setValue(prjManage.get_exposureW());
 }
 
 void MarkWidget::select_pattern_toggled(bool checked){
@@ -1012,14 +993,15 @@ void MarkWidget::search_area_toggled(bool checked){
             Point lt=frame.get_top_left();
             int pw=frame.get_width()+0.5;
             int ph=frame.get_height()+0.5;
+            CvRect searchArea;
             if(button == tb_searchArea0 ){
-                prjManage.searcRectD=cvRect(lt.x()+0.5, lt.y()+0.5, pw, ph);
-//                diamondCirclesDetecter->set_area(&prjManage.searcRectD);
+                searchArea = cvRect(lt.x()+0.5, lt.y()+0.5, pw, ph);
+                prjManage.set_searcRectD(searchArea);
                 prjManage.save_diamond_search_area();
             }
             else{
-                prjManage.searcRectW = cvRect(lt.x()+0.5, lt.y()+0.5, pw, ph);
-//                watchCircleDetecter->set_area(&prjManage.searcRectW);
+                searchArea = cvRect(lt.x()+0.5, lt.y()+0.5, pw, ph);
+                prjManage.set_searcRectW(searchArea);
                 prjManage.save_watch_search_area();
             }
         }
@@ -1030,7 +1012,7 @@ void MarkWidget::diamond_test_toggled(bool checked){
     QPushButton* button=qobject_cast<QPushButton*>(sender());
     if(button == bt_detect0){
         if(checked){
-            markView->set_search_frame(prjManage.searcRectD);
+            markView->set_search_frame(prjManage.get_searcRectD());
             prjManage.save_diamond_camera_param(param.camADL, param.camBL, param.camGain, param.camExposure);
         }
         else{
@@ -1040,7 +1022,7 @@ void MarkWidget::diamond_test_toggled(bool checked){
     }
     else if(button == bt_detectHoles){
         if(checked){
-            markView->set_search_frame(prjManage.searcRectW);
+            markView->set_search_frame(prjManage.get_searcRectW());
             prjManage.save_watch_camera_param(param.camADL, param.camBL, param.camGain, param.camExposure);
         }
         else{
@@ -1055,34 +1037,34 @@ void MarkWidget::set_scan_beginning(){
     char buf[256];
     int i;
     for(i=0;i<3;i++){
-        prjManage.scanStartPos[i]=emcStatus.cmdAxis[i];
+        prjManage.set_scanStartPos(i,emcStatus.cmdAxis[i]);
     }
-    double dx=prjManage.scanEndPos[0]-prjManage.scanStartPos[0];
-    double dy=prjManage.scanEndPos[1]-prjManage.scanStartPos[1];
+    double dx=prjManage.get_scanEndPos(0)-prjManage.get_scanStartPos(0);
+    double dy=prjManage.get_scanEndPos(1)-prjManage.get_scanStartPos(1);
     double signx = dx>0?1:-1;
     double signy = dy>0?1:-1;
-    prjManage.scanColDis=prjManage.searcRectD.width*param.kxx*signx;
-    prjManage.scanRowDis=prjManage.searcRectD.height*param.kyy*signy;
-    prjManage.scanColNum=dx/prjManage.scanColDis+2;
-    prjManage.scanRowNum=dy/prjManage.scanRowDis+2;
+    prjManage.set_scanColDis(prjManage.get_searcRectD().width*param.kxx*signx);
+    prjManage.set_scanRowDis(prjManage.get_searcRectD().height*param.kyy*signy);
+    prjManage.set_scanColNum(dx/prjManage.get_scanColDis()+2);
+    prjManage.set_scanRowNum(dy/prjManage.get_scanRowDis()+2);
 #ifdef WITH_EMC
     emc_mode(NULL, EMC_TASK_MODE_MDI);
     sprintf(buf, "#%d=%.3f #%d=%.3f #%d=%.3f #%d=%d #%d=%d #%d=%.3f #%d=%.3f",
-            ProjectManage::SCAN_X0,prjManage.scanStartPos[0],
-            ProjectManage::SCAN_Y0,prjManage.scanStartPos[1],
-            ProjectManage::SCAN_Z,prjManage.scanStartPos[2],
-            ProjectManage::SCAN_ROW_NUM, prjManage.scanRowNum,
-            ProjectManage::SCAN_COL_NUM, prjManage.scanColNum,
-            ProjectManage::SCAN_ROW_DIS, prjManage.scanRowDis,
-            ProjectManage::SCAN_COL_DIS, prjManage.scanColDis);
+            ProjectManage::SCAN_X0,prjManage.get_scanStartPos(0),
+            ProjectManage::SCAN_Y0,prjManage.get_scanStartPos(1),
+            ProjectManage::SCAN_Z,prjManage.get_scanStartPos(2),
+            ProjectManage::SCAN_ROW_NUM, prjManage.get_scanRowNum(),
+            ProjectManage::SCAN_COL_NUM, prjManage.get_scanColNum(),
+            ProjectManage::SCAN_ROW_DIS, prjManage.get_scanRowDis(),
+            ProjectManage::SCAN_COL_DIS, prjManage.get_scanColDis());
     emc_mdi(buf);
     emc_mode(NULL, EMC_TASK_MODE_MANUAL);
 #endif
-    sprintf(buf, "%8.3f", prjManage.scanStartPos[0]);
+    sprintf(buf, "%8.3f", prjManage.get_scanStartPos(0));
     lb_scanX0->setText(QString::fromUtf8(buf));
-    sprintf(buf, "%8.3f", prjManage.scanStartPos[1]);
+    sprintf(buf, "%8.3f", prjManage.get_scanStartPos(1));
     lb_scanY0->setText(QString::fromUtf8(buf));
-    sprintf(buf, "%8.3f", prjManage.scanStartPos[2]);
+    sprintf(buf, "%8.3f", prjManage.get_scanStartPos(2));
     lb_scanZ0->setText(QString::fromUtf8(buf));
     prjManage.save_scan_param();
 }
@@ -1093,9 +1075,9 @@ void MarkWidget::back_scan_beginning(){
 #ifdef WITH_EMC
     emc_mode(NULL, EMC_TASK_MODE_MDI);
     emc_mdi("g0 g53 z0");
-    sprintf(buf, "g0 g53 x%f y%f", prjManage.scanStartPos[0], prjManage.scanStartPos[1]);
+    sprintf(buf, "g0 g53 x%f y%f", prjManage.get_scanStartPos(0), prjManage.get_scanStartPos(1));
     emc_mdi(buf);
-    sprintf(buf, "g1 g53 z%f f3000", prjManage.scanStartPos[2]);
+    sprintf(buf, "g1 g53 z%f f3000", prjManage.get_scanStartPos(2));
     emc_mdi(buf);
     emcStatus.stopToManual=true;
 #endif
@@ -1106,30 +1088,30 @@ void MarkWidget::set_scan_end(){
     char buf[256];
     int i;
     for(i=0;i<3;i++)
-        prjManage.scanEndPos[i]=emcStatus.cmdAxis[i];
-    double dx=prjManage.scanEndPos[0]-prjManage.scanStartPos[0];
-    double dy=prjManage.scanEndPos[1]-prjManage.scanStartPos[1];
+        prjManage.set_scanEndPos(i,emcStatus.cmdAxis[i]);
+    double dx=prjManage.get_scanEndPos(0)-prjManage.get_scanStartPos(0);
+    double dy=prjManage.get_scanEndPos(1)-prjManage.get_scanStartPos(1);
     double signx = dx>0?1:-1;
     double signy = dy>0?1:-1;
-    prjManage.scanColDis=prjManage.searcRectD.width*param.kxx*signx;
-    prjManage.scanRowDis=prjManage.searcRectD.height*param.kyy*signy;
-    prjManage.scanColNum=dx/prjManage.scanColDis+2;
-    prjManage.scanRowNum=dy/prjManage.scanRowDis+2;
+    prjManage.set_scanColDis(prjManage.get_searcRectD().width*param.kxx*signx);
+    prjManage.set_scanRowDis(prjManage.get_searcRectD().height*param.kyy*signy);
+    prjManage.set_scanColNum(dx/prjManage.get_scanColDis()+2);
+    prjManage.set_scanRowNum(dy/prjManage.get_scanRowDis()+2);
 #ifdef WITH_EMC
     emc_mode(NULL, EMC_TASK_MODE_MDI);
     sprintf(buf, "#%d=%d #%d=%d #%d=%.3f #%d=%.3f",
-            ProjectManage::SCAN_ROW_NUM, prjManage.scanRowNum,
-            ProjectManage::SCAN_COL_NUM, prjManage.scanColNum,
-            ProjectManage::SCAN_ROW_DIS, prjManage.scanRowDis,
-            ProjectManage::SCAN_COL_DIS, prjManage.scanColDis);
+            ProjectManage::SCAN_ROW_NUM, prjManage.get_scanRowNum(),
+            ProjectManage::SCAN_COL_NUM, prjManage.get_scanColNum(),
+            ProjectManage::SCAN_ROW_DIS, prjManage.get_scanRowDis(),
+            ProjectManage::SCAN_COL_DIS, prjManage.get_scanColDis());
     emc_mdi(buf);
     emc_mode(NULL, EMC_TASK_MODE_MANUAL);
 #endif
-    sprintf(buf, "%8.3f", prjManage.scanEndPos[0]);
+    sprintf(buf, "%8.3f", prjManage.get_scanEndPos(0));
     lb_scanX1->setText(QString::fromUtf8(buf));
-    sprintf(buf, "%8.3f", prjManage.scanEndPos[1]);
+    sprintf(buf, "%8.3f", prjManage.get_scanEndPos(1));
     lb_scanY1->setText(QString::fromUtf8(buf));
-    sprintf(buf, "%8.3f", prjManage.scanEndPos[2]);
+    sprintf(buf, "%8.3f", prjManage.get_scanEndPos(2));
     lb_scanZ1->setText(QString::fromUtf8(buf));
     prjManage.save_scan_param();
 }
@@ -1139,9 +1121,9 @@ void MarkWidget::back_scan_end(){
 #ifdef WITH_EMC
     emc_mode(NULL, EMC_TASK_MODE_MDI);
     emc_mdi("g0 g53 z0");
-    sprintf(buf, "g0 g53 x%f y%f", prjManage.scanEndPos[0], prjManage.scanEndPos[1]);
+    sprintf(buf, "g0 g53 x%f y%f", prjManage.get_scanEndPos(0), prjManage.get_scanEndPos(1));
     emc_mdi(buf);
-    sprintf(buf, "g1 g53 z%f f3000", prjManage.scanEndPos[2]);
+    sprintf(buf, "g1 g53 z%f f3000", prjManage.get_scanEndPos(2));
     emc_mdi(buf);
     emcStatus.stopToManual=true;
 #endif
@@ -1163,16 +1145,16 @@ void MarkWidget::scan_test(){
 
 void MarkWidget::pickup_first(){
     char buf[128];
-    if(watchResult.dimamondPos.size()==0)
+    if(diamondPosition.dimamondPos.size()==0)
         return;
-    watchResult.pickupIterator=watchResult.dimamondPos.begin();
-    Point pos=*watchResult.pickupIterator;
+    diamondPosition.pickupIterator=diamondPosition.dimamondPos.begin();
+    Point pos=*diamondPosition.pickupIterator;
 #ifdef WITH_EMC
     emc_mode(NULL,EMC_TASK_MODE_MDI);
     emc_mdi("g0 g53 z0");
     sprintf(buf, "g0 g53 x%f y%f", pos.x()-param.pickup_offset_x(), pos.y()-param.pickup_offset_y());
     emc_mdi(buf);
-    sprintf(buf, "g1 g53 z%f f3000", prjManage.pickupZD);
+    sprintf(buf, "g1 g53 z%f f3000", prjManage.get_pickupZD());
     emc_mdi(buf);
     emcStatus.stopToManual=true;
 #endif
@@ -1180,20 +1162,20 @@ void MarkWidget::pickup_first(){
 
 void MarkWidget::pickup_next(){
     char buf[128];
-    if(watchResult.dimamondPos.size()==0)
+    if(diamondPosition.dimamondPos.size()==0)
         return;
-    watchResult.pickupIterator++;
-    if(watchResult.pickupIterator==watchResult.dimamondPos.end()){
-       watchResult.pickupIterator=watchResult.dimamondPos.begin();
+    diamondPosition.pickupIterator++;
+    if(diamondPosition.pickupIterator==diamondPosition.dimamondPos.end()){
+       diamondPosition.pickupIterator=diamondPosition.dimamondPos.begin();
     }
-    Point pos= *watchResult.pickupIterator;
+    Point pos= *diamondPosition.pickupIterator;
 #ifdef WITH_EMC
     emc_mode(NULL,EMC_TASK_MODE_MDI);
-    sprintf(buf, "g0 g53 z%f", prjManage.pickupZD+5);
+    sprintf(buf, "g0 g53 z%f", prjManage.get_pickupZD()+5);
     emc_mdi(buf);
     sprintf(buf, "g0 g53 x%f y%f", pos.x()-param.pickup_offset_x(), pos.y()-param.pickup_offset_y());
     emc_mdi(buf);
-    sprintf(buf, "g1 g53 z%f f3000", prjManage.pickupZD);
+    sprintf(buf, "g1 g53 z%f f3000", prjManage.get_pickupZD());
     emc_mdi(buf);
     emcStatus.stopToManual=true;
 #endif
@@ -1207,6 +1189,11 @@ void MarkWidget::pickup_all(){
     emc_run(0);
     emcStatus.stopToManual=true;
 #endif
+}
+
+void MarkWidget::on_bt_clearDiamond_clicked()
+{
+    clear_diamond_pos();
 }
 
 void MarkWidget::choose_pattern_shap( )
@@ -1238,7 +1225,7 @@ bool distance_within(const Point& p1, const Point& p2)
 //void MarkWidget::record_diamond_pos()
 //{
 //    ofstream ofs;
-//    list<Point> posList = watchResult.dimamondPos;
+//    list<Point> posList = diamondPosition.dimamondPos;
 //    list<Point> tmpPosList;
 //    list<double> tmpList;
 //    list<Point>::iterator iter,iter1;
@@ -1308,13 +1295,13 @@ void MarkWidget::change_angle(){
 void MarkWidget::set_pickup_diamnod_z(double value){
     char buf[32];
     if(fabs(value - 0)<0.00001) //if value == 0
-        prjManage.pickupZD=emcStatus.cmdAxis[2];
+        prjManage.set_pickupZD(emcStatus.cmdAxis[2]);
     else
-        prjManage.pickupZD = value;
-    write_profile_double("DIAMOND", "PICKUP_Z", prjManage.pickupZD, prjManage.ini_file());
+        prjManage.set_pickupZD(value);
+    write_profile_double("DIAMOND", "PICKUP_Z", prjManage.get_pickupZD(), prjManage.ini_file());
 #ifdef WITH_EMC
     emc_mode(NULL,EMC_TASK_MODE_MDI);
-    sprintf(buf, "#%d=%f", ProjectManage::PICKUP_Z, prjManage.pickupZD);
+    sprintf(buf, "#%d=%f", ProjectManage::PICKUP_Z, prjManage.get_pickupZD());
     emc_mdi(buf);
     emc_mode(NULL,EMC_TASK_MODE_MANUAL);
 #endif
@@ -1324,24 +1311,24 @@ void MarkWidget::set_pickup_diamnod_z(double value){
 void MarkWidget::set_glue_z_pos(double value)
 {
     if(fabs(value - 0)<0.00001)
-        prjManage.glueZPos=emcStatus.cmdAxis[2];
+        prjManage.set_glueZPos(emcStatus.cmdAxis[2]);
     else
-        prjManage.glueZPos = value;
-    write_profile_double("WATCH", "GLUE_Z_POS", prjManage.glueZPos, prjManage.ini_file());
+        prjManage.set_glueZPos(value);
+    write_profile_double("WATCH", "GLUE_Z_POS", prjManage.get_glueZPos(), prjManage.ini_file());
 }
 //设置镶钻高度
 void MarkWidget::set_setdiamond_z_pos(double value)
 {
     char buf[32];
     if(fabs(value - 0)<0.00001)
-        prjManage.setDiamondZPos=emcStatus.cmdAxis[2];
+        prjManage.set_setDiamondZPos(emcStatus.cmdAxis[2]);
     else
-        prjManage.setDiamondZPos = value;
-    write_profile_double("WATCH", "SET_DIAMOND_Z_POS", prjManage.setDiamondZPos, prjManage.ini_file());
+        prjManage.set_setDiamondZPos(value);
+    write_profile_double("WATCH", "SET_DIAMOND_Z_POS", prjManage.get_setDiamondZPos(), prjManage.ini_file());
 
 #ifdef WITH_EMC
     emc_mode(NULL,EMC_TASK_MODE_MDI);
-    sprintf(buf, "#%d=%f", ProjectManage::SETDIAMOND_Z, prjManage.setDiamondZPos);
+    sprintf(buf, "#%d=%f", ProjectManage::SETDIAMOND_Z, prjManage.get_setDiamondZPos());
     emc_mdi(buf);
     emc_mode(NULL,EMC_TASK_MODE_MANUAL);
 #endif
@@ -1354,18 +1341,19 @@ void MarkWidget::set_time(int index, int varNum, double value)
     string times[4] = {"SET_GLUE_TIME", "AFTER_GLUE_TIME","GET_DIAMOND_TIME","SET_DIAMOND_TIME"};
     switch(index){
     case 0:
-        prjManage.glueTime = value;
+        prjManage.set_glueTime(value);
         break;
     case 1:
-        prjManage.afterGlueTime = value;
+        prjManage.set_afterGlueTime(value);
         break;
     case 2:
-        prjManage.getDiamondTime = value;
+        prjManage.set_getDiamondTime(value);
         break;
     case 3:
-        prjManage.setDiamondTime = value;
+        prjManage.set_setDiamondTime(value);
         break;
     }
+    //printf("Time: %s,%f\n",times[index].c_str(),value);
     write_profile_double("TIME", times[index].c_str(), value, prjManage.ini_file());
 #ifdef WITH_EMC
     emc_mode(NULL,EMC_TASK_MODE_MDI);
@@ -1527,11 +1515,11 @@ void MarkWidget::set_first_hole()
     char buf[128];
     posRecorder->holeIter = (posRecorder->holesPosVec).begin();
     const Position pos = *(posRecorder->holeIter);
-    //if(watchResult.dimamondPos.size()==0){
+    //if(diamondPosition.dimamondPos.size()==0){
     //    cout<<"没有钻石了！"<<endl;
     //    return;
     //}
-    //Point diamondPos= *watchResult.dimamondPos.begin();
+    //Point diamondPos= *diamondPosition.dimamondPos.begin();
 #ifdef WITH_EMC
     //if(pos)
     //{
@@ -1549,10 +1537,10 @@ void MarkWidget::set_first_hole()
         sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos.get_value(0)-param.pickup_offset_x(),
                 pos.get_value(1)-param.pickup_offset_y(), pos.get_value(3),pos.get_value(4));
         emc_mdi(buf);
-        sprintf(buf, "g0 g53 z%.3f", prjManage.setDiamondZPos);
+        sprintf(buf, "g0 g53 z%.3f", prjManage.get_setDiamondZPos());
         emc_mdi(buf);
         emcStatus.stopToManual=true;
-        //watchResult.dimamondPos.pop_front();
+        //diamondPosition.dimamondPos.pop_front();
     //}
 #endif
 
@@ -1567,11 +1555,11 @@ void MarkWidget::set_next_hole()
     if(posRecorder->holeIter == (posRecorder->holesPosVec).end())
         posRecorder->holeIter = (posRecorder->holesPosVec).begin();
     const Position pos = *(posRecorder->holeIter);
-    //if(watchResult.dimamondPos.size()==0){
+    //if(diamondPosition.dimamondPos.size()==0){
     //    cout<<"没有钻石了！"<<endl;
     //    return;
     //}
-    //Point diamondPos= *watchResult.dimamondPos.begin();
+    //Point diamondPos= *diamondPosition.dimamondPos.begin();
 #ifdef WITH_EMC
     //if(pos)
     //{
@@ -1589,10 +1577,10 @@ void MarkWidget::set_next_hole()
         sprintf(buf,"g0 g53 x%.3f y%.3f a%.3f b%.3f",pos.get_value(0)-param.pickup_offset_x(),
                 pos.get_value(1)-param.pickup_offset_y(), pos.get_value(3),pos.get_value(4));
         emc_mdi(buf);
-        sprintf(buf, "g0 g53 z%.3f",  prjManage.setDiamondZPos);
+        sprintf(buf, "g0 g53 z%.3f",  prjManage.get_setDiamondZPos());
         emc_mdi(buf);
         emcStatus.stopToManual=true;
-        //watchResult.dimamondPos.pop_front();
+        //diamondPosition.dimamondPos.pop_front();
     //}
 #endif
 }
@@ -1738,6 +1726,8 @@ void MarkWidget::auto_set_diamond()
 
 void MarkWidget::show_load_dialog(){
     loadRecordDialog->set_combo_box(param.projectName);
+    std::cout<<"project name: "<<param.projectName<<std::endl;
+    prjManage.save_as_project("test2");
     if(loadRecordDialog->exec()==QDialog::Accepted){
        QString prjName= loadRecordDialog->get_project_name();
        if(prjName.size()>0){
@@ -1808,7 +1798,7 @@ void MarkWidget::adjPos_pressed()
 
     Vector2 vm(emcStatus.cmdAxis[0], emcStatus.cmdAxis[1]);
     if(rb_circle->isChecked()){
-        const list<Point> positions=diamondCirclesDetecter->detect(srcImage,&prjManage.searcRectD);
+        const list<Point> positions=diamondCirclesDetecter->detect(srcImage,&prjManage.get_searcRectD());
         if(positions.size()>0){
             res=0;
             pos=*positions.begin();
@@ -1895,7 +1885,7 @@ void MarkWidget::detect_hole_presssed(){
     Point pos;
     Vector2 vm(emcStatus.cmdAxis[0], emcStatus.cmdAxis[1]);
     if(rb_circle->isChecked()){
-        const list<Point>& positions=diamondCirclesDetecter->detect(srcImage, &prjManage.searcRectD);
+        const list<Point>& positions=diamondCirclesDetecter->detect(srcImage, &prjManage.get_searcRectD());
         if(positions.size()>0){
             res=0;
             pos=*diamondCirclesDetecter->get_positions().begin();
@@ -1946,7 +1936,7 @@ void MarkWidget::input_glue_pos_pressed(){
 
 void MarkWidget::set_offset(int index, double value)
 {
-    switch(index){
+/*    switch(index){
         //Pickup X Offset
     case 0:
         param.pickupOffsetX = value;
@@ -1968,7 +1958,35 @@ void MarkWidget::set_offset(int index, double value)
         write_profile_double("MARK", "GLUE_OFFSET_Y", param.glueOffsetY, EMC_INIFILE);
         break;
     }
-    //printf("index: %d, value: %.2f\n", index, value);
+    */
+
+    switch(index){
+    case 0:
+        prjManage.set_pickupOffsetX(value);
+        param.pickupOffsetX = value;
+        write_profile_double("OFFSET", "PICKUP_OFFSET_X", prjManage.get_pickupOffsetX(),
+                             prjManage.ini_file());
+        break;
+    case 1:
+        prjManage.set_pickupOffsetY(value);
+        param.pickupOffsetY = value;
+        write_profile_double("OFFSET", "PICKUP_OFFSET_Y", prjManage.get_pickupOffsetY(),
+                             prjManage.ini_file());
+        break;
+    case 2:
+        prjManage.set_glueOffsetX(value);
+        param.glueOffsetX = value;
+        write_profile_double("OFFSET", "GLUE_OFFSET_X", prjManage.get_glueOffsetX(),
+                             prjManage.ini_file());
+        break;
+    case 3:
+        prjManage.set_glueOffsetY(value);
+        param.glueOffsetY = value;
+        write_profile_double("OFFSET", "GLUE_OFFSET_Y", prjManage.get_glueOffsetY(),
+                             prjManage.ini_file());
+        break;
+    }
+
 }
 
 void MarkWidget::mark_adjust_param()
@@ -2073,6 +2091,8 @@ void MarkWidget::set_camera_param(int val){
             write_profile_int("MARK","CAM_GAIN",val, EMC_INIFILE);
         }
         else if(slider==sl_brightness){
+            if(cb_autoBL->isChecked())
+                return;
             param.camBL=val;
             if(capture)
                 capture->set_brightness(val);
@@ -2110,12 +2130,26 @@ void MarkWidget::save_image()
         cvSaveImage(fileName.toUtf8().constData(), srcImage);
 }
 
+void MarkWidget::auto_brightness(int val)
+{
+    bool checked = cb_autoBL->isChecked();
+    if(checked)
+    {
+        capture->set_auto_BL(1);
+    }
+    else
+    {
+        capture->set_auto_BL(0);
+    }
+}
+
 void MarkWidget::machine_open(int cmd){
 #ifdef WITH_EMC
     if(cmd){
         emc_estop(NULL,0);
         emc_machine(NULL,1);
         emc_mode(NULL,EMC_TASK_MODE_MANUAL);
+        emc_optional_stop(NULL,1);
     }
     else{
         emc_machine(NULL,0);
@@ -2252,3 +2286,5 @@ void MarkWidget::set_io(int index , bool on)
 
 #endif
 }
+
+

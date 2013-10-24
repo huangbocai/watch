@@ -26,15 +26,29 @@ typedef struct
     hal_bit_t* glueHoleValid;
     hal_s32_t * state;
     hal_u32_t* fps;
-    hal_bit_t* setGlue;
-    hal_bit_t* glueUpDown;
-    hal_bit_t* pickupDiamond;
-    hal_bit_t* dropDiamond;
-    hal_bit_t* lightControl;
+    hal_bit_t* ioPin[5];
     hal_bit_t* start;
     hal_bit_t* paused;
     hal_bit_t* stop;
 }MarkHalPins;
+
+class HalBitPin
+{
+public:
+    //dir=0 : HAL_IN, dir=1 : HAL_OUT
+    HalBitPin(const char *name, int dir,
+              int comp_id, int defaultVal);
+    //if success return 0
+    int createHalPinSuccess() {return mSuccess;}
+    void setHalPin(int val) {*mPin = val;}
+    bool isHalPinValid() {return *mPin == 1;}
+
+private:
+    hal_pin_dir_t setDirection(int dir) {return dir == 0 ? HAL_IN : HAL_OUT;}
+    int mSuccess;
+    hal_pin_dir_t mDir;
+    hal_bit_t* mPin;
+};
 
 
 class MarkHal
@@ -45,8 +59,10 @@ public:
     int comp_id;
     MarkHalPins* halpins;
     bool pin_is_valid(int index);
+    void set_axis_pos(int axis,float pos);
 private:
-    hal_bit_t* pins[io_num];
+    //hal_bit_t* pins[io_num];
+    HalBitPin* mIoPin;
 };
 
 //Programe Run TIme Manager

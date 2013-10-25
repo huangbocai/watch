@@ -1989,6 +1989,16 @@ void MarkWidget::set_offset(int index, double value)
 
 }
 
+void MarkWidget::set_diamond_detect_algorithm(int type)
+{
+    if(type == 0){
+        diamondCirclesDetecter->setAlgorithmType(DiamondCircleDetecter::DT);
+    }
+    else if(type == 1){
+        diamondCirclesDetecter->setAlgorithmType(DiamondCircleDetecter::HOUGH_CIRCLE);
+    }
+}
+
 void MarkWidget::mark_adjust_param()
 {
     char buf[256];

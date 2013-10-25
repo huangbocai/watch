@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <stdio.h>
 #include "markWidget.h"
+#include "algorithmdialog.h"
 
 namespace Ui {
 class WatchDiamondWidget;
@@ -79,6 +80,7 @@ private slots:
     void hal_config();
     void hal_meter();
     void hal_scope();
+    void setup_algorithm();
 
     void clear_error_message();
 
@@ -102,7 +104,9 @@ private:
     QDoubleValidator* doubleValidator;
     QPushButton* jogButtons[10];
     QPushButton* ioButtons[6];
-    QTimer* timer;    
+    QTimer* timer;
+    AlgorithmDialog* setupDialog;
+
     double fastVel;
     double slowVel;
     double currentVel;

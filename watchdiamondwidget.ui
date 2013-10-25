@@ -1432,8 +1432,15 @@
     <addaction name="action_halMeter"/>
     <addaction name="action_halScope"/>
    </widget>
+   <widget class="QMenu" name="menu_2">
+    <property name="title">
+     <string>设置</string>
+    </property>
+    <addaction name="action_algorithm"/>
+   </widget>
    <addaction name="menu"/>
    <addaction name="menuHAL"/>
+   <addaction name="menu_2"/>
   </widget>
   <action name="action_halConfig">
    <property name="text">
@@ -1458,6 +1465,11 @@
   <action name="action_saveAs">
    <property name="text">
     <string>另存为</string>
+   </property>
+  </action>
+  <action name="action_algorithm">
+   <property name="text">
+    <string>算法</string>
    </property>
   </action>
  </widget>

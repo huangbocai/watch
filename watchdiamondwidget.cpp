@@ -12,6 +12,7 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
     setFocusPolicy(Qt::StrongFocus);
     markWidget = new MarkWidget(argc,argv,wg_mark);
     coordinate = new Coordinate(lb_x,lb_y,lb_z,lb_a,lb_b);
+    setupDialog= new AlgorithmDialog(this);
 
     for(int i=0; i<5; i++)
         axisPos[i] = 0;
@@ -59,6 +60,7 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
     connect(action_halConfig,SIGNAL(triggered()),this,SLOT(hal_config()));
     connect(action_halMeter,SIGNAL(triggered()),this,SLOT(hal_meter()));
     connect(action_halScope,SIGNAL(triggered()),this,SLOT(hal_scope()));
+    connect(action_algorithm,SIGNAL(triggered()),this,SLOT(setup_algorithm()));
     connect(bt_autoRun,SIGNAL(toggled(bool)),this,SLOT(auto_run(bool)));
     connect(bt_pause,SIGNAL(toggled(bool)),this,SLOT(pause(bool)));
     connect(bt_stop,SIGNAL(clicked()),this,SLOT(stop()));
@@ -613,6 +615,16 @@ void WatchDiamondWidget::hal_scope()
     int val=system("halscope &");
     if(val)
         printf("open halscope fail\n");
+}
+
+void WatchDiamondWidget::setup_algorithm()
+{
+    //setupDialog->show();
+    if(setupDialog->exec() == QDialog::Accepted){
+        printf("test\n");
+        int type = setupDialog->get_algorithm_type();
+        markWidget->set_diamond_detect_algorithm(type);
+    }
 }
 
 void WatchDiamondWidget::clear_error_message()

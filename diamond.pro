@@ -32,12 +32,14 @@ HEADERS += markWidget.h \
     emcsec.hh \
     iniwrite.hh \
     watchdiamondwidget.h \
-    imageprocessing.h
+    imageprocessing.h \
+    algorithmdialog.h
 
 
 FORMS += markWidget.ui \
     loadRecordDialog.ui \
     watchdiamondwidget.ui \
+    algorithmdialog.ui
 
 
 SOURCES += markWidget.cpp \
@@ -56,7 +58,8 @@ SOURCES += markWidget.cpp \
     watchConfig.cc \
     diamodWidget.cpp \
     watchdiamondwidget.cpp \
-    imageprocessing.cpp
+    imageprocessing.cpp \
+    algorithmdialog.cpp
 
 
 RESOURCES +=

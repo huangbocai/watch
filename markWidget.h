@@ -233,6 +233,8 @@ public:
     void set_time(int index, int varNum, double value);
     void set_offset(int index, double value);
 
+    void set_diamond_detect_algorithm(int type);
+
 signals:
     void update_emc_status(const MarkEmcStatus& status);
     void update_infor(const Information& infor);

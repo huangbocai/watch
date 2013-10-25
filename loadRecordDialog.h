@@ -13,7 +13,6 @@ public:
 
 private slots:
     void delete_record();
-
 private:
     void set_combo_box();
     char currentPrj[256];

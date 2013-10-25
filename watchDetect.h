@@ -5,6 +5,7 @@
 #include <list>
 #include <vector>
 #include "imageMeasure.hh"
+#include "imageprocessing.h"
 using namespace hbc;
 //class CirclesDetecter{
 //public:
@@ -79,14 +80,31 @@ private:
 class DiamondCircleDetecter : public WatchCircleDetecter
 {
 public:
+    typedef enum{
+        DT,
+        HOUGH_CIRCLE
+    }ALGORITHM;
     DiamondCircleDetecter();
+    ~DiamondCircleDetecter();
     IplImage* createIdealPattern(float R, float outWidth=0);
     const list<Point>& detect(IplImage* image, CvRect* roi=NULL);
-    double calcuateAverageBrightness(cv::Mat src, float radious, list<Point> centers);
-    const list<Point> deleteLessBrightCenter(cv::Mat src, float radious, list<Point> centers, double averageBrightness);
     int calForegroundPix(const cv::Mat& img, int threshold);
+
+    void setMinDist(int val);
+    void setCannyHighThreshold(int val);
+    void setMinVotes(int val);
+    void setMinRadius(int val);
+    void setMaxRadius(int val);
+
+    void setAlgorithmType(ALGORITHM type){mType = type;}
+
+private:
+    const list<Point>& dtTransform(IplImage* image);
+    const list<Point>& houghCircle(IplImage* image);
+    CirclesFinder* finder;
     int mPatternFgPixNum; //pattern foreground pix num
-    double mAverageBrightness;
+    ALGORITHM mType;
+
 };
 
 #endif // WATCHDETECT_H

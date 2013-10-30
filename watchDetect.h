@@ -97,12 +97,39 @@ public:
     void setMaxRadius(int val);
 
     void setAlgorithmType(ALGORITHM type){mType = type;}
+    ALGORITHM getAlgorithmType(){return mType;}
+    void setDtThreshold(int threshold){mDtThreshold = threshold;}
+    int getDtThreshold(){return mDtThreshold;}
+    void setDtPixNumDiffer(int val){mDtPixNumDiffer = val;}
+    int getDtPixNumDiffer(){return mDtPixNumDiffer;}
+    void setDtSearchRegionWidth(int val){mDtSearchRegionWidth = val;}
+    int getDtSearchRegionWidth(){return mDtSearchRegionWidth;}
+    void setDistanceBetweenDiamonds(int val){
+        mDistance = val/2+0.5;
+    }
+    void setDtSearchRegionWidth(){
+        int R;
+        if(!m_pattern[0]){
+            R = 55;
+            mDtSearchRegionWidth = (R+mDistance)*2;
+            //printf("Search Region Width1: %d\n",mDtSearchRegionWidth);
+            return;
+        }
+        R = m_pattern[0]->width/2;
+        mDtSearchRegionWidth = (R+mDistance)*2;
+        //printf("Search Region Width2: %d\n",mDtSearchRegionWidth);
+    }
+
 
 private:
     const list<Point>& dtTransform(IplImage* image);
     const list<Point>& houghCircle(IplImage* image);
     CirclesFinder* finder;
     int mPatternFgPixNum; //pattern foreground pix num
+    int mDtThreshold;
+    int mDtPixNumDiffer;
+    int mDtSearchRegionWidth;
+    int mDistance;
     ALGORITHM mType;
 
 };

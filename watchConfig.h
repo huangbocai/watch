@@ -165,7 +165,7 @@ class ProjectManage
 {
 public:
     typedef enum{SCAN_X0=3301, SCAN_Y0, SCAN_Z, SCAN_ROW_NUM, SCAN_COL_NUM, SCAN_ROW_DIS, SCAN_COL_DIS,
-         PICKUP_Z,
+         PICKUP_Z,       //3308
          SETDIAMOND_Z,
          SET_GLUE_Z,
          GLUE_T,
@@ -190,6 +190,7 @@ public:
     IplImage* get_watch_pattern();
     const char* ini_file()const;
     const char* project_dir()const;
+    void change_current_project(const char* projectName);
 
 #define PARAM_ACCEPTER(AXIS,type) \
 type get_##AXIS()                 \

@@ -180,7 +180,7 @@ void Project::save_scan_param(){
 void Project::save_as(const char *projectName)
 {
     char cmd[1024];
-    sprintf(cmd, "cp /home/u/cnc/镶钻存档/test1/* /home/u/cnc/镶钻存档/%s/",projectName);
+    sprintf(cmd, "cp %s/* /home/u/cnc/镶钻存档/%s/",projectDirectory,projectName);
     int val=system(cmd);
     if(val){
         printf("copy data fail\n");
@@ -261,6 +261,11 @@ const char* ProjectManage::ini_file()const
 const char* ProjectManage::project_dir()const
 {
     return currentPrj->project_dir();
+}
+
+void ProjectManage::change_current_project(const char *projectName)
+{
+    load_project(projectName);
 }
 
 void ProjectManage::set_scanStartPos(int index, double val){

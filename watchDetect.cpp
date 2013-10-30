@@ -471,7 +471,8 @@ bool WatchCircleDetecter::pattern_is_new(){
 }
 
 DiamondCircleDetecter::DiamondCircleDetecter()
-    :WatchCircleDetecter(),mPatternFgPixNum(0),mType(DT)
+    :WatchCircleDetecter(),mPatternFgPixNum(0),mDtThreshold(60),
+      mDtPixNumDiffer(1000),mDtSearchRegionWidth(130),mType(HOUGH_CIRCLE)
 {
     finder = new CirclesFinder();
     setMinDist(20);
@@ -562,11 +563,11 @@ const list<Point>& DiamondCircleDetecter::detect(IplImage* image, CvRect* roi)
         m_roi=cvRect(0, 0, image->width, image->height);
 
     if(mType == DT){
-        printf("DT\n");
+        //printf("DT\n");
         return dtTransform(image);
     }
     else{
-        printf("Hough\n");
+        //printf("Hough\n");
         return houghCircle(image);
     }
 }
@@ -591,7 +592,7 @@ const list<Point>& DiamondCircleDetecter::dtTransform(IplImage *image)
     //binary
     cv::Mat bw;
     //cvtColor(src1,bw,CV_BGR2GRAY);
-    threshold(src1,bw,60,255,CV_THRESH_BINARY);
+    threshold(src1,bw,mDtThreshold,255,CV_THRESH_BINARY);
 
     //do distance transform and get the brightest points
     cv::Mat dist;
@@ -734,31 +735,50 @@ const list<Point>& DiamondCircleDetecter::dtTransform(IplImage *image)
 
 //    }
 
-
-    int minWidth = templateMat1.cols;
+    setDtSearchRegionWidth();
+    int minWidth = mDtSearchRegionWidth/2;
     vector<hbc::Point> tmpCenters;
     if(mPatternFgPixNum == 0){
-        mPatternFgPixNum = calForegroundPix(templateMat1,60);
+        mPatternFgPixNum = calForegroundPix(templateMat1,mDtThreshold);
+        mDtPixNumDiffer = mPatternFgPixNum*3/4;
+        //printf("\nPixNum: %d,%d,%d\n",mPatternFgPixNum,mDtPixNumDiffer,mDtSearchRegionWidth);
     }
 
-    if(centers.size()>0 ){
-        for(unsigned int i=0; i<centers.size(); i++){
-            Point center1 = centers[i];
-            cv::Rect region1 = cv::Rect(center1.x()-minWidth,center1.y()-minWidth,2*minWidth,2*minWidth);
-            if(region1.tl().x<0 || region1.tl().y<0 || region1.br().x>src1.cols-2 || region1.br().y>src1.rows-2 )
-                continue;
 
-            cv::Mat roi1 = cv::Mat(src1,region1);
-            int num = calForegroundPix(roi1,60);
-            //std::cout<<"Pix num: "<<num<<std::endl;
-            if(abs(mPatternFgPixNum-num)<1000){
-                tmpCenters.push_back(centers[i]);
-            }
-        }
-        centers.clear();
-        centers = tmpCenters;
-        //std::cout<<"centers size: "<<centers.size()<<std::endl;
-    }
+//    if(centers.size()>0 ){
+//        for(unsigned int i=0; i<centers.size(); i++){
+//            Point center1 = centers[i];
+//            cv::Rect region1 = cv::Rect(center1.x()-minWidth,center1.y()-minWidth,2*minWidth,2*minWidth);
+//            int lx=region1.tl().x;
+//            int ly=region1.tl().y;
+//            int rx=region1.br().x;
+//            int ry=region1.br().y;
+////            if(region1.tl().x<0 || region1.tl().y<0 || region1.br().x>src1.cols-2 || region1.br().y>src1.rows-2 )
+////                continue;
+//            if(lx<0)
+//                lx = 0;
+//            if(ly<0)
+//                ly=0;
+//            if(rx>src1.cols)
+//                rx = src1.cols;
+//            if(ry>src1.rows){
+//                ry = src1.rows;
+//            }
+//            if(rx-lx>0 && ry-ly>0 && lx>=0 && ly>=0)
+//                region1 = cv::Rect(lx,ly,rx-lx,ry-ly);
+
+//            cv::Mat roi1 = cv::Mat(src1,region1);
+//            //cv::imshow("ROI",roi1);
+//            int num = calForegroundPix(roi1,mDtThreshold);
+//            //std::cout<<"\nPix num: "<<num<<std::endl;
+//            if(abs(num-mPatternFgPixNum)<mDtPixNumDiffer){
+//                tmpCenters.push_back(centers[i]);
+//            }
+//        }
+//        centers.clear();
+//        centers = tmpCenters;
+//        //std::cout<<"centers size: "<<centers.size()<<std::endl;
+//    }
 
     cv::Rect rect(m_roi);
 
@@ -775,7 +795,7 @@ const list<Point>& DiamondCircleDetecter::dtTransform(IplImage *image)
     }
 
     double tt =((double)cv::getTickCount()-t)/cv::getTickFrequency();
-    printf("Time: %.3f\n",tt);
+    //printf("Time: %.3f\n",tt);
     return m_centers;
 
 }
@@ -784,7 +804,7 @@ const list<Point>& DiamondCircleDetecter::dtTransform(IplImage *image)
 const list<Point>& DiamondCircleDetecter::houghCircle(IplImage* image)
 {
 
-    double t = cv::getTickCount();
+    //double t = cv::getTickCount();
     cv::Mat src(image);
     cv::Mat templateMat(m_pattern[0]);
     if(!src.data || !templateMat.data)
@@ -814,23 +834,43 @@ const list<Point>& DiamondCircleDetecter::houghCircle(IplImage* image)
         ++itc;
     }
 
-    int minWidth = templateMat1.cols;
+    setDtSearchRegionWidth();
+    int minWidth = mDtSearchRegionWidth/2;
     vector<hbc::Point> tmpCenters;
     if(mPatternFgPixNum == 0){
-        mPatternFgPixNum = calForegroundPix(templateMat1,60);
+        mPatternFgPixNum = calForegroundPix(templateMat1,mDtThreshold);
+        mDtPixNumDiffer = mPatternFgPixNum/2;
+        //printf("\nPixNum: %d,%d,%d\n",mPatternFgPixNum,mDtPixNumDiffer,mDtSearchRegionWidth);
     }
+
 
     if(centers.size()>0 ){
         for(unsigned int i=0; i<centers.size(); i++){
             Point center1 = centers[i];
             cv::Rect region1 = cv::Rect(center1.x()-minWidth,center1.y()-minWidth,2*minWidth,2*minWidth);
-            if(region1.tl().x<0 || region1.tl().y<0 || region1.br().x>src1.cols-2 || region1.br().y>src1.rows-2 )
-                continue;
+            int lx=region1.tl().x;
+            int ly=region1.tl().y;
+            int rx=region1.br().x;
+            int ry=region1.br().y;
+//            if(region1.tl().x<0 || region1.tl().y<0 || region1.br().x>src1.cols-2 || region1.br().y>src1.rows-2 )
+//                continue;
+            if(lx<0)
+                lx = 0;
+            if(ly<0)
+                ly=0;
+            if(rx>src1.cols)
+                rx = src1.cols;
+            if(ry>src1.rows){
+                ry = src1.rows;
+            }
+            if(rx-lx>0 && ry-ly>0 && lx>=0 && ly>=0)
+                region1 = cv::Rect(lx,ly,rx-lx,ry-ly);
 
             cv::Mat roi1 = cv::Mat(src1,region1);
-            int num = calForegroundPix(roi1,60);
-            //std::cout<<"Pix num: "<<num<<std::endl;
-            if(abs(mPatternFgPixNum-num)<1000){
+            //cv::imshow("ROI",roi1);
+            int num = calForegroundPix(roi1,mDtThreshold);
+            //std::cout<<"\nPix num: "<<num<<std::endl;
+            if(num-mPatternFgPixNum<mDtPixNumDiffer){
                 tmpCenters.push_back(centers[i]);
             }
         }
@@ -853,8 +893,8 @@ const list<Point>& DiamondCircleDetecter::houghCircle(IplImage* image)
         m_centers.push_back(hbc::Point(x,y));
     }
 
-    double tt =((double)cv::getTickCount()-t)/cv::getTickFrequency();
-    printf("Time: %.3f\n",tt);
+    //double tt =((double)cv::getTickCount()-t)/cv::getTickFrequency();
+    //printf("Time: %.3f\n",tt);
     return m_centers;
 
 }
@@ -871,10 +911,11 @@ int DiamondCircleDetecter::calForegroundPix(const cv::Mat& img, int threshold){
     for(int j = 0; j < row; j++){
         uchar* data = bw.ptr<uchar>(j);
         for(int i=0; i<col; i++){
-            if(data[i] > 0)
+            if(data[i] == 255)
                 forgroundPixNum++;
         }
     }
+    //printf("num:%d\t",forgroundPixNum);
     return forgroundPixNum;
 }
 

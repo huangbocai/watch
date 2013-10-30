@@ -10,7 +10,7 @@
 //#include <vector>
 //#include <iostream>
 
-#define MARK2_VERSION "WATCH 1.0.0"
+#define MARK2_VERSION "WATCH 1.0.1"
 
 #define OFFSET_WHITE_CIRCLE 0
 #define OFFSET_BLACK_CIRCLE 1
@@ -26,6 +26,18 @@ Recorder::Recorder(string prjDir)
     currentHoleIndex = 0;
     currentGlueHoleIndex = 0;
     posVec.clear();
+}
+
+void Recorder::change_project(string prjDir)
+{
+    watchPosFileName = prjDir + string("/Watch.pos");
+    holePosFileName = prjDir + string("/holes.pos");
+    currentIndex = 0;
+    currentMarkIndex = 0;
+    currentHoleIndex = 0;
+    currentGlueHoleIndex = 0;
+    posVec.clear();
+    load();
 }
 
 void Recorder::record_current_pos(double x, double y, double z, double a, double b ,RectangleFrame rect)
@@ -271,23 +283,12 @@ MarkWidget::MarkWidget(int argc,  char **argv, QWidget* parent)
     detecter_model_init();
 
     markView= new MarkView(widgetMarkView);
+    loadRecordDialog = new LoadRecordDialog(this);
+    newProjectDialog = new NewProjectDialog(this);
 
     posRecorder = new Recorder(string(prjManage.project_dir()));
     posRecorder->load();
-
-    infor.setGlueZ = prjManage.get_glueZPos();
-    infor.setDiamondZ = prjManage.get_setDiamondZPos();
-    infor.getDiamondZ = prjManage.get_pickupZD();
-    infor.glueT = prjManage.get_glueTime();
-    infor.afterGlueT = prjManage.get_afterGlueTime();
-    infor.getDiamondT = prjManage.get_getDiamondTime();
-    infor.setDiamondT = prjManage.get_setDiamondTime();
-    infor.slowVel = param.slowVel;
-    infor.fastVel = param.fastVel;
-    infor.pickupOffsetX = prjManage.get_pickupOffsetX();
-    infor.pickupOffsetY = prjManage.get_pickupOffsetY();
-    infor.glueOffsetX = prjManage.get_glueOffsetX();
-    infor.glueOffsetY = prjManage.get_glueOffsetY();
+    init_information();
 
     status_bar_init();
     diamond_page_init();
@@ -316,6 +317,24 @@ MarkWidget::~MarkWidget(){
     emc_quit();
     hal_exit(halData->comp_id);
     printf("mark exit\n");
+}
+
+void MarkWidget::init_information()
+{
+    infor.setGlueZ = prjManage.get_glueZPos();
+    infor.setDiamondZ = prjManage.get_setDiamondZPos();
+    infor.getDiamondZ = prjManage.get_pickupZD();
+    infor.glueT = prjManage.get_glueTime();
+    infor.afterGlueT = prjManage.get_afterGlueTime();
+    infor.getDiamondT = prjManage.get_getDiamondTime();
+    infor.setDiamondT = prjManage.get_setDiamondTime();
+    infor.pickupOffsetX = prjManage.get_pickupOffsetX();
+    infor.pickupOffsetY = prjManage.get_pickupOffsetY();
+    infor.glueOffsetX = prjManage.get_glueOffsetX();
+    infor.glueOffsetY = prjManage.get_glueOffsetY();
+    infor.slowVel = param.slowVel;
+    infor.fastVel = param.fastVel;
+
 }
 
 
@@ -405,7 +424,6 @@ void MarkWidget::diamond_page_init(){
     patternView = new PatternView(w, h, patternViewFrame0);
     rb_circle->setChecked(true);
     //rb_rectangle->setChecked(true);
-    loadRecordDialog = new LoadRecordDialog(this);
     char buf[16];
     sprintf(buf, "%8.3f", prjManage.get_scanStartPos(0));
     lb_scanX0->setText(QString::fromUtf8(buf));
@@ -1310,11 +1328,19 @@ void MarkWidget::set_pickup_diamnod_z(double value){
 //设置滴胶高度
 void MarkWidget::set_glue_z_pos(double value)
 {
+    char buf[32];
     if(fabs(value - 0)<0.00001)
         prjManage.set_glueZPos(emcStatus.cmdAxis[2]);
     else
         prjManage.set_glueZPos(value);
     write_profile_double("WATCH", "GLUE_Z_POS", prjManage.get_glueZPos(), prjManage.ini_file());
+#ifdef WITH_EMC
+    emc_mode(NULL,EMC_TASK_MODE_MDI);
+    sprintf(buf, "#%d=%f", ProjectManage::SET_GLUE_Z, prjManage.get_glueZPos());
+    emc_mdi(buf);
+    emc_mode(NULL,EMC_TASK_MODE_MANUAL);
+#endif
+
 }
 //设置镶钻高度
 void MarkWidget::set_setdiamond_z_pos(double value)
@@ -1722,16 +1748,26 @@ void MarkWidget::auto_set_diamond()
 //}
 
 
+void MarkWidget::load_project(const char *projectName)
+{
+    prjManage.change_current_project(projectName);
+    if(posRecorder){
+        posRecorder->change_project(prjManage.project_dir());
+        init_information();
+    }
+    sprintf(param.projectName,"%s",projectName);
+    write_profile_string("MARK", "CURRENT_PROJECT", projectName,EMC_INIFILE);
+    lb_project->setText(QString::fromUtf8(param.projectName));
+    infor.changeProject = true;
+}
 
 
 void MarkWidget::show_load_dialog(){
     loadRecordDialog->set_combo_box(param.projectName);
-    std::cout<<"project name: "<<param.projectName<<std::endl;
-    prjManage.save_as_project("test2");
     if(loadRecordDialog->exec()==QDialog::Accepted){
        QString prjName= loadRecordDialog->get_project_name();
        if(prjName.size()>0){
-           //load_project(prjName.toUtf8().constData());
+           load_project(prjName.toUtf8().constData());
        }
     }
 }
@@ -1999,6 +2035,51 @@ void MarkWidget::set_diamond_detect_algorithm(int type)
     }
 }
 
+void MarkWidget::set_dt_threshold(int value)
+{
+    diamondCirclesDetecter->setDtThreshold(value);
+}
+
+int MarkWidget::get_dt_threshold()
+{
+    return diamondCirclesDetecter->getDtThreshold();
+}
+
+void MarkWidget::set_dt_pix_num_differ(int value)
+{
+    diamondCirclesDetecter->setDtPixNumDiffer(value);
+}
+
+int MarkWidget::get_dt_pix_num_differ()
+{
+    return diamondCirclesDetecter->getDtPixNumDiffer();
+}
+
+void MarkWidget::set_dt_search_region_width(double value)
+{
+    Point imgPoint;
+    imgPoint = transfMatrix->inv_transform(value,0);
+    int width = imgPoint.x()+0.5;
+    diamondCirclesDetecter->setDtSearchRegionWidth(width);
+}
+
+double MarkWidget::get_dt_search_region_width()
+{
+    int width = diamondCirclesDetecter->getDtSearchRegionWidth();
+    //printf("%d\n",width);
+    double actual;
+    actual = width*transfMatrix->kx();
+    //printf("%f\n",actual);
+    return actual;
+}
+
+void MarkWidget::set_distance_between_diamonds(double value)
+{
+    int width = value*transfMatrix->in_kx()+0.5;
+    printf("Pix distance:%d\n",width);
+    diamondCirclesDetecter->setDistanceBetweenDiamonds(width);
+}
+
 void MarkWidget::mark_adjust_param()
 {
     char buf[256];
@@ -2254,6 +2335,11 @@ void MarkWidget::stop()
 #endif
 }
 
+void MarkWidget::closeSystem()
+{
+    write_profile_string("MARK", "CURRENT_PROJECT", prjManage.get_current_project_name(),EMC_INIFILE);
+}
+
 void MarkWidget::set_var_param(int varNum, double value)
 {
     switch(ProjectManage::VAR_PARAM(varNum)){
@@ -2295,6 +2381,32 @@ void MarkWidget::set_io(int index , bool on)
     }
 
 #endif
+}
+
+void MarkWidget::open_project()
+{
+    show_load_dialog();
+}
+
+void MarkWidget::new_project()
+{
+    if(newProjectDialog->exec()==QDialog::Accepted){
+        //printf("New a project\nProject name: %s\n",newProjectDialog->get_project_name().toStdString().c_str());
+        char dirBuf[512];
+        char createDir[640];
+        char copyFile[640];
+        QString projectName = newProjectDialog->get_project_name();
+        sprintf(dirBuf,"/home/u/cnc/镶钻存档/%s",projectName.toStdString().c_str());
+        sprintf(createDir,"mkdir %s",dirBuf);
+        sprintf(copyFile,"cp %s/* %s/",prjManage.project_dir(),dirBuf);
+        int res = system(createDir);
+        res += system(copyFile);
+        if(res != 0){
+            printf("Create new project failed!\n");
+            return;
+        }
+        load_project(projectName.toStdString().c_str());
+    }
 }
 
 

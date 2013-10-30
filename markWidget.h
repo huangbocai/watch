@@ -9,6 +9,7 @@
 #include "displayModel.h"
 #include "markView.h"
 #include "loadRecordDialog.h"
+#include "newprojectdialog.h"
 #include "markEMC.h"
 #include "watchDetect.h"
 #include "watchConfig.h"
@@ -124,6 +125,8 @@ public:
 
     void sort();
 
+    void change_project(string prjDir);
+
 
 private:
     bool is_file_open(ofstream& ofs, string fileName);
@@ -131,7 +134,6 @@ private:
 public:
     vector<Position> holesPosVec;
     vector<Position>::iterator holeIter;
-
 private:
     unsigned int currentIndex;
     unsigned int currentMarkIndex;
@@ -152,7 +154,7 @@ public:
     Information():watchPosIndex(0),gluePosIndex(0),holePosIndex(0),
         diamondNum(0),watchPosNum(0),holePosNum(0),endAutoRun(true),
         endSetGLue(true),endSetDiamond(true),endScanWatch(true),
-        start(false),paused(false),stop(false),runTime("00:00")
+        start(false),paused(false),stop(false),changeProject(false),runTime("00:00")
     {
         for(int i=0; i<4; i++)
             ioState[i] = false;
@@ -193,6 +195,8 @@ public:
     bool paused;
     bool stop;
 
+    bool changeProject;
+
     QString runTime;
 
 };
@@ -225,6 +229,7 @@ public:
     void auto_run(bool type);
     void pause();
     void stop();
+    void closeSystem();
     void set_var_param(int varNum, double value);
     void set_io(int index , bool on);
     void set_pickup_diamnod_z(double value);
@@ -233,11 +238,23 @@ public:
     void set_time(int index, int varNum, double value);
     void set_offset(int index, double value);
 
+    //algorithm setting
     void set_diamond_detect_algorithm(int type);
+    void set_dt_threshold(int value);
+    int get_dt_threshold();
+    void set_dt_pix_num_differ(int value);
+    int get_dt_pix_num_differ();
+    void set_dt_search_region_width(double value);
+    double get_dt_search_region_width();
+    void set_distance_between_diamonds(double value);
+
+    //project
+    void open_project();
+    void new_project();
 
 signals:
     void update_emc_status(const MarkEmcStatus& status);
-    void update_infor(const Information& infor);
+    void update_infor(Information& infor);
 
 private slots:
     //status bar
@@ -317,6 +334,9 @@ private:
     void mark_view_update();
     void mark_adjust_param();
 
+    void load_project(const char* projectName);
+    void init_information();
+
     //拾起一颗石子
     void pickup_one_diamond(const Point& diamondPos, double pickupZ);
     //在一个槽里滴胶
@@ -347,6 +367,7 @@ private:
     QWidget* adjTable;
 
     LoadRecordDialog* loadRecordDialog;
+    NewProjectDialog* newProjectDialog;
 
     MarkView* markView;
     PatternView* patternView;

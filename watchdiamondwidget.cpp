@@ -45,7 +45,7 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
     ioButtons[3] = tb_4; ioButtons[4] = tb_5; ioButtons[5] = tb_6;
 
     connect(markWidget,SIGNAL(update_emc_status(MarkEmcStatus)),this,SLOT(update_emc_slot(MarkEmcStatus)));    
-    connect(markWidget,SIGNAL(update_infor(Information)),this,SLOT(update_infor_slot(Information)));
+    connect(markWidget,SIGNAL(update_infor(Information&)),this,SLOT(update_infor_slot(Information&)));
     connect(bt_machineRun,SIGNAL(toggled(bool)),this,SLOT(machine_open_toggled(bool)));
     connect(bt_home,SIGNAL(clicked()),this,SLOT(home()));
     connect(bt_zero,SIGNAL(clicked()),this,SLOT(zero()));
@@ -56,7 +56,7 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
     connect(bt_setGlue,SIGNAL(toggled(bool)),this,SLOT(set_glue(bool)));
     connect(bt_setDiamond,SIGNAL(toggled(bool)),this,SLOT(set_diamond(bool)));
     connect(action_open,SIGNAL(triggered()),this,SLOT(open_project()));
-    connect(action_saveAs,SIGNAL(triggered()),this,SLOT(save_as_project()));
+    connect(action_new,SIGNAL(triggered()),this,SLOT(new_project()));
     connect(action_halConfig,SIGNAL(triggered()),this,SLOT(hal_config()));
     connect(action_halMeter,SIGNAL(triggered()),this,SLOT(hal_meter()));
     connect(action_halScope,SIGNAL(triggered()),this,SLOT(hal_scope()));
@@ -86,10 +86,6 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
     connect(sp_glueOffsetX,SIGNAL(valueChanged(double)),this,SLOT(micro_adjust_offset(double)));
     connect(sp_glueOffsetY,SIGNAL(valueChanged(double)),this,SLOT(micro_adjust_offset(double)));
 
-
-
-
-
     for(int i=0; i<10; i++){
         connect(jogButtons[i],SIGNAL(pressed()),this,SLOT(jog()));
         connect(jogButtons[i],SIGNAL(released()),this,SLOT(end_jog()));
@@ -99,6 +95,8 @@ WatchDiamondWidget::WatchDiamondWidget(int argc, char **argv, QWidget *parent) :
         connect(ioButtons[i],SIGNAL(toggled(bool)),this,SLOT(io_button_toggled(bool)));
     }
 
+    connect(sp_distance,SIGNAL(valueChanged(double)),this,SLOT(set_diamond_distance(double)));
+    sp_distance->setValue(0.080);
     bt_machineRun->setChecked(true);
     timer = new QTimer(this);
     connect(timer,SIGNAL(timeout()),this,SLOT(ask_home()));
@@ -137,7 +135,7 @@ void WatchDiamondWidget::update_emc_slot(const MarkEmcStatus& status)
     }
 }
 
-void WatchDiamondWidget::update_infor_slot(const Information& infor){
+void WatchDiamondWidget::update_infor_slot(Information &infor){
     static int loadParam = 0;
     char buf[12];
     sprintf(buf,"%d",infor.diamondNum);
@@ -190,8 +188,21 @@ void WatchDiamondWidget::update_infor_slot(const Information& infor){
         //std::cout<<"test for one time"<<std::endl;
     }
 
+    //update var parameters
+    if(infor.changeProject){
+        set_var_param(3308,infor.getDiamondZ);
+        set_var_param(3309,infor.setDiamondZ);
+        set_var_param(3310,infor.setGlueZ);
+        markWidget->set_time(0,3311,infor.glueT);
+        markWidget->set_time(1,3312,infor.afterGlueT);
+        markWidget->set_time(2,3313,infor.getDiamondT);
+        markWidget->set_time(3,3314,infor.setDiamondT);
+    }
+
     //只执行一次
-    if(loadParam == 0){
+    if(loadParam == 0 || infor.changeProject){
+        infor.changeProject = false;
+        printf("Change project and load param\n");
         sp_setGlueZ->setValue(infor.setGlueZ);
         sp_setDiamondZ->setValue(infor.setDiamondZ);
         sp_getDiamondZ->setValue(infor.getDiamondZ);
@@ -459,6 +470,7 @@ void WatchDiamondWidget::closeEvent(QCloseEvent *event){
                                      QString::fromUtf8("关闭系统？"),
                                      QMessageBox::Yes|QMessageBox::No);
     if(QMessageBox::Yes==r){
+        //markWidget->closeSystem();
         close();
     }
     else{
@@ -587,13 +599,12 @@ void WatchDiamondWidget::set_var_param(int varNum, double value)
 
 void WatchDiamondWidget::open_project()
 {
-
+    markWidget->open_project();
 }
 
-void WatchDiamondWidget::save_as_project()
+void WatchDiamondWidget::new_project()
 {
-
-
+    markWidget->new_project();
 }
 
 void WatchDiamondWidget::hal_config()
@@ -619,12 +630,20 @@ void WatchDiamondWidget::hal_scope()
 
 void WatchDiamondWidget::setup_algorithm()
 {
-    //setupDialog->show();
-    if(setupDialog->exec() == QDialog::Accepted){
-        printf("test\n");
-        int type = setupDialog->get_algorithm_type();
-        markWidget->set_diamond_detect_algorithm(type);
-    }
+//    setupDialog->set_dt_threshold(markWidget->get_dt_threshold());
+//    setupDialog->set_dt_pix_num_differ(markWidget->get_dt_pix_num_differ());
+//    double value = markWidget->get_dt_search_region_width();
+//    printf("Width:%f\n",value);
+//    setupDialog->set_dt_search_region_width(value);
+
+//    if(setupDialog->exec() == QDialog::Accepted){
+//        printf("test\n");
+//        int type = setupDialog->get_algorithm_type();
+//        markWidget->set_diamond_detect_algorithm(type);
+//        markWidget->set_dt_threshold(setupDialog->get_dt_threshold());
+//        markWidget->set_dt_pix_num_differ(setupDialog->get_dt_pix_num_differ());
+//        markWidget->set_dt_search_region_width(setupDialog->get_dt_search_region_width());
+//    }
 }
 
 void WatchDiamondWidget::clear_error_message()
@@ -651,4 +670,12 @@ void WatchDiamondWidget::micro_adjust_offset(double value)
     }
     markWidget->set_offset(index,value);
 
+}
+
+void WatchDiamondWidget::set_diamond_distance(double value)
+{
+    QDoubleSpinBox* sp = qobject_cast<QDoubleSpinBox*>(sender());
+    if(sp == sp_distance){
+        markWidget->set_distance_between_diamonds(value);
+    }
 }

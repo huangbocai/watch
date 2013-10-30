@@ -46,7 +46,7 @@ public:
 
 private slots:
     void update_emc_slot(const MarkEmcStatus& status);
-    void update_infor_slot(const Information& infor);
+    void update_infor_slot(Information& infor);
     void set_axis(const double* val, int *colors);
     void machine_open_toggled(bool checked);
     void home();
@@ -72,11 +72,12 @@ private slots:
     void set_var_param(int varNum, double value=0);
 
     void micro_adjust_offset(double value);
+    void set_diamond_distance(double value);
 
 
     //menu action
     void open_project();
-    void save_as_project();
+    void new_project();
     void hal_config();
     void hal_meter();
     void hal_scope();

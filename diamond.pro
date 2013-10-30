@@ -33,13 +33,17 @@ HEADERS += markWidget.h \
     iniwrite.hh \
     watchdiamondwidget.h \
     imageprocessing.h \
-    algorithmdialog.h
+    algorithmdialog.h \
+    newprojectdialog.h
 
 
-FORMS += markWidget.ui \
-    loadRecordDialog.ui \
-    watchdiamondwidget.ui \
-    algorithmdialog.ui
+FORMS += ui/markWidget.ui \
+    ui/loadRecordDialog.ui \
+    ui/watchdiamondwidget.ui \
+    ui/algorithmdialog.ui \
+    ui/newprojectdialog.ui
+
+OBJECTS_DIR = objects
 
 
 SOURCES += markWidget.cpp \
@@ -59,7 +63,8 @@ SOURCES += markWidget.cpp \
     diamodWidget.cpp \
     watchdiamondwidget.cpp \
     imageprocessing.cpp \
-    algorithmdialog.cpp
+    algorithmdialog.cpp \
+    newprojectdialog.cpp
 
 
 RESOURCES +=

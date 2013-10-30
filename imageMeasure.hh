@@ -451,6 +451,7 @@ public:
 	void inv_transform(double srcx, double srcy, double &detx, double& dety) const;
 	double kx() const{return m_kxx;};
 	double ky() const{return m_kyy;};
+    double in_kx() const{return in_kxx;};
 	double k() const{return (m_kxx+m_kyy)/2;}
 	double rotate_angle()const {return rotateAngle;};
 protected:

@@ -20,11 +20,11 @@ NewProjectDialog::~NewProjectDialog()
 
 void NewProjectDialog::check(QString projectName)
 {
+    //std::cout<<projectName.toUtf8().constData()<<std::endl;
     DIR* dir=opendir("/home/u/cnc/镶钻存档/");
     if(dir){
         struct dirent* content;
         while((content=readdir(dir))!=NULL){
-            //std::cout<<content->d_name<<std::endl<<std::endl;
             if(strcmp(content->d_name, projectName.toStdString().c_str())==0){
                 lb_warning->setText(QString::fromUtf8("警告：该工程已存在！"));
                 lb_warning->setVisible(true);

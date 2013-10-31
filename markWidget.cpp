@@ -10,7 +10,7 @@
 //#include <vector>
 //#include <iostream>
 
-#define MARK2_VERSION "WATCH 1.0.1"
+#define MARK2_VERSION "软件版本: 1.0.1"
 
 #define OFFSET_WHITE_CIRCLE 0
 #define OFFSET_BLACK_CIRCLE 1
@@ -26,6 +26,7 @@ Recorder::Recorder(string prjDir)
     currentHoleIndex = 0;
     currentGlueHoleIndex = 0;
     posVec.clear();
+    holesPosVec.clear();
 }
 
 void Recorder::change_project(string prjDir)
@@ -37,6 +38,7 @@ void Recorder::change_project(string prjDir)
     currentHoleIndex = 0;
     currentGlueHoleIndex = 0;
     posVec.clear();
+    holesPosVec.clear();
     load();
 }
 
@@ -413,7 +415,7 @@ void MarkWidget::detecter_model_init(){
 
 void MarkWidget::status_bar_init(){
     lb_project->setText(QString::fromUtf8(param.projectName));
-    lb_version->setText(MARK2_VERSION); 
+    lb_version->setText(QString::fromUtf8(MARK2_VERSION));
     connect(bt_load, SIGNAL(clicked()), this, SLOT(show_load_dialog()));
 }
 
@@ -2340,6 +2342,31 @@ void MarkWidget::closeSystem()
     write_profile_string("MARK", "CURRENT_PROJECT", prjManage.get_current_project_name(),EMC_INIFILE);
 }
 
+//update 7 var parameters's values.
+//3308 取钻高度 (NC 代码中只是用这个参数和下一个参数来计算传送高度)
+//3309 镶钻高度
+//3310 滴胶高度 (NC 代码中没用到这个参数，使用的是由程序直接传过来的值)
+//3311 滴胶时间
+//3312 滴胶后时间
+//3313 吸钻延时
+//3314 释钻延时
+//将所有的参数和值放在一条MDI指令中可以提高效率
+
+void MarkWidget::set_var_params(double *values)
+{
+#ifdef WITH_EMC
+    char buf[256];
+    sprintf(buf,"#%d=%.3f #%d=%.3f #%d=%.3f #%d=%.3f #%d=%.3f #%d=%.3f #%d=%.3f",
+            3308,*(values+0),3309,*(values+1),3310,*(values+2),3311,*(values+3),
+            3312,*(values+4),3313,*(values+5),3314,*(values+6));
+    //printf("%s\n",buf);
+    emc_mode(NULL,EMC_TASK_MODE_MDI);
+    emc_mdi(buf);
+    emc_mode(NULL,EMC_TASK_MODE_MANUAL);
+#endif
+
+}
+
 void MarkWidget::set_var_param(int varNum, double value)
 {
     switch(ProjectManage::VAR_PARAM(varNum)){
@@ -2396,7 +2423,7 @@ void MarkWidget::new_project()
         char createDir[640];
         char copyFile[640];
         QString projectName = newProjectDialog->get_project_name();
-        sprintf(dirBuf,"/home/u/cnc/镶钻存档/%s",projectName.toStdString().c_str());
+        sprintf(dirBuf,"/home/u/cnc/镶钻存档/%s",projectName.toUtf8().constData());
         sprintf(createDir,"mkdir %s",dirBuf);
         sprintf(copyFile,"cp %s/* %s/",prjManage.project_dir(),dirBuf);
         int res = system(createDir);
@@ -2405,7 +2432,7 @@ void MarkWidget::new_project()
             printf("Create new project failed!\n");
             return;
         }
-        load_project(projectName.toStdString().c_str());
+        load_project(projectName.toUtf8().constData());
     }
 }
 

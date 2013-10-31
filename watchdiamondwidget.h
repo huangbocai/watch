@@ -70,6 +70,7 @@ private slots:
     void set_height();
     void set_time();
     void set_var_param(int varNum, double value=0);
+    void set_var_params(double *values);
 
     void micro_adjust_offset(double value);
     void set_diamond_distance(double value);

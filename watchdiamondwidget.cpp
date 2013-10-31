@@ -190,19 +190,13 @@ void WatchDiamondWidget::update_infor_slot(Information &infor){
 
     //update var parameters
     if(infor.changeProject){
-        set_var_param(3308,infor.getDiamondZ);
-        set_var_param(3309,infor.setDiamondZ);
-        set_var_param(3310,infor.setGlueZ);
-        markWidget->set_time(0,3311,infor.glueT);
-        markWidget->set_time(1,3312,infor.afterGlueT);
-        markWidget->set_time(2,3313,infor.getDiamondT);
-        markWidget->set_time(3,3314,infor.setDiamondT);
+        double values[7] = {infor.getDiamondZ,infor.setDiamondZ,infor.setGlueZ,
+                           infor.glueT,infor.afterGlueT,infor.getDiamondT,infor.setDiamondT};
+        set_var_params(values);
     }
 
     //只执行一次
     if(loadParam == 0 || infor.changeProject){
-        infor.changeProject = false;
-        printf("Change project and load param\n");
         sp_setGlueZ->setValue(infor.setGlueZ);
         sp_setDiamondZ->setValue(infor.setDiamondZ);
         sp_getDiamondZ->setValue(infor.getDiamondZ);
@@ -225,6 +219,7 @@ void WatchDiamondWidget::update_infor_slot(Information &infor){
         sp_glueOffsetX->setValue(infor.glueOffsetX);
         sp_glueOffsetY->setValue(infor.glueOffsetY);
         loadParam++;
+        infor.changeProject = false;
     }
 
 }
@@ -590,6 +585,11 @@ void WatchDiamondWidget::set_time()
     else if(le == le_setDiamondT){
         markWidget->set_time(3,3314,value);
     }
+}
+
+void WatchDiamondWidget::set_var_params(double *values)
+{
+    markWidget->set_var_params(values);
 }
 
 void WatchDiamondWidget::set_var_param(int varNum, double value)

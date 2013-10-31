@@ -231,6 +231,7 @@ public:
     void stop();
     void closeSystem();
     void set_var_param(int varNum, double value);
+    void set_var_params(double* values);//update 7 var parameters's values
     void set_io(int index , bool on);
     void set_pickup_diamnod_z(double value);
     void set_glue_z_pos(double value);
